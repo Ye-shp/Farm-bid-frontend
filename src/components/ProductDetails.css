@@ -1,0 +1,15 @@
+/* src/components/ProductDetails.css */
+.product-details {
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .product-details h2 {
+    margin-top: 0;
+    color: #ff6347;
+  }
+  
+  .product-details p {
+    color: #555;
+  }
+  

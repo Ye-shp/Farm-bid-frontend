@@ -1,0 +1,37 @@
+/* src/components/ProductList.css */
+.product-list {
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .products {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+  }
+  
+  .product-item {
+    border: 1px solid #ddd;
+    padding: 20px;
+    width: 200px;
+    text-align: left;
+  }
+  
+  .product-item h3 {
+    margin-top: 0;
+  }
+  
+  .product-item p {
+    margin-bottom: 10px;
+  }
+  
+  .product-item a {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .product-item a:hover {
+    text-decoration: underline;
+  }
+  

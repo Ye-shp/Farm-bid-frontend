@@ -1,0 +1,50 @@
+/* src/components/FarmerDashboard.css */
+.farmer-dashboard {
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .farmer-dashboard h2 {
+    color: #333;
+  }
+  
+  .farmer-dashboard ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .farmer-dashboard li {
+    background: #f9f9f9;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+  
+  .farmer-dashboard form {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .farmer-dashboard input,
+  .farmer-dashboard textarea {
+    padding: 10px;
+    font-size: 1em;
+    width: 80%;
+    max-width: 400px;
+  }
+  
+  .farmer-dashboard button {
+    padding: 10px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .farmer-dashboard button:hover {
+    background-color: #218838;
+  }
+  

@@ -1,0 +1,36 @@
+/* src/components/Header.css */
+.header {
+    display: flex;
+    justify-content: flex-end;
+    background-color: #f8f9fa;
+    padding: 10px 20px;
+  }
+  
+  .nav-links {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+  }
+  
+  .nav-links li a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+  }
+  
+  .nav-links li a:hover {
+    color: #0056b3;
+  }
+  
+  /* Media Queries for Responsiveness */
+  @media (max-width: 768px) {
+    .header {
+      justify-content: center;
+    }
+  
+    .nav-links {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+  

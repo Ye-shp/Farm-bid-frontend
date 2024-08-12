@@ -1,37 +1,33 @@
 // src/components/ProductDetails.js
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
+import './ProductDetails.css';
 
-const ProductDetails = ({ match }) => {
+const ProductDetails = () => {
+  const { id } = useParams();
   const [product, setProduct] = useState(null);
-  const [bidAmount, setBidAmount] = useState('');
 
   useEffect(() => {
     const fetchProduct = async () => {
-      const response = await axios.get(`/api/products/${match.params.id}`);
-      setProduct(response.data);
+      try {
+        const response = await axios.get(`/api/products/${id}`);
+        setProduct(response.data);
+      } catch (error) {
+        console.error('Error fetching product details:', error);
+      }
     };
-    fetchProduct();
-  }, [match.params.id]);
 
-  const handleBid = async () => {
-    await axios.post(`/api/products/${match.params.id}/bids`, { amount: bidAmount });
-    // Handle bid success
-  };
+    fetchProduct();
+  }, [id]);
 
   if (!product) return <div>Loading...</div>;
 
   return (
-    <div>
+    <div className="product-details">
       <h2>{product.title}</h2>
       <p>{product.description}</p>
-      <input
-        type="number"
-        value={bidAmount}
-        onChange={(e) => setBidAmount(e.target.value)}
-        placeholder="Enter your bid"
-      />
-      <button onClick={handleBid}>Place Bid</button>
+      {/* Add more product details as needed */}
     </div>
   );
 };

@@ -1,0 +1,14 @@
+/* src/components/Dashboard.css */
+.dashboard {
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .dashboard h2 {
+    color: #333;
+  }
+  
+  .dashboard p {
+    color: #555;
+  }
+  

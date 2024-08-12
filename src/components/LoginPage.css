@@ -1,0 +1,47 @@
+/* Common Styles for Forms */
+.form-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 80vh;
+    padding: 20px;
+  }
+  
+  .form-page form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .form-page input {
+    padding: 10px;
+    font-size: 1em;
+    width: 100%;
+  }
+  
+  .form-page button {
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .form-page button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Media Queries for Responsiveness */
+  @media (max-width: 768px) {
+    .form-page {
+      padding: 10px;
+    }
+  
+    .form-page form {
+      max-width: 100%;
+    }
+  }
+  
