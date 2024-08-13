@@ -1,36 +1,31 @@
 /* src/components/Header.css */
-.header {
-    display: flex;
-    justify-content: flex-end;
-    background-color: #f8f9fa;
-    padding: 10px 20px;
-  }
-  
-  .nav-links {
-    list-style: none;
-    display: flex;
-    gap: 20px;
-  }
-  
-  .nav-links li a {
-    text-decoration: none;
-    color: #007bff;
-    font-weight: bold;
-  }
-  
-  .nav-links li a:hover {
-    color: #0056b3;
-  }
-  
-  /* Media Queries for Responsiveness */
-  @media (max-width: 768px) {
-    .header {
-      justify-content: center;
-    }
-  
-    .nav-links {
-      flex-direction: column;
-      align-items: center;
-    }
-  }
-  
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #333; /* You can customize the background color */
+}
+
+.logo a {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  text-decoration: none;
+}
+
+.navigation nav ul {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+}
+
+.navigation nav ul li a {
+  color: white;
+  font-size: 18px;
+  text-decoration: none;
+}
+
+.navigation nav ul li a:hover {
+  color: #ddd; /* Slightly different color on hover for better UX */
+}
