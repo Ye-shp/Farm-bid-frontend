@@ -1,7 +1,7 @@
 // src/services/api.js
 import axios from 'axios';
 
-const API_URL = 'https://farm-bid-2dd5bc2872dd.herokuapp.com/';
+const API_URL = process.env.REACT_APP_API_URL || 'https://farm-bid-2dd5bc2872dd.herokuapp.com/api';
 
 const api = axios.create({
   baseURL: API_URL,
