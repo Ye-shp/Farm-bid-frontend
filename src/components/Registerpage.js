@@ -1,20 +1,31 @@
 // src/components/RegisterPage.js
 import React, { useState } from 'react';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { register } from '../services/api';
 import './RegisterPage.css';
 
 const RegisterPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('buyer'); // Default role
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/register', { username, password, role });
-      console.log(response.data);
+      const response = await register({ username, password, role });
+      if (response.status === 200) {
+        alert("Registration successful!");
+        navigate('/login'); // Redirect to login page after successful registration
+      }
     } catch (error) {
-      console.error('Registration failed:', error);
+      if (error.response && error.response.status === 409) {
+        // 409 Conflict, user already exists
+        setError("User already registered. Please log in.");
+      } else {
+        setError("An error occurred. Please try again.");
+      }
     }
   };
 
@@ -41,6 +52,7 @@ const RegisterPage = () => {
           <option value="farmer">Farmer</option>
         </select>
         <button type="submit">Register</button>
+        {error && <p className="error">{error}</p>} {/* Display error message */}
       </form>
     </div>
   );
