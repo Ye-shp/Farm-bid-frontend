@@ -1,7 +1,7 @@
 // src/components/RegisterPage.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { register } from '../services/api';
+import { register } from '../Services/api';
 import './RegisterPage.css';
 
 const RegisterPage = () => {
