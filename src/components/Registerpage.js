@@ -5,7 +5,7 @@ import { register } from '../Services/api';
 import './RegisterPage.css';
 
 const RegisterPage = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('buyer'); // Default role
   const [error, setError] = useState(null);
@@ -14,14 +14,13 @@ const RegisterPage = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const response = await register({ username, password, role });
-      if (response.status === 200) {
+      const response = await register({ email, password, role });
+      if (response.status === 201) {
         alert("Registration successful!");
         navigate('/login'); // Redirect to login page after successful registration
       }
     } catch (error) {
       if (error.response && error.response.status === 409) {
-        // 409 Conflict, user already exists
         setError("User already registered. Please log in.");
       } else {
         setError("An error occurred. Please try again.");
@@ -34,10 +33,10 @@ const RegisterPage = () => {
       <h2>Register</h2>
       <form onSubmit={handleRegister}>
         <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Username"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
           required
         />
         <input
