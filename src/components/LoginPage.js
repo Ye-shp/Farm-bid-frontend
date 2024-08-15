@@ -1,15 +1,39 @@
 // src/components/LoginPage.js
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { login } from '../Services/api';
 import './LoginPage.css';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Add your login logic here
+    try {
+      const response = await login({ email, password });
+      if (response.status === 200) {
+        // Store the user's email and role in localStorage or state
+        localStorage.setItem('userEmail', response.data.email);
+        localStorage.setItem('userRole', response.data.role);
+        alert("Login successful!");
+        
+        // Navigate to the correct dashboard based on the role
+        if (response.data.role === 'farmer') {
+          navigate('/farmer-dashboard'); 
+        } else {
+          navigate('/buyer-dashboard');
+        }
+      }
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        setError("Invalid email or password. Please try again.");
+      } else {
+        setError("An error occurred. Please try again.");
+      }
+    }
   };
 
   return (
@@ -35,6 +59,7 @@ const LoginPage = () => {
           />
         </div>
         <button type="submit">Login</button>
+        {error && <p className="error">{error}</p>}
       </form>
       <p>
         Don't have an account? <Link to="/register">Register here</Link>
