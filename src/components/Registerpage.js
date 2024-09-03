@@ -17,9 +17,14 @@ const RegisterPage = () => {
       const response = await register({ email, password, role });
       if (response.status === 201) {
         alert("Registration successful!");
-        navigate('/login'); // Redirect to login page after successful registration
+        setEmail('');  // Clear the email field
+        setPassword('');  // Clear the password field
+        setRole('buyer');  // Reset role to default
+        setError(null);  // Clear any error messages
+        navigate('/login'); // Redirect to login page
       }
     } catch (error) {
+      console.error('Registration error:', error);  // Log any errors
       if (error.response && error.response.status === 409) {
         setError("User already registered. Please log in.");
       } else {

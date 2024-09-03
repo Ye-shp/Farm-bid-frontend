@@ -1,10 +1,16 @@
 // src/components/Header.js
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate for redirect
 import './Header.css';
 
 const Header = () => {
   const userEmail = localStorage.getItem('userEmail'); // Get the user's email from localStorage
+  const navigate = useNavigate(); // Initialize useNavigate for redirection
+
+  const handleLogout = () => {
+    localStorage.clear(); // Clear all stored user data
+    navigate('/login'); // Redirect to login page
+  };
 
   return (
     <div className="header-container">
@@ -18,7 +24,7 @@ const Header = () => {
               <>
                 <li>Welcome, {userEmail}</li>
                 <li><Link to="/dashboard">Dashboard</Link></li>
-                <li><Link to="/" onClick={() => localStorage.clear()}>Logout</Link></li>
+                <li><button onClick={handleLogout}>Logout</button></li> {/* Use a button for logout */}
               </>
             ) : (
               <>
