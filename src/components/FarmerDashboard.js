@@ -6,10 +6,12 @@ const FarmerDashboard = () => {
   const [products, setProducts] = useState([]);
   const [auctions, setAuctions] = useState([]);
   const [newProduct, setNewProduct] = useState({ title: '', description: '' });
-  const [selectedProduct, setSelectedProduct] = useState('');
-  const [newAuction, setNewAuction] = useState({ product: '', startingBid: 0 });
+  const [auctionProductId, setAuctionProductId] = useState('');
+  const [startingBid, setStartingBid] = useState('');
+  const [newAuctionError, setNewAuctionError] = useState(null);
   const token = localStorage.getItem('token');
 
+  // Fetch farmer's products and auctions
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -17,6 +19,7 @@ const FarmerDashboard = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProducts(productResponse.data);
+
         const auctionResponse = await axios.get('/api/auctions/farmer-auctions', {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -29,42 +32,51 @@ const FarmerDashboard = () => {
     fetchData();
   }, [token]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewProduct({ ...newProduct, [name]: value });
-  };
-
-  const handleAuctionInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewAuction({ ...newAuction, [name]: value });
-  };
-
+  // Handle product creation with added logging
   const handleCreateProduct = async (e) => {
     e.preventDefault();
+
+    // Log when the button is clicked
+    console.log('Create Product button clicked');
+
+    // Log the product details
+    console.log('New Product Details:', newProduct);
+
     try {
       const response = await axios.post('/api/products', newProduct, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setProducts([...products, response.data]);
-      setNewProduct({ title: '', description: '' });
+
+      // Log the response from the server
+      console.log('Product created successfully:', response.data);
+
+      setProducts([...products, response.data]); // Update product list
+      setNewProduct({ title: '', description: '' }); // Clear form fields
     } catch (error) {
+      // Log any errors that occur
       console.error('Error creating product:', error);
+      alert('Error creating product. Please try again.'); // Show alert for error
     }
   };
 
+  // Handle auction creation
   const handleCreateAuction = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/auctions', {
-        product: selectedProduct,
-        startingBid: newAuction.startingBid,
+      const response = await axios.post('/api/auctions/create', {
+        productId: auctionProductId,
+        startingBid,
       }, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       setAuctions([...auctions, response.data]);
-      setNewAuction({ product: '', startingBid: 0 });
+      setAuctionProductId('');
+      setStartingBid('');
+      setNewAuctionError(null);
     } catch (error) {
       console.error('Error creating auction:', error);
+      setNewAuctionError('Error creating auction. Please try again.');
     }
   };
 
@@ -73,14 +85,7 @@ const FarmerDashboard = () => {
       <h2>My Products</h2>
       <ul>
         {products.map(product => (
-          <li key={product.id}>{product.title}</li>
-        ))}
-      </ul>
-
-      <h2>My Auctions</h2>
-      <ul>
-        {auctions.map(auction => (
-          <li key={auction.id}>{auction.product.title} - {auction.startingBid}</li>
+          <li key={product._id}>{product.title}</li>
         ))}
       </ul>
 
@@ -90,14 +95,14 @@ const FarmerDashboard = () => {
           type="text"
           name="title"
           value={newProduct.title}
-          onChange={handleInputChange}
+          onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
           placeholder="Title"
           required
         />
         <textarea
           name="description"
           value={newProduct.description}
-          onChange={handleInputChange}
+          onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
           placeholder="Description"
           required
         />
@@ -107,27 +112,26 @@ const FarmerDashboard = () => {
       <h2>Create New Auction</h2>
       <form onSubmit={handleCreateAuction}>
         <select
-          name="product"
-          value={selectedProduct}
-          onChange={(e) => setSelectedProduct(e.target.value)}
+          value={auctionProductId}
+          onChange={(e) => setAuctionProductId(e.target.value)}
           required
         >
-          <option value="">Select Product</option>
+          <option value="">Select a Product</option>
           {products.map(product => (
-            <option key={product.id} value={product.id}>
+            <option key={product._id} value={product._id}>
               {product.title}
             </option>
           ))}
         </select>
         <input
           type="number"
-          name="startingBid"
-          value={newAuction.startingBid}
-          onChange={handleAuctionInputChange}
+          value={startingBid}
+          onChange={(e) => setStartingBid(e.target.value)}
           placeholder="Starting Bid"
           required
         />
         <button type="submit">Create Auction</button>
+        {newAuctionError && <p className="error">{newAuctionError}</p>}
       </form>
     </div>
   );

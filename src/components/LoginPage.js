@@ -15,16 +15,18 @@ const LoginPage = () => {
     try {
       const response = await login({ email, password });
       if (response.status === 200) {
-        // Store the user's email and role in localStorage or state
-        localStorage.setItem('userEmail', response.data.email);
-        localStorage.setItem('userRole', response.data.role);
+        // Store the user's email and role in localStorage
+        localStorage.setItem('userEmail', response.data.user.email);
+        localStorage.setItem('userRole', response.data.user.role);
         alert("Login successful!");
         
         // Navigate to the correct dashboard based on the role
-        if (response.data.role === 'farmer') {
-          navigate('/farmer-dashboard'); 
+        if (response.data.user.role === 'farmer') {
+          navigate('/farmer-dashboard');  // Correct path for farmer dashboard
+        } else if (response.data.user.role === 'buyer') {
+          navigate('/buyer-dashboard');   // Correct path for buyer dashboard
         } else {
-          navigate('/buyer-dashboard');
+          navigate('/');  // Default path if the role is neither
         }
       }
     } catch (error) {
