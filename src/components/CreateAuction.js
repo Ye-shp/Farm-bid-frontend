@@ -1,4 +1,5 @@
 // src/components/CreateAuction.js
+// Check how it works against the auction creation in farmers dashboard 
 import React, { useState } from 'react';
 import { createAuction } from '../Services/api';
 

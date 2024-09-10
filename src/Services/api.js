@@ -1,10 +1,14 @@
-// src/services/api.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api'; // Adjust as needed
+const API_URL = 'http://localhost:5000/api'; 
+
+const token = localStorage.getItem('token'); // Add token retrieval for authenticated routes
 
 const api = axios.create({
   baseURL: API_URL,
+  headers: {
+    Authorization: `Bearer ${token}`, // Include token in headers
+  },
 });
 
 // User registration
@@ -60,6 +64,17 @@ export const createAuction = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Error in creating auction:", error.response ? error.response.data : error.message);
+    throw error;
+  }
+};
+
+// Create a new product
+export const createProduct = async (data) => {
+  try {
+    const response = await api.post('/products', data);
+    return response.data;
+  } catch (error) {
+    console.error("Error in creating product:", error.response ? error.response.data : error.message);
     throw error;
   }
 };
