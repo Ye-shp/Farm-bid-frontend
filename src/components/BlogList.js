@@ -1,28 +1,50 @@
 // src/components/BlogList.js
-
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { getBlogPosts } from '../Services/blogs';
+import CreateBlogPost from './CreateBlogPost';
 
 const BlogList = () => {
-  const [posts, setPosts] = useState([]);
+  const [blogs, setBlogs] = useState([]);
+  const [showCreateForm, setShowCreateForm] = useState(false); // Toggle for create form
 
   useEffect(() => {
-    // Fetch blog posts from API or local data source
-    fetch('/api/blogs')
-      .then(response => response.json())
-      .then(data => setPosts(data));
+    const fetchBlogs = async () => {
+      try {
+        const response = await getBlogPosts();
+        setBlogs(response);
+      } catch (error) {
+        console.error('Error fetching blogs:', error);
+      }
+    };
+
+    fetchBlogs();
   }, []);
 
   return (
     <div>
-      <h1>Blog</h1>
-      <ul>
-        {posts.map(post => (
-          <li key={post.id}>
-            <Link to={`/blog/${post.id}`}>{post.title}</Link>
-          </li>
-        ))}
-      </ul>
+      <h2>Blog Posts</h2>
+
+      {/* Button to toggle create blog form */}
+      <button onClick={() => setShowCreateForm(!showCreateForm)}>
+        {showCreateForm ? 'Cancel' : 'Create Blog Post'}
+      </button>
+
+      {/* Conditionally render blog creation form */}
+      {showCreateForm && <CreateBlogPost />}
+
+      {/* Display list of blog posts */}
+      {blogs.length ? (
+        <ul>
+          {blogs.map(blog => (
+            <li key={blog._id}>
+              <h3>{blog.title}</h3>
+              <p>{blog.content}</p>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No blog posts available</p>
+      )}
     </div>
   );
 };

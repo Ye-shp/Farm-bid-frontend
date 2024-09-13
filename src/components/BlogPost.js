@@ -1,25 +1,31 @@
-// src/components/BlogPost.js
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { getBlogPost } from '../Services/blogs'; // Correct import from services
 
 const BlogPost = () => {
   const { id } = useParams();
-  const [post, setPost] = useState(null);
+  const [blog, setBlog] = useState(null);
 
   useEffect(() => {
-    // Fetch the individual blog post by ID from API or local data source
-    fetch(`/api/blogs/${id}`)
-      .then(response => response.json())
-      .then(data => setPost(data));
+    const fetchBlog = async () => {
+      try {
+        const fetchedBlog = await getBlogPost(id);
+        setBlog(fetchedBlog);
+      } catch (error) {
+        console.error("Error fetching blog post:", error);
+      }
+    };
+
+    fetchBlog();
   }, [id]);
 
-  if (!post) return <div>Loading...</div>;
+  if (!blog) return <p>Loading...</p>;
 
   return (
     <div>
-      <h1>{post.title}</h1>
-      <p>{post.content}</p>
+      <h2>{blog.title}</h2>
+      <p>{blog.content}</p>
+      <p>Posted by: {blog.authorRole}</p>
     </div>
   );
 };

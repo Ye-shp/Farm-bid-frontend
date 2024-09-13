@@ -1,16 +1,15 @@
-// src/components/Header.js
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Header.css';
 
 const Header = () => {
-  const userEmail = localStorage.getItem('userEmail'); // Get the user's email from localStorage
-  const userRole = localStorage.getItem('userRole'); // Get the user's role from localStorage
+  const userEmail = localStorage.getItem('userEmail');
+  const userRole = localStorage.getItem('userRole');
   const navigate = useNavigate();
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate('/login'); // Redirect to login after logout
+    navigate('/login');
   };
 
   return (
@@ -26,10 +25,11 @@ const Header = () => {
                 <li>Welcome, {userEmail}</li>
                 <li><Link to="/dashboard">Dashboard</Link></li>
                 {userRole === 'farmer' ? (
-                  <li><Link to="/farmer-products">Products</Link></li>  
+                  <li><Link to="/farmer-dashboard">My Products</Link></li>  // Change to correct farmer route
                 ) : (
-                  <li><Link to="/products">Products</Link></li>         
+                  <li><Link to="/products">Products</Link></li>
                 )}
+                <li><Link to="/blogs">Blog</Link></li>
                 <li><Link to="/" onClick={handleLogout}>Logout</Link></li>
               </>
             ) : (

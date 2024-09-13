@@ -1,43 +1,52 @@
-// src/components/CreateBlogPost.js
-
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import axios from 'axios'; // To make API requests
+import { createBlogPost } from '../Services/blogs'; 
+
 
 const CreateBlogPost = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const navigate = useNavigate();
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Post the new blog to the API or save locally
-    fetch('/api/blogs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content }),
-    })
-      .then(response => response.json())
-      .then(data => {
-        // Redirect to the blog list after successful post creation
-        navigate('/blog');
+    try {
+      const token = localStorage.getItem('token'); // Get the user's token
+      const response = await axios.post('http://localhost:5000/api/blogs', {
+        title,
+        content,
+      }, {
+        headers: { Authorization: `Bearer ${token}` } // Add token in the request
       });
+
+      alert('Blog post created successfully!');
+      setTitle(''); // Clear the form fields
+      setContent('');
+    } catch (error) {
+      setError('Error creating blog post');
+    }
   };
 
   return (
     <div>
-      <h1>Create New Blog Post</h1>
+      <h2>Create Blog Post</h2>
       <form onSubmit={handleSubmit}>
-        <div>
-          <label>Title</label>
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
-        </div>
-        <div>
-          <label>Content</label>
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} required />
-        </div>
-        <button type="submit">Create Post</button>
+        <input
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
+        <textarea
+          placeholder="Content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          required
+        />
+        <button type="submit">Submit</button>
       </form>
+      {error && <p>{error}</p>}
     </div>
   );
 };

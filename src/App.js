@@ -1,5 +1,4 @@
 // src/App.js
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Header from './components/Header';
@@ -8,24 +7,32 @@ import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import ProductList from './components/ProductList';
 import ProductDetails from './components/ProductDetails';
-import Dashboard from './components/Dashboard';
-import FarmerDashboard from './components/FarmerDashboard';  // Import Farmer Dashboard
+import FarmerDashboard from './components/FarmerDashboard';
+import BuyerDashboard from './components/BuyerDashboard';
+import BlogList from './components/BlogList'; // Blog listing
+import BlogPost from './components/BlogPost'; // Single blog post
+import CreateBlogPost from './components/CreateBlogPost'; // Create a new blog post
 
-const App = () => (
-  <Router>
-    <div>
-      <Header />
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/products" element={<ProductList />} />
-        <Route path="/product/:id" element={<ProductDetails />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/farmer-products" element={<FarmerDashboard />} />  {/* Farmer's product page */}
-      </Routes>
-    </div>
-  </Router>
-);
+const App = () => {
+  return (
+    <Router>
+      <div>
+        <Header />
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/products" element={<ProductList />} />
+          <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/farmer-dashboard" element={<FarmerDashboard />} />
+          <Route path="/buyer-dashboard" element={<BuyerDashboard />} />
+          <Route path="/blogs" element={<BlogList />} /> {/* Blog listing */}
+          <Route path="/blog/:id" element={<BlogPost />} /> {/* Single blog post */}
+          <Route path="/create-blog" element={<CreateBlogPost />} /> {/* Create a blog post */}
+        </Routes>
+      </div>
+    </Router>
+  );
+};
 
 export default App;

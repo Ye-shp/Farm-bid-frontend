@@ -80,3 +80,47 @@ export const createProduct = async (data) => {
 };
 
 export default api;
+
+// Get all blogs
+export const getBlogs = async () => {
+  try {
+    const response = await api.get('/blogs');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching blogs:', error);
+    throw error;
+  }
+};
+
+// Get a single blog post by ID
+export const getBlogById = async (id) => {
+  try {
+    const response = await api.get(`/blogs/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching blog post:', error);
+    throw error;
+  }
+};
+
+// Create a new blog post
+export const createBlog = async (data) => {
+  try {
+    const response = await api.post('/blogs', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating blog post:', error);
+    throw error;
+  }
+};
+
+// Post a comment on a blog
+export const postComment = async (blogId, commentData) => {
+  try {
+    const response = await api.post(`/blogs/${blogId}/comments`, commentData);
+    return response.data;
+  } catch (error) {
+    console.error('Error posting comment:', error);
+    throw error;
+  }
+};
