@@ -1,31 +1,21 @@
-/* src/components/Header.css */
 .header-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-  background-color: #333; /* You can customize the background color */
+  background-color: #4CAF50 !important; /* Add !important to override */
+  padding: 10px !important;
 }
 
-.logo a {
-  font-size: 24px;
-  font-weight: bold;
-  color: white;
-  text-decoration: none;
+.header-container {
+  background-color: #007bff; /* Blue header background */
+  padding: 10px;
 }
 
-.navigation nav ul {
-  list-style: none;
-  display: flex;
-  gap: 20px;
+.header-container a.navbar-brand {
+  color: rgb(16, 81, 20); /* Make the brand text white */
 }
 
-.navigation nav ul li a {
-  color: white;
-  font-size: 18px;
-  text-decoration: none;
+.header-container .navbar-nav .nav-link {
+  color: rgb(137, 22, 22); /* Make the nav links white */
 }
 
-.navigation nav ul li a:hover {
-  color: #ddd; /* Slightly different color on hover for better UX */
+.header-container .navbar-nav .nav-link:hover {
+  color: #ffcc00; /* Add hover effect, change to yellow */
 }
