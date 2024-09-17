@@ -2,13 +2,21 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api'; 
 
-const token = localStorage.getItem('token'); // Add token retrieval for authenticated routes
-
+// Create an axios instance
 const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    Authorization: `Bearer ${token}`, // Include token in headers
-  },
+});
+
+// Add a request interceptor to dynamically add the token to headers
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');  // Always retrieve the token dynamically
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => {
+  // Handle the error
+  return Promise.reject(error);
 });
 
 // User registration

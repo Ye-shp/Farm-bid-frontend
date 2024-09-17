@@ -5,7 +5,7 @@ import './FarmerDashboard.css';
 const FarmerDashboard = () => {
   const [products, setProducts] = useState([]);
   const [auctions, setAuctions] = useState([]);
-  const [newProduct, setNewProduct] = useState({ title: '', description: '' });
+  const [newProduct, setNewProduct] = useState({ title: '', description: '', image: null });
   const [auctionProductId, setAuctionProductId] = useState('');
   const [startingBid, setStartingBid] = useState('');
   const [newAuctionError, setNewAuctionError] = useState(null);
@@ -32,30 +32,31 @@ const FarmerDashboard = () => {
     fetchData();
   }, [token]);
 
-  // Handle product creation with added logging
+  // Handle product creation with image upload
   const handleCreateProduct = async (e) => {
     e.preventDefault();
 
-    // Log when the button is clicked
-    console.log('Create Product button clicked');
-
-    // Log the product details
-    console.log('New Product Details:', newProduct);
+    // Form data to handle image upload
+    const formData = new FormData();
+    formData.append('title', newProduct.title);
+    formData.append('description', newProduct.description);
+    if (newProduct.image) {
+      formData.append('image', newProduct.image); // Append image to the form
+    }
 
     try {
-      const response = await axios.post('/api/products', newProduct, {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await axios.post('/api/products', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
-      // Log the response from the server
-      console.log('Product created successfully:', response.data);
-
       setProducts([...products, response.data]); // Update product list
-      setNewProduct({ title: '', description: '' }); // Clear form fields
+      setNewProduct({ title: '', description: '', image: null }); // Reset form
     } catch (error) {
-      // Log any errors that occur
       console.error('Error creating product:', error);
-      alert('Error creating product. Please try again.'); // Show alert for error
+      alert('Error creating product. Please try again.');
     }
   };
 
@@ -70,8 +71,8 @@ const FarmerDashboard = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setAuctions([...auctions, response.data]);
-      setAuctionProductId('');
+      setAuctions([...auctions, response.data]); // Update auction list
+      setAuctionProductId(''); // Reset form fields
       setStartingBid('');
       setNewAuctionError(null);
     } catch (error) {
@@ -85,7 +86,10 @@ const FarmerDashboard = () => {
       <h2>My Products</h2>
       <ul>
         {products.map(product => (
-          <li key={product._id}>{product.title}</li>
+          <li key={product._id}>
+            {product.imageUrl && <img src={product.imageUrl} alt={product.title} width="100" />}
+            {product.title}
+          </li>
         ))}
       </ul>
 
@@ -104,6 +108,12 @@ const FarmerDashboard = () => {
           value={newProduct.description}
           onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
           placeholder="Description"
+          required
+        />
+        <input
+          type="file"
+          name="image"
+          onChange={(e) => setNewProduct({ ...newProduct, image: e.target.files[0] })}
           required
         />
         <button type="submit">Create Product</button>
@@ -133,13 +143,17 @@ const FarmerDashboard = () => {
         <button type="submit">Create Auction</button>
         {newAuctionError && <p className="error">{newAuctionError}</p>}
       </form>
+
+      <h2>My Auctions</h2>
+      <ul>
+        {auctions.map(auction => (
+          <li key={auction._id}>
+            Product: {auction.product.title} | Starting Bid: {auction.startingBid}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
 
 export default FarmerDashboard;
-
-
-
-
-

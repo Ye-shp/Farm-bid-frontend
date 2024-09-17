@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios'; // To make API requests
-import { createBlogPost } from '../Services/blogs'; 
+import axios from 'axios';
 
-
-const CreateBlogPost = () => {
+const CreateBlogPost = ({ onBlogCreated }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [error, setError] = useState(null);
@@ -11,17 +9,18 @@ const CreateBlogPost = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token'); // Get the user's token
-      const response = await axios.post('http://localhost:5000/api/blogs', {
+      const token = localStorage.getItem('token');
+      const response = await axios.post('/api/blogs', {
         title,
         content,
       }, {
-        headers: { Authorization: `Bearer ${token}` } // Add token in the request
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       alert('Blog post created successfully!');
-      setTitle(''); // Clear the form fields
+      setTitle(''); // Clear form fields
       setContent('');
+      onBlogCreated(response.data); // Callback to refresh the blog list
     } catch (error) {
       setError('Error creating blog post');
     }

@@ -1,41 +1,44 @@
-// src/components/BlogList.js
 import React, { useState, useEffect } from 'react';
 import { getBlogPosts } from '../Services/blogs';
 import CreateBlogPost from './CreateBlogPost';
 
 const BlogList = () => {
   const [blogs, setBlogs] = useState([]);
-  const [showCreateForm, setShowCreateForm] = useState(false); // Toggle for create form
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   useEffect(() => {
-    const fetchBlogs = async () => {
-      try {
-        const response = await getBlogPosts();
-        setBlogs(response);
-      } catch (error) {
-        console.error('Error fetching blogs:', error);
-      }
-    };
-
     fetchBlogs();
   }, []);
+
+  const fetchBlogs = async () => {
+    try {
+      const response = await getBlogPosts();
+      setBlogs(response);
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+    }
+  };
+
+  // Handle refreshing the blog list after a new post is created
+  const handleBlogCreated = (newBlog) => {
+    setBlogs((prevBlogs) => [...prevBlogs, newBlog]);
+    setShowCreateForm(false); // Hide the form after creation
+  };
 
   return (
     <div>
       <h2>Blog Posts</h2>
 
-      {/* Button to toggle create blog form */}
+      {/* Toggle for blog post creation form */}
       <button onClick={() => setShowCreateForm(!showCreateForm)}>
         {showCreateForm ? 'Cancel' : 'Create Blog Post'}
       </button>
 
-      {/* Conditionally render blog creation form */}
-      {showCreateForm && <CreateBlogPost />}
+      {showCreateForm && <CreateBlogPost onBlogCreated={handleBlogCreated} />}
 
-      {/* Display list of blog posts */}
       {blogs.length ? (
         <ul>
-          {blogs.map(blog => (
+          {blogs.map((blog) => (
             <li key={blog._id}>
               <h3>{blog.title}</h3>
               <p>{blog.content}</p>

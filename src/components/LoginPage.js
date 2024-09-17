@@ -15,6 +15,9 @@ const LoginPage = () => {
     try {
       const response = await login({ email, password });
       if (response.status === 200) {
+        // Store the JWT token in localStorage
+        localStorage.setItem('token', response.data.token);
+
         // Store the user's email and role in localStorage
         localStorage.setItem('userEmail', response.data.user.email);
         localStorage.setItem('userRole', response.data.user.role);
