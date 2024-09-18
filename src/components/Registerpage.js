@@ -1,20 +1,42 @@
 // src/components/RegisterPage.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { register } from '../Services/api';
+import axios from 'axios';
 import './RegisterPage.css';
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('buyer'); // Default role
+  const [location, setLocation] = useState({ latitude: '', longitude: '' });
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  // Use ipinfo.io API to get user's location based on their IP
+  useEffect(() => {
+    const fetchLocation = async () => {
+      try {
+        // Replace <YOUR_API_KEY> with your ipinfo.io API key
+        const response = await axios.get('https://ipinfo.io/json?token=<YOUR_API_KEY>');
+        const loc = response.data.loc.split(','); // loc is returned as "latitude,longitude"
+        setLocation({
+          latitude: loc[0],
+          longitude: loc[1]
+        });
+      } catch (error) {
+        console.error("Error fetching location:", error);
+        setError("Unable to fetch location from IP address.");
+      }
+    };
+
+    fetchLocation();
+  }, []);
 
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const response = await register({ email, password, role });
+      const response = await register({ email, password, role, location });
       if (response.status === 201) {
         alert("Registration successful!");
         setEmail('');  // Clear the email field
@@ -55,6 +77,9 @@ const RegisterPage = () => {
           <option value="buyer">Buyer</option>
           <option value="farmer">Farmer</option>
         </select>
+        {location.latitude && location.longitude && (
+          <p>Detected location: {location.latitude}, {location.longitude}</p>
+        )}
         <button type="submit">Register</button>
         {error && <p className="error">{error}</p>} {/* Display error message */}
       </form>
