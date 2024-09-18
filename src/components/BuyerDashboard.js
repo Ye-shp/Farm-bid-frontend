@@ -1,18 +1,31 @@
-//Buyer Dashboard
+// src/components/BuyerDashboard.js
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';  
-import { getNearbyFarmers } from '../Services/api'; // New API to fetch nearby farmers
+import axios from 'axios';
 import './BuyerDashboard.css';
 
 const BuyerDashboard = () => {
-  const [farmers, setFarmers] = useState([]);
+  const [auctions, setAuctions] = useState([]);
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
-  const [error, setError] = useState(null);
 
+  // Fetch available auctions
+  useEffect(() => {
+    const fetchAuctions = async () => {
+      try {
+        const response = await axios.get('/api/auctions');
+        setAuctions(response.data);
+      } catch (error) {
+        console.error('Error fetching auctions:', error);
+      }
+    };
+
+    fetchAuctions();
+  }, []);
+
+  // Fetch buyer's location (using ipinfo.io)
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3');
+        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3'); // Replace with your actual token
         const loc = response.data.loc.split(',');
         setLocation({
           latitude: loc[0],
@@ -20,38 +33,20 @@ const BuyerDashboard = () => {
         });
       } catch (error) {
         console.error('Error fetching location:', error);
-        setError('Unable to fetch location');
       }
     };
 
-    const fetchNearbyFarmers = async () => {
-      try {
-        const response = await getNearbyFarmers(location); // Fetch nearby farmers
-        setFarmers(response.data);
-      } catch (error) {
-        console.error('Error fetching farmers:', error);
-        setError('Unable to fetch nearby farmers');
-      }
-    };
-
-    fetchLocation().then(fetchNearbyFarmers);
-  }, [location]);
+    fetchLocation();
+  }, []);
 
   return (
     <div className="buyer-dashboard">
-      <h2>Farmers Near You</h2>
-      {error && <p className="error">{error}</p>}
-      {farmers.length > 0 ? (
-        <ul>
-          {farmers.map((farmer) => (
-            <li key={farmer.id}>
-              {farmer.name} - {farmer.location.latitude}, {farmer.location.longitude}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No farmers found near your location.</p>
-      )}
+      <h2>Available Auctions</h2>
+      <ul>
+        {auctions.map(auction => (
+          <li key={auction.id}>{auction.title}</li>
+        ))}
+      </ul>
     </div>
   );
 };
