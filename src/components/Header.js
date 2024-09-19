@@ -5,12 +5,12 @@ import './Header.css';
 
 const Header = () => {
   const userEmail = localStorage.getItem('userEmail');
-  const userRole = localStorage.getItem('userRole');
+  const userRole = localStorage.getItem('userRole'); // To differentiate between farmer and buyer
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
+    localStorage.clear(); // Clear localStorage on logout
+    navigate('/login');   // Redirect to login page
   };
 
   return (
@@ -29,23 +29,24 @@ const Header = () => {
                 <li className="nav-item">
                   <span className="nav-link">Welcome, {userEmail}</span>
                 </li>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/dashboard">Dashboard</Link>
-                </li>
-                {userRole === 'farmer' ? (
+
+                {/* Dashboard link based on user role */}
+                {userRole === 'farmer' && (
                   <li className="nav-item">
-                    <Link className="nav-link" to="/farmer-dashboard">My Products</Link>
-                  </li>
-                ) : (
-                  <li className="nav-item">
-                    <Link className="nav-link" to="/products">Products</Link>
+                    <Link className="nav-link" to="/farmer-dashboard">Farmer Dashboard</Link>
                   </li>
                 )}
+                {userRole === 'buyer' && (
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/buyer-dashboard">Buyer Dashboard</Link>
+                  </li>
+                )}
+
                 <li className="nav-item">
                   <Link className="nav-link" to="/blogs">Blog</Link>
                 </li>
 
-                {/* Dropdown for About Us, Feature Request, and Logout */}
+                {/* More dropdown menu */}
                 <li className="nav-item dropdown">
                   <a className="nav-link dropdown-toggle" href="/" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     More

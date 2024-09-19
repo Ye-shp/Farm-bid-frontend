@@ -11,8 +11,6 @@ import ProductList from './components/ProductList';
 import ProductDetails from './components/ProductDetails';
 import FarmerDashboard from './components/FarmerDashboard';
 import BuyerDashboard from './components/BuyerDashboard';
-import FeatureRequest from './components/FeatureRequest';
-import AboutUs from './components/AboutUs';
 import BlogList from './components/BlogList'; // Blog listing
 import BlogPost from './components/BlogPost'; // Single blog post
 import CreateBlogPost from './components/CreateBlogPost'; // Create a new blog post
