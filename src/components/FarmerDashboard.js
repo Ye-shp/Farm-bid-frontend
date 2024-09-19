@@ -1,30 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import CreateAuction from './CreateAuction'; // Import the dedicated auction component
 import './FarmerDashboard.css';
 
 const FarmerDashboard = () => {
   const [products, setProducts] = useState([]);
-  const [auctions, setAuctions] = useState([]);
-  const [newProduct, setNewProduct] = useState({ title: '', description: '', image: null });
-  const [auctionProductId, setAuctionProductId] = useState('');
-  const [startingBid, setStartingBid] = useState('');
-  const [newAuctionError, setNewAuctionError] = useState(null);
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
+  const [newProduct, setNewProduct] = useState({ title: '', description: '', image: null });
   const token = localStorage.getItem('token');
 
-  // Fetch farmer's products and auctions
+  // Fetch farmer's products
   useEffect(() => {
     const fetchData = async () => {
       try {
         const productResponse = await axios.get('http://localhost:5000/api/products/farmer-products', {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setProducts(productResponse.data);  
-
-        const auctionResponse = await axios.get('/api/auctions/farmer-auctions', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setAuctions(auctionResponse.data);
+        setProducts(productResponse.data);
       } catch (error) {
         console.error('Error fetching farmer data:', error);
       }
@@ -79,27 +71,6 @@ const FarmerDashboard = () => {
     }
   };
 
-  // Handle auction creation
-  const handleCreateAuction = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post('https://localhost:5000/api/auctions/create', {
-        productId: auctionProductId,
-        startingBid,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setAuctions([...auctions, response.data]); // Update auction list
-      setAuctionProductId(''); // Reset form fields
-      setStartingBid('');
-      setNewAuctionError(null);
-    } catch (error) {
-      console.error('Error creating auction:', error);
-      setNewAuctionError('Error creating auction. Please try again.');
-    }
-  };
-
   return (
     <div className="farmer-dashboard">
       <h2>My Products</h2>
@@ -138,39 +109,8 @@ const FarmerDashboard = () => {
         <button type="submit">Create Product</button>
       </form>
 
-      <h2>Create New Auction</h2>
-      <form onSubmit={handleCreateAuction}>
-        <select
-          value={auctionProductId}
-          onChange={(e) => setAuctionProductId(e.target.value)}
-          required
-        >
-          <option value="">Select a Product</option>
-          {products.map(product => (
-            <option key={product._id} value={product._id}>
-              {product.title}
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          value={startingBid}
-          onChange={(e) => setStartingBid(e.target.value)}
-          placeholder="Starting Bid"
-          required
-        />
-        <button type="submit">Create Auction</button>
-        {newAuctionError && <p className="error">{newAuctionError}</p>}
-      </form>
-
-      <h2>My Auctions</h2>
-      <ul>
-        {auctions.map(auction => (
-          <li key={auction._id}>
-            Product: {auction.product.title} | Starting Bid: {auction.startingBid}
-          </li>
-        ))}
-      </ul>
+      {/* Include the dedicated auction creation component */}
+      <CreateAuction products={products} />
     </div>
   );
 };

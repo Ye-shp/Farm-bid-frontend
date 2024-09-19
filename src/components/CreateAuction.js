@@ -1,52 +1,77 @@
-// src/components/CreateAuction.js
-// Check how it works against the auction creation in farmers dashboard 
 import React, { useState } from 'react';
-import { createAuction } from '../Services/api';
+import axios from 'axios';
 
-const CreateAuction = () => {
-  const [productId, setProductId] = useState('');
-  const [startingPrice, setStartingPrice] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [message, setMessage] = useState('');
+const CreateAuction = ({ products }) => {
+  const [auctionProductId, setAuctionProductId] = useState('');
+  const [startingBid, setStartingBid] = useState('');
+  const [endTime, setEndTime] = useState(''); // New state for auction end time
+  const [newAuctionError, setNewAuctionError] = useState(null);
+  const token = localStorage.getItem('token');  // Ensure we get the token
 
+  // Handle auction creation
   const handleCreateAuction = async (e) => {
     e.preventDefault();
+
     try {
-      const response = await createAuction({ productId, startingPrice, endTime });
-      setMessage('Auction created successfully!');
+      const response = await axios.post(
+        'http://localhost:5000/api/auctions/create',
+        {
+          productId: auctionProductId,
+          startingBid,
+          endTime,  // Pass the end time to the back-end
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,  // Ensure the token is passed in the header
+          },
+        }
+      );
+
+      // Reset form fields and error
+      setAuctionProductId('');
+      setStartingBid('');
+      setEndTime('');  // Reset end time
+      setNewAuctionError(null);
+      alert('Auction created successfully!');
     } catch (error) {
-      setMessage('Error creating auction');
+      console.error('Error creating auction:', error);
+      setNewAuctionError('Error creating auction. Please try again.');
     }
   };
 
   return (
     <div>
-      <h2>Create Auction</h2>
+      <h2>Create New Auction</h2>
       <form onSubmit={handleCreateAuction}>
-        <input
-          type="text"
-          placeholder="Product ID"
-          value={productId}
-          onChange={(e) => setProductId(e.target.value)}
+        <select
+          value={auctionProductId}
+          onChange={(e) => setAuctionProductId(e.target.value)}
           required
-        />
+        >
+          <option value="">Select a Product</option>
+          {products.map(product => (
+            <option key={product._id} value={product._id}>
+              {product.title}
+            </option>
+          ))}
+        </select>
         <input
           type="number"
-          placeholder="Starting Price"
-          value={startingPrice}
-          onChange={(e) => setStartingPrice(e.target.value)}
+          value={startingBid}
+          onChange={(e) => setStartingBid(e.target.value)}
+          placeholder="Starting Bid"
           required
         />
         <input
-          type="datetime-local"
-          placeholder="End Time"
+          type="datetime-local"  // New input for end time
           value={endTime}
           onChange={(e) => setEndTime(e.target.value)}
+          placeholder="End Time"
           required
         />
         <button type="submit">Create Auction</button>
+        {newAuctionError && <p className="error">{newAuctionError}</p>}
       </form>
-      {message && <p>{message}</p>}
     </div>
   );
 };

@@ -17,8 +17,7 @@ const RegisterPage = () => {
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        // Replace <YOUR_API_KEY> with your ipinfo.io API key
-        const response = await axios.get('https://ipinfo.io/json?token=<YOUR_API_KEY>');
+        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3');
         const loc = response.data.loc.split(','); // loc is returned as "latitude,longitude"
         setLocation({
           latitude: loc[0],
@@ -77,10 +76,7 @@ const RegisterPage = () => {
           <option value="buyer">Buyer</option>
           <option value="farmer">Farmer</option>
         </select>
-        {location.latitude && location.longitude && (
-          <p>Detected location: {location.latitude}, {location.longitude}</p>
-        )}
-        <button type="submit">Register</button>
+              <button type="submit">Register</button>
         {error && <p className="error">{error}</p>} {/* Display error message */}
       </form>
     </div>
