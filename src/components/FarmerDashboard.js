@@ -16,10 +16,10 @@ const FarmerDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const productResponse = await axios.get('/api/products/farmer-products', {
+        const productResponse = await axios.get('http://localhost:5000/api/products/farmer-products', {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setProducts(productResponse.data);
+        setProducts(productResponse.data);  
 
         const auctionResponse = await axios.get('/api/auctions/farmer-auctions', {
           headers: { Authorization: `Bearer ${token}` },
@@ -83,7 +83,7 @@ const FarmerDashboard = () => {
   const handleCreateAuction = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/auctions/create', {
+      const response = await axios.post('https://localhost:5000/api/auctions/create', {
         productId: auctionProductId,
         startingBid,
       }, {
