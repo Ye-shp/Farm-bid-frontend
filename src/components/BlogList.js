@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getBlogPosts } from '../Services/blogs';
-import CreateBlogPost from 'http://localhost:5000/blogs/CreateBlogPost';
+import { getBlogPosts } from '../Services/blogs';  // Ensure correct service path
+import CreateBlogPost from './CreateBlogPost';      // Correctly import local component
 
 const BlogList = () => {
   const [blogs, setBlogs] = useState([]);

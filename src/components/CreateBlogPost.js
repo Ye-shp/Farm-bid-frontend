@@ -10,7 +10,7 @@ const CreateBlogPost = ({ onBlogCreated }) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:5000/api/blogs', {
+      const response = await axios.post(`${window.location.origin}/api/blogs`, {
         title,
         content,
       }, {
@@ -20,7 +20,9 @@ const CreateBlogPost = ({ onBlogCreated }) => {
       alert('Blog post created successfully!');
       setTitle(''); // Clear form fields
       setContent('');
-      onBlogCreated(response.data); // Callback to refresh the blog list
+      if (onBlogCreated) {
+        onBlogCreated(response.data); // Callback to refresh the blog list
+      }
     } catch (error) {
       setError('Error creating blog post');
     }

@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/blogs';
+const API_URL = process.env.REACT_APP_API_URL || '/api';
 
 // Fetch all blogs
 export const getBlogPosts = async () => {
