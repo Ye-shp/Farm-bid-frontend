@@ -1,10 +1,11 @@
+// src/components/LoginPage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../Services/api';  // Assuming you have the login function in Services/api
 import axios from 'axios';
 import './LoginPage.css';
 
-const LoginPage = () => {
+const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -15,7 +16,7 @@ const LoginPage = () => {
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3'); // Replace with your actual token
+        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3'); 
         const loc = response.data.loc.split(',');
         setLocation({
           latitude: loc[0],
@@ -54,6 +55,10 @@ const LoginPage = () => {
         localStorage.setItem('longitude', location.longitude);  // Store longitude
 
         console.log('Login successful:', { userRole, token, location });  // Debugging log
+
+        // Set the logged-in state in App.js
+        setIsLoggedIn(true);
+        setUserRole(userRole);
 
         // Redirect based on userRole
         if (userRole === 'farmer') {

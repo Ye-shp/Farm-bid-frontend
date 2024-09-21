@@ -10,7 +10,7 @@ const CreateBlogPost = ({ onBlogCreated }) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('/api/blogs', {
+      const response = await axios.post('http://localhost:5000/api/blogs', {
         title,
         content,
       }, {

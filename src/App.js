@@ -1,5 +1,5 @@
 // src/App.js
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';  // Import Bootstrap CSS
 import 'bootstrap/dist/js/bootstrap.bundle.min'; // Import Bootstrap JS bundle (includes Popper.js)
@@ -16,13 +16,26 @@ import BlogPost from './components/BlogPost'; // Single blog post
 import CreateBlogPost from './components/CreateBlogPost'; // Create a new blog post
 
 const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+
+  // Manage login state using localStorage
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    if (token && role) {
+      setIsLoggedIn(true);
+      setUserRole(role);
+    }
+  }, []);
+
   return (
     <Router>
       <div>
-        <Header />
+        <Header isLoggedIn={isLoggedIn} userRole={userRole} />
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/login" element={<LoginPage setIsLoggedIn={setIsLoggedIn} setUserRole={setUserRole} />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/products" element={<ProductList />} />
           <Route path="/product/:id" element={<ProductDetails />} />

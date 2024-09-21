@@ -1,77 +1,92 @@
+// src/components/Header.js
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import './Header.css';
+import './Header.css'; // Assuming you have some styles
 
 const Header = () => {
-  const userEmail = localStorage.getItem('userEmail');
-  const userRole = localStorage.getItem('userRole'); // To differentiate between farmer and buyer
   const navigate = useNavigate();
+  const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('role'); // Get user role from localStorage
 
   const handleLogout = () => {
-    localStorage.clear(); // Clear localStorage on logout
-    navigate('/login');   // Redirect to login page
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    navigate('/'); // Redirect to home page after logout
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-light">
-      <div className="container-fluid">
-        <Link className="navbar-brand" to="/">Farm Bid</Link>
-
-        <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <header className="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div className="container">
+        <Link to="/" className="navbar-brand">
+          Farm-Bid
+        </Link>
+        <button
+          className="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
           <span className="navbar-toggler-icon"></span>
         </button>
-
         <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav ms-auto">
-            {userEmail ? (
+          <ul className="navbar-nav me-auto">
+            <li className="nav-item">
+              <Link to="/blogs" className="nav-link">Blogs</Link> {/* Accessible to everyone */}
+            </li>
+            <li className="nav-item">
+              <Link to="/products" className="nav-link">Products</Link> {/* Accessible to everyone */}
+            </li>
+
+            {/* Show these options for logged-in farmers */}
+            {token && userRole === 'farmer' && (
               <>
                 <li className="nav-item">
-                  <span className="nav-link">Welcome, {userEmail}</span>
+                  <Link to="/farmer-dashboard" className="nav-link">Farmer Dashboard</Link>
                 </li>
-
-                {/* Dashboard link based on user role */}
-                {userRole === 'farmer' && (
-                  <li className="nav-item">
-                    <Link className="nav-link" to="/farmer-dashboard">Farmer Dashboard</Link>
-                  </li>
-                )}
-                {userRole === 'buyer' && (
-                  <li className="nav-item">
-                    <Link className="nav-link" to="/buyer-dashboard">Buyer Dashboard</Link>
-                  </li>
-                )}
-
                 <li className="nav-item">
-                  <Link className="nav-link" to="/blogs">Blog</Link>
-                </li>
-
-                {/* More dropdown menu */}
-                <li className="nav-item dropdown">
-                  <a className="nav-link dropdown-toggle" href="/" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    More
-                  </a>
-                  <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                    <li><Link className="dropdown-item" to="/AboutUs">About Us</Link></li>
-                    <li><Link className="dropdown-item" to="/FeatureRequest">Feature Request</Link></li>
-                    <li><Link className="dropdown-item" to="/" onClick={handleLogout}>Logout</Link></li>
-                  </ul>
+                  <Link to="/auctions" className="nav-link">Auctions</Link>
                 </li>
               </>
-            ) : (
+            )}
+
+            {/* Show these options for logged-in buyers */}
+            {token && userRole === 'buyer' && (
               <>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/login">Login</Link>
+                  <Link to="/buyer-dashboard" className="nav-link">Buyer Dashboard</Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/register">Register</Link>
+                  <Link to="/auctions" className="nav-link">Auctions</Link>
                 </li>
               </>
             )}
           </ul>
+
+          <ul className="navbar-nav ml-auto">
+            {/* Show login and register for not logged-in users */}
+            {!token ? (
+              <>
+                <li className="nav-item">
+                  <Link to="/login" className="nav-link">Login</Link>
+                </li>
+                <li className="nav-item">
+                  <Link to="/register" className="nav-link">Register</Link>
+                </li>
+              </>
+            ) : (
+              <li className="nav-item">
+                <button onClick={handleLogout} className="nav-link btn btn-link text-white">
+                  Logout
+                </button>
+              </li>
+            )}
+          </ul>
         </div>
       </div>
-    </nav>
+    </header>
   );
 };
 

@@ -1,21 +1,19 @@
-.header-container {
-  background-color: #4CAF50 !important; /* Add !important to override */
-  padding: 10px !important;
+/* src/components/Header.css */
+.navbar {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.header-container {
-  background-color: #007bff; /* Blue header background */
-  padding: 10px;
+.navbar-nav .nav-link {
+  color: white !important;
+  font-weight: 500;
+  padding: 8px 16px;
 }
 
-.header-container a.navbar-brand {
-  color: rgb(16, 81, 20); /* Make the brand text white */
+.navbar-brand {
+  font-weight: 700;
+  color: #fff !important;
 }
 
-.header-container .navbar-nav .nav-link {
-  color: rgb(137, 22, 22); /* Make the nav links white */
-}
-
-.header-container .navbar-nav .nav-link:hover {
-  color: #ffcc00; /* Add hover effect, change to yellow */
+.navbar-toggler {
+  border-color: #fff;
 }
