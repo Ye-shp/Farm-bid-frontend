@@ -78,7 +78,7 @@ const FarmerDashboard = () => {
         {products.map(product => (
           <li key={product._id}>
             {product.imageUrl && <img src={product.imageUrl} width="100" />}    
-            {product.title}    
+           <h4>{product.title}</h4>   
             {product.description}
           </li>
         ))}

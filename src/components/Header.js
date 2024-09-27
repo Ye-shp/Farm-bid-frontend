@@ -47,7 +47,7 @@ const Header = () => {
                   <Link to="/farmer-dashboard" className="nav-link">Farmer Dashboard</Link>
                 </li>
                 <li className="nav-item">
-                  <Link to="/auctions" className="nav-link">Auctions</Link>
+                  <Link to="/farmer-auctions" className="nav-link">Auctions</Link>
                 </li>
               </>
             )}

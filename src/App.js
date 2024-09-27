@@ -14,6 +14,7 @@ import BuyerDashboard from './components/BuyerDashboard';
 import BlogList from './components/BlogList'; // Blog listing
 import BlogPost from './components/BlogPost'; // Single blog post
 import CreateBlogPost from './components/CreateBlogPost'; // Create a new blog post
+import FarmerAuctions from './components/FarmerAuctions';
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -44,6 +45,7 @@ const App = () => {
           <Route path="/blogs" element={<BlogList />} /> {/* Blog listing */}
           <Route path="/blog/:id" element={<BlogPost />} /> {/* Single blog post */}
           <Route path="/create-blog" element={<CreateBlogPost />} /> {/* Create a blog post */}
+          <Route path="/farmer-auctions" element={<FarmerAuctions />} />
         </Routes>
       </div>
     </Router>
