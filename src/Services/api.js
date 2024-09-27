@@ -21,6 +21,6 @@ export const getNearbyBuyers = (location) => {
 export default {
   register,
   login,
-  getNearbyFarmers,
-  getNearbyBuyers,
+ // getNearbyFarmers, for future use 
+ // getNearbyBuyers, for future use
 };
