@@ -91,7 +91,6 @@ const BuyerDashboard = () => {
       </ul>
 
       {/* Existing functionality */}
-      <h2>My Favorite Products</h2>
       {/* Assume there is some logic here for showing the buyer's favorite products */}
       <ul>
         {/* Favorite product list logic */}

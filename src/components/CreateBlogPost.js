@@ -10,18 +10,20 @@ const CreateBlogPost = ({ onBlogCreated }) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${window.location.origin}/api/blogs`, {
+      const creationDate = new Date().toISOString(); // Capture the current date in ISO format
+      const response = await axios.post('http://localhost:5000/api/blogs', {
         title,
         content,
+        creationDate, // Pass the creation date to the backend
       }, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       alert('Blog post created successfully!');
-      setTitle(''); // Clear form fields
+      setTitle('');
       setContent('');
       if (onBlogCreated) {
-        onBlogCreated(response.data); // Callback to refresh the blog list
+        onBlogCreated(response.data);
       }
     } catch (error) {
       setError('Error creating blog post');

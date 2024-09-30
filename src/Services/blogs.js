@@ -7,7 +7,7 @@ const API_URL = process.env.REACT_APP_API_URL || '/api';
 // Fetch all blogs
 export const getBlogPosts = async () => {
   try {
-    const response = await axios.get(API_URL);
+    const response = await axios.get(`${API_URL}/blogs`);
     return response.data;
   } catch (error) {
     console.error('Error fetching blogs:', error);
@@ -29,7 +29,7 @@ export const getBlogPost = async (id) => {
 // Create a new blog post
 export const createBlogPost = async (data) => {
   try {
-    const response = await axios.post(API_URL, data);
+    const response = await axios.post(`${API_URL}/blogs`, data);
     return response.data;
   } catch (error) {
     console.error('Error creating blog post:', error);
