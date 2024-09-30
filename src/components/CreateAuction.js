@@ -63,7 +63,7 @@ const CreateAuction = ({ products }) => {
           required
         />
         <input
-          type="datetime-local"  // New input for end time
+          type="datetime-local" 
           value={endTime}
           onChange={(e) => setEndTime(e.target.value)}
           placeholder="End Time"

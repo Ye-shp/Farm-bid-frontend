@@ -47,7 +47,7 @@ const Header = () => {
                   <Link to="/farmer-dashboard" className="nav-link">Farmer Dashboard</Link>
                 </li>
                 <li className="nav-item">
-                  <Link to="/farmer-auctions" className="nav-link">Auctions</Link>
+                  <Link to="/farmer-auctions" className="nav-link">My Auctions</Link>
                 </li>
               </>
             )}
@@ -57,9 +57,6 @@ const Header = () => {
               <>
                 <li className="nav-item">
                   <Link to="/buyer-dashboard" className="nav-link">Buyer Dashboard</Link>
-                </li>
-                <li className="nav-item">
-                  <Link to="/auctions" className="nav-link">Auctions</Link>
                 </li>
               </>
             )}
