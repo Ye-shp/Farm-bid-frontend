@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { getBlogPosts } from '../Services/blogs';
 import { Link } from 'react-router-dom';
-import { getBlogPosts} from '../Services/blogs'; // Correct import from services
 
 const BlogList = () => {
   const [blogs, setBlogs] = useState([]);
@@ -8,28 +8,27 @@ const BlogList = () => {
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
-        const fetchedBlogs = await getBlogPosts();
-        setBlogs(fetchedBlogs);
+        const response = await getBlogPosts();
+        setBlogs(response.data);
       } catch (error) {
         console.error('Error fetching blogs:', error);
       }
     };
-
     fetchBlogs();
   }, []);
 
   return (
     <div>
-      <h2>Blogs</h2>
-      <ul>
-        {blogs.map(blog => (
-          <li key={blog._id}>
-            <Link to={`/blog/${blog._id}`}>
-              {blog.title} - Posted by {blog.authorRole}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <h2>Blog Posts</h2>
+      {blogs.map((blog) => (
+        <div key={blog._id}>
+          <h3>
+            <Link to={`/blogs/${blog._id}`}>{blog.title}</Link>
+          </h3>
+          <p>Posted by <Link to={`/user/${blog.user._id}`}>{blog.user.email}</Link></p>
+          <p>{blog.content}</p>
+        </div>
+      ))}
     </div>
   );
 };

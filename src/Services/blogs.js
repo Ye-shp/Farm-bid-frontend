@@ -1,38 +1,15 @@
-// src/services/blogs.js
-
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || '/api';
+const API_URL = 'http://localhost:5000/api/blogs'; // Adjust if needed
 
-// Fetch all blogs
-export const getBlogPosts = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/blogs`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching blogs:', error);
-    throw error;
-  }
-};
+// Fetch all blog posts
+export const getBlogPosts = () => axios.get(API_URL);
 
-// Fetch a single blog by ID
-export const getBlogPost = async (id) => {
-  try {
-    const response = await axios.get(`${API_URL}/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching blog:', error);
-    throw error;
-  }
-};
+// Fetch a single blog post by ID
+export const getBlogPost = (id) => axios.get(`${API_URL}/${id}`);
 
 // Create a new blog post
-export const createBlogPost = async (data) => {
-  try {
-    const response = await axios.post(`${API_URL}/blogs`, data);
-    return response.data;
-  } catch (error) {
-    console.error('Error creating blog post:', error);
-    throw error;
-  }
-};
+export const createBlogPost = (data) => axios.post(`${API_URL}/create`, data);
+
+// Add a comment to a blog post
+export const addComment = (id, data) => axios.post(`${API_URL}/${id}/comment`, data);

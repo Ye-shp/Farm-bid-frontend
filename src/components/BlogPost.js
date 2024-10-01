@@ -1,37 +1,33 @@
 import React, { useEffect, useState } from 'react';
+import { getBlogPost, addComment } from '../Services/blogs';
 import { useParams } from 'react-router-dom';
-import { getBlogPost } from '../Services/blogs'; // Correct import from services
-import axios from 'axios';
 
 const BlogPost = () => {
   const { id } = useParams();
   const [blog, setBlog] = useState(null);
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState('');
+  const [comment, setComment] = useState('');
 
   useEffect(() => {
     const fetchBlog = async () => {
       try {
-        const fetchedBlog = await getBlogPost(id);
-        setBlog(fetchedBlog);
-        setComments(fetchedBlog.comments || []); // Load existing comments
+        const response = await getBlogPost(id);
+        setBlog(response.data);
       } catch (error) {
-        console.error("Error fetching blog post:", error);
+        console.error('Error fetching blog:', error);
       }
     };
-
     fetchBlog();
   }, [id]);
 
-  const handleAddComment = async () => {
-    const token = localStorage.getItem('token');
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
     try {
-      const response = await axios.post(`http://localhost:5000/api/blogs/${id}/comments`, { content: newComment }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setComments([...comments, response.data]); // Add the new comment to the list
-      setNewComment(''); // Clear input field
+      const response = await addComment(id, { content: comment });
+      setBlog((prevBlog) => ({
+        ...prevBlog,
+        comments: [...prevBlog.comments, response.data],
+      }));
+      setComment('');
     } catch (error) {
       console.error('Error adding comment:', error);
     }
@@ -42,26 +38,25 @@ const BlogPost = () => {
   return (
     <div>
       <h2>{blog.title}</h2>
+      <p>Posted by {blog.user.email}</p>
       <p>{blog.content}</p>
-      <p>Posted by: {blog.authorRole}</p>
 
       <h3>Comments</h3>
-      {comments.length > 0 ? (
-        <ul>
-          {comments.map((comment, index) => (
-            <li key={index}>{comment.content}</li>
-          ))}
-        </ul>
-      ) : (
-        <p>No comments yet.</p>
-      )}
+      {blog.comments.map((comment, index) => (
+        <div key={index}>
+          <p>{comment.user.email}: {comment.content}</p>
+        </div>
+      ))}
 
-      <textarea
-        value={newComment}
-        onChange={(e) => setNewComment(e.target.value)}
-        placeholder="Add a comment"
-      />
-      <button onClick={handleAddComment}>Post Comment</button>
+      <form onSubmit={handleCommentSubmit}>
+        <textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Add a comment"
+          required
+        />
+        <button type="submit">Submit</button>
+      </form>
     </div>
   );
 };

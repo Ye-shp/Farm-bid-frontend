@@ -1,55 +1,41 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { createBlogPost } from '../Services/blogs';
+import { useNavigate } from 'react-router-dom';
 
-const CreateBlogPost = ({ onBlogCreated }) => {
+const CreateBlogPost = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      const creationDate = new Date().toISOString(); // Capture the current date in ISO format
-      const response = await axios.post('http://localhost:5000/api/blogs', {
-        title,
-        content,
-        creationDate, // Pass the creation date to the backend
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      alert('Blog post created successfully!');
-      setTitle('');
-      setContent('');
-      if (onBlogCreated) {
-        onBlogCreated(response.data);
-      }
+      const response = await createBlogPost({ title, content });
+      navigate(`/blogs/${response.data._id}`);
     } catch (error) {
-      setError('Error creating blog post');
+      console.error('Error creating blog post:', error);
     }
   };
 
   return (
     <div>
-      <h2>Create Blog Post</h2>
+      <h2>Create a Blog Post</h2>
       <form onSubmit={handleSubmit}>
         <input
           type="text"
-          placeholder="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          placeholder="Blog Title"
           required
         />
         <textarea
-          placeholder="Content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
+          placeholder="Blog Content"
           required
         />
-        <button type="submit">Submit</button>
+        <button type="submit">Create Post</button>
       </form>
-      {error && <p>{error}</p>}
     </div>
   );
 };
