@@ -18,7 +18,7 @@ const Header = () => {
     <header className="navbar navbar-expand-lg navbar-dark bg-dark">
       <div className="container">
         <Link to="/" className="navbar-brand">
-          Farm-Bid
+          Elipae
         </Link>
         <button
           className="navbar-toggler"
