@@ -8,23 +8,29 @@ const BlogPost = () => {
   const [comments, setComments] = useState([]);
   const [comment, setComment] = useState('');
 
+  // Fetch blog post and comments
   useEffect(() => {
     const fetchBlog = async () => {
-      const response = await getBlogPost(id);
-      setBlogPost(response.data);
-      setComments(response.data.comments || []); // Load existing comments
+      try {
+        const response = await getBlogPost(id);
+        setBlogPost(response.data);
+        setComments(response.data.comments || []); // Load comments
+      } catch (err) {
+        console.error('Error fetching blog post:', err);
+      }
     };
     fetchBlog();
   }, [id]);
 
+  // Handle submitting a new comment
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await addCommentToBlogPost(id, { content: comment });
       setComments([...comments, response.data]);
-      setComment(''); // Clear comment input after submission
+      setComment(''); // Clear the comment input
     } catch (err) {
-      console.error('Failed to comment');
+      console.error('Error adding comment:', err);
     }
   };
 
@@ -34,30 +40,32 @@ const BlogPost = () => {
 
   return (
     <div>
-      <h2>{blogPost.title}</h2>
-      <p>{blogPost.content}</p>
+      {blogPost ? (
+        <>
+          <h1>{blogPost.title}</h1>
+          <p>{blogPost.content}</p>
 
-      <h3>Comments</h3>
-      {comments.length > 0 ? (
-        <ul>
-          {comments.map((com, index) => (
-            <li key={index}>{com.content}</li>
-          ))}
-        </ul>
+          <div>
+            <h2>Comments</h2>
+            {blogPost.comments.map((comment) => (
+              <div key={comment._id}>
+                <p><strong>{comment.user?.email || 'Anonymous'}:</strong> {comment.content}</p>
+              </div>
+            ))}
+
+            <form onSubmit={handleCommentSubmit}>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Write a comment"
+              ></textarea>
+              <button type="submit">Post Comment</button>
+            </form>
+          </div>
+        </>
       ) : (
-        <p>No comments yet.</p>
+        <p>Loading...</p>
       )}
-
-      <form onSubmit={handleCommentSubmit}>
-        <input
-          type="text"
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          placeholder="Add a comment"
-          required
-        />
-        <button type="submit">Add Comment</button>
-      </form>
     </div>
   );
 };
