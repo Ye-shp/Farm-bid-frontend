@@ -10,9 +10,17 @@ const CreateBlogPost = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const token = localStorage.getItem('token'); // Assuming you're storing the token in localStorage
+
+    if (!token) {
+      setError('You need to be logged in to create a blog post');
+      return;
+    }
+
     try {
       const postData = { title, content, createdAt: new Date() };
-      await createBlogPost(postData);
+      await createBlogPost(postData, token); // Pass the token to the API
       navigate('/blogs'); // Redirect to blog list after creation
     } catch (err) {
       setError('Failed to create blog post');

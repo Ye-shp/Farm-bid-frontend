@@ -2,6 +2,8 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api'; // Adjust this as needed for your API
 
+const getToken = () => localStorage.getItem('token');
+
 // Fetch all blog posts
 export const getBlogPosts = () => axios.get(`${API_URL}/blogs`);
 
@@ -9,12 +11,20 @@ export const getBlogPosts = () => axios.get(`${API_URL}/blogs`);
 export const getBlogPost = (id) => axios.get(`${API_URL}/blogs/${id}`);
 
 // Create a new blog post
-export const createBlogPost = (data) => axios.post(`${API_URL}/blogs/create`, data);
+export const createBlogPost = (data) =>
+  axios.post(`${API_URL}/blogs/create`, data, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`, // Attach token for authenticated requests
+    },
+  });
 
 // Add a comment to a blog post
-export const addCommentToBlogPost = (blogId, commentData) => {
-  return axios.post(`${API_URL}/blogs/${blogId}/comment`, commentData);
-};
+export const addCommentToBlogPost = (blogId, commentData) =>
+  axios.post(`${API_URL}/blogs/${blogId}/comments`, commentData, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`, // Attach token for authenticated requests
+    },
+  });
 
 // Export all the functions
 export default {
