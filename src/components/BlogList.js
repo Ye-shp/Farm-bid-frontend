@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { getBlogPosts } from '../Services/blogs';
-import { Link } from 'react-router-dom';
-
-const BlogList = () => {
+import { Link, useNavigate } from 'react-router-dom';
+import './Blog.css'
+const BlogList = ({ isLoggedIn }) => {
   const [blogs, setBlogs] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchBlogs = async () => {
@@ -20,6 +21,14 @@ const BlogList = () => {
   return (
     <div>
       <h2>Blog Posts</h2>
+      
+      {/* Show the "Create Blog Post" button only if the user is logged in */}
+      {isLoggedIn && (
+        <button onClick={() => navigate('/create-blog')} className="create-post-btn">
+          Create New Blog Post
+        </button>
+      )}
+
       {blogs.map((blog) => (
         <div key={blog._id}>
           <h3>

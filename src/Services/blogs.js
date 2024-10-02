@@ -1,15 +1,25 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/blogs'; // Adjust if needed
+const API_URL = 'http://localhost:5000/api'; // Adjust this as needed for your API
 
 // Fetch all blog posts
-export const getBlogPosts = () => axios.get(API_URL);
+export const getBlogPosts = () => axios.get(`${API_URL}/blogs`);
 
-// Fetch a single blog post by ID
-export const getBlogPost = (id) => axios.get(`${API_URL}/${id}`);
+// Fetch a single blog post by ID (with comments)
+export const getBlogPost = (id) => axios.get(`${API_URL}/blogs/${id}`);
 
 // Create a new blog post
-export const createBlogPost = (data) => axios.post(`${API_URL}/create`, data);
+export const createBlogPost = (data) => axios.post(`${API_URL}/blogs/create`, data);
 
 // Add a comment to a blog post
-export const addComment = (id, data) => axios.post(`${API_URL}/${id}/comment`, data);
+export const addCommentToBlogPost = (blogId, commentData) => {
+  return axios.post(`${API_URL}/blogs/${blogId}/comment`, commentData);
+};
+
+// Export all the functions
+export default {
+  getBlogPosts,
+  getBlogPost,
+  createBlogPost,
+  addCommentToBlogPost,
+};

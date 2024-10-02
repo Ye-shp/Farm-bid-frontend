@@ -1,20 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { getBlogPost, addComment } from '../Services/blogs';
 import { useParams } from 'react-router-dom';
+import { getBlogPost, addCommentToBlogPost } from '../Services/blogs';
 
 const BlogPost = () => {
   const { id } = useParams();
-  const [blog, setBlog] = useState(null);
+  const [blogPost, setBlogPost] = useState(null);
+  const [comments, setComments] = useState([]);
   const [comment, setComment] = useState('');
 
   useEffect(() => {
     const fetchBlog = async () => {
-      try {
-        const response = await getBlogPost(id);
-        setBlog(response.data);
-      } catch (error) {
-        console.error('Error fetching blog:', error);
-      }
+      const response = await getBlogPost(id);
+      setBlogPost(response.data);
+      setComments(response.data.comments || []); // Load existing comments
     };
     fetchBlog();
   }, [id]);
@@ -22,40 +20,43 @@ const BlogPost = () => {
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await addComment(id, { content: comment });
-      setBlog((prevBlog) => ({
-        ...prevBlog,
-        comments: [...prevBlog.comments, response.data],
-      }));
-      setComment('');
-    } catch (error) {
-      console.error('Error adding comment:', error);
+      const response = await addCommentToBlogPost(id, { content: comment });
+      setComments([...comments, response.data]);
+      setComment(''); // Clear comment input after submission
+    } catch (err) {
+      console.error('Failed to comment');
     }
   };
 
-  if (!blog) return <p>Loading...</p>;
+  if (!blogPost) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div>
-      <h2>{blog.title}</h2>
-      <p>Posted by {blog.user.email}</p>
-      <p>{blog.content}</p>
+      <h2>{blogPost.title}</h2>
+      <p>{blogPost.content}</p>
 
       <h3>Comments</h3>
-      {blog.comments.map((comment, index) => (
-        <div key={index}>
-          <p>{comment.user.email}: {comment.content}</p>
-        </div>
-      ))}
+      {comments.length > 0 ? (
+        <ul>
+          {comments.map((com, index) => (
+            <li key={index}>{com.content}</li>
+          ))}
+        </ul>
+      ) : (
+        <p>No comments yet.</p>
+      )}
 
       <form onSubmit={handleCommentSubmit}>
-        <textarea
+        <input
+          type="text"
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           placeholder="Add a comment"
           required
         />
-        <button type="submit">Submit</button>
+        <button type="submit">Add Comment</button>
       </form>
     </div>
   );

@@ -5,36 +5,39 @@ import { useNavigate } from 'react-router-dom';
 const CreateBlogPost = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await createBlogPost({ title, content });
-      navigate(`/blogs/${response.data._id}`);
-    } catch (error) {
-      console.error('Error creating blog post:', error);
+      const postData = { title, content, createdAt: new Date() };
+      await createBlogPost(postData);
+      navigate('/blogs'); // Redirect to blog list after creation
+    } catch (err) {
+      setError('Failed to create blog post');
     }
   };
 
   return (
     <div>
-      <h2>Create a Blog Post</h2>
+      <h2>Create Blog Post</h2>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <form onSubmit={handleSubmit}>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Blog Title"
+          placeholder="Title"
           required
         />
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Blog Content"
+          placeholder="Write your content here"
           required
         />
-        <button type="submit">Create Post</button>
+        <button type="submit">Create Blog</button>
       </form>
     </div>
   );
