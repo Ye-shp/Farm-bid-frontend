@@ -50,7 +50,7 @@ const Header = () => {
                   <Link to="/farmer-auctions" className="nav-link">My Auctions</Link>
                 </li>
                 <li className="nav-item">
-                  <Link to="/CreateBlogPost" className="nav-link">Create Blog Post</Link> {/* Farmers can create blog posts */}
+                  <Link to="/create-blog" className="nav-link">Create Blog Post</Link> {/* Farmers can create blog posts */}
                 </li>
               </>
             )}
@@ -65,7 +65,7 @@ const Header = () => {
                   <Link to="/buyer-auctions" className="nav-link">Browse Auctions</Link> {/* Buyers can browse all auctions */}
                 </li>
                 <li className="nav-item">
-                  <Link to="/createBlogPost" className="nav-link">Create Blog Post</Link> {/* Buyers can create blog posts */}
+                  <Link to="/create-blog" className="nav-link">Create Blog Post</Link> {/* Buyers can create blog posts */}
                 </li>
               </>
             )}
