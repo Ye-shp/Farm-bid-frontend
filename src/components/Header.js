@@ -37,7 +37,7 @@ const Header = () => {
               <Link to="/blogs" className="nav-link">Blogs</Link> {/* Accessible to everyone */}
             </li>
             <li className="nav-item">
-              <Link to="/products" className="nav-link">Products</Link> {/* Accessible to everyone */}
+              {/*<Link to="/products" className="nav-link">Products</Link> {/* Accessible to everyone */}
             </li>
 
             {/* Show these options for logged-in farmers */}
@@ -47,7 +47,7 @@ const Header = () => {
                   <Link to="/farmer-dashboard" className="nav-link">Farmer Dashboard</Link>
                 </li>
                 <li className="nav-item">
-                  <Link to="/farmer-auctions" className="nav-link">My Auctions</Link>
+                  {/*<Link to="/farmer-auctions" className="nav-link">My Auctions</Link>*/}
                 </li>
                 <li className="nav-item">
                   <Link to="/create-blog" className="nav-link">Create Blog Post</Link> {/* Farmers can create blog posts */}

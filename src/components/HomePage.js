@@ -5,13 +5,13 @@ const HomePage = () => (
   <div className="container text-center my-5">
     {/* Header Section */}
     <header className="py-5 bg-primary text-white rounded shadow">
-      <h1 className="display-4 fw-bold">Welcome to Farm Bid Marketplace</h1>
+      <h1 className="display-4 fw-bold">Welcome to Elipae Marketplace</h1>
       <p className="lead">Bid on fresh produce directly from local farmers.</p>
     </header>
 
     {/* Why Farm Bid Section */}
     <section className="my-5 p-5 bg-light rounded shadow">
-      <h2 className="mb-4">Why Farm Bid?</h2>
+      <h2 className="mb-4">Why Elipae</h2>
       <p className="lead">Get the freshest produce at competitive prices while supporting local farmers.</p>
     </section>
 
