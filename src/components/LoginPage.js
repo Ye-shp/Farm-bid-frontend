@@ -78,28 +78,35 @@ const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
   };
 
   return (
-    <div className="login-page">
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-          required
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          required
-        />
-        <button type="submit">Login</button>
-        {error && <p className="error">{error}</p>}
+    <div className="container mt-5">
+      <h2 className="text-center mb-4">Login</h2>
+      <form onSubmit={handleLogin} className="mb-5">
+        <div className="mb-3">
+          <input
+            type="email"
+            className="form-control"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <input
+            type="password"
+            className="form-control"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            required
+          />
+        </div>
+        <button type="submit" className="btn btn-primary">Login</button>
+        {error && <p className="text-danger mt-3">{error}</p>}
       </form>
     </div>
   );
+  
 };
 
 export default LoginPage;

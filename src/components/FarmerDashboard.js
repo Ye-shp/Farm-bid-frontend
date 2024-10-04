@@ -72,48 +72,61 @@ const FarmerDashboard = () => {
   };
 
   return (
-    <div className="farmer-dashboard">
-      <h2>My Products</h2>
-      <ul>
+    <div className="container mt-5">
+      <h2 className="text-center mb-4">My Products</h2>
+      <div className="row">
         {products.map(product => (
-          <li key={product._id}>
-            {product.imageUrl && <img src={product.imageUrl} width="100" />}    
-           <h4>{product.title}</h4>   
-            {product.description}
-          </li>
+          <div className="col-md-6 mb-4" key={product._id}>
+            <div className="card">
+              {product.imageUrl && <img src={product.imageUrl} className="card-img-top" alt={product.title} />}
+              <div className="card-body">
+                <h4 className="card-title">{product.title}</h4>
+                <p className="card-text">{product.description}</p>
+              </div>
+            </div>
+          </div>
         ))}
-      </ul>
-
-      <h2>Create New Product</h2>
-      <form onSubmit={handleCreateProduct}>
-        <input
-          type="text"
-          name="title"
-          value={newProduct.title}
-          onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
-          placeholder="Title"
-          required
-        />
-        <textarea
-          name="description"
-          value={newProduct.description}
-          onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-          placeholder="Description"
-          required
-        />
-        <input
-          type="file"
-          name="image"
-          onChange={(e) => setNewProduct({ ...newProduct, image: e.target.files[0] })}
-          required
-        />
-        <button type="submit">Create Product</button>
+      </div>
+  
+      <h2 className="text-center mb-4">Create New Product</h2>
+      <form onSubmit={handleCreateProduct} className="mb-5">
+        <div className="mb-3">
+          <input
+            type="text"
+            className="form-control"
+            name="title"
+            value={newProduct.title}
+            onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
+            placeholder="Title"
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <textarea
+            className="form-control"
+            name="description"
+            value={newProduct.description}
+            onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+            placeholder="Description"
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <input
+            type="file"
+            className="form-control"
+            name="image"
+            onChange={(e) => setNewProduct({ ...newProduct, image: e.target.files[0] })}
+            required
+          />
+        </div>
+        <button type="submit" className="btn btn-primary">Create Product</button>
       </form>
-
-      {/* Include the dedicated auction creation component */}
+      
       <CreateAuction products={products} />
     </div>
   );
+  
 };
 
 export default FarmerDashboard;

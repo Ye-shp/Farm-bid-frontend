@@ -28,27 +28,34 @@ const CreateBlogPost = () => {
   };
 
   return (
-    <div>
-      <h2>Create Blog Post</h2>
+    <div className="container mt-5">
+      <h2 className="text-center mb-4">Create Blog Post</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Title"
-          required
-        />
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Write your content here"
-          required
-        />
-        <button type="submit">Create Blog</button>
+        <div className="form-group mb-3">
+          <input
+            type="text"
+            className="form-control"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Title"
+            required
+          />
+        </div>
+        <div className="form-group mb-3">
+          <textarea
+            className="form-control"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Write your content here"
+            required
+            rows="5"
+          />
+        </div>
+        <button type="submit" className="btn btn-primary">Create Blog</button>
       </form>
     </div>
-  );
+  );  
 };
 
 export default CreateBlogPost;

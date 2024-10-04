@@ -39,27 +39,31 @@ const BlogPost = () => {
   }
 
   return (
-    <div>
+    <div className="container mt-5">
       {blogPost ? (
         <>
-          <h1>{blogPost.title}</h1>
+          <h1 className="mb-4">{blogPost.title}</h1>
           <p>{blogPost.content}</p>
-
-          <div>
+  
+          <div className="mt-5">
             <h2>Comments</h2>
             {blogPost.comments.map((comment) => (
-              <div key={comment._id}>
-                <p><strong>{comment.user?.email || 'Anonymous'}:</strong> {comment.content}</p>
+              <div key={comment._id} className="card mb-3">
+                <div className="card-body">
+                  <p><strong>{comment.user?.email || 'Anonymous'}:</strong> {comment.content}</p>
+                </div>
               </div>
             ))}
-
-            <form onSubmit={handleCommentSubmit}>
+  
+            <form onSubmit={handleCommentSubmit} className="mt-4">
               <textarea
+                className="form-control mb-3"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Write a comment"
+                rows="3"
               ></textarea>
-              <button type="submit">Post Comment</button>
+              <button type="submit" className="btn btn-primary">Post Comment</button>
             </form>
           </div>
         </>
@@ -68,6 +72,7 @@ const BlogPost = () => {
       )}
     </div>
   );
+  
 };
 
 export default BlogPost;

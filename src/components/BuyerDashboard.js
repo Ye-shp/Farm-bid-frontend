@@ -66,37 +66,33 @@ const BuyerDashboard = () => {
   };
 
   return (
-    <div className="buyer-dashboard">
-      <h2>Available Auctions</h2>
-      <ul>
+    <div className="container mt-5">
+      <h2 className="text-center mb-4">Available Auctions</h2>
+      <div className="row">
         {auctions.map(auction => (
-          <li key={auction._id}>
-            <p>Product: {auction.product.title}</p> {/* Display product title */}
-            <p>Starting Bid: {auction.startingPrice}</p> {/* Display starting price */}
-            <p>End Time: {new Date(auction.endTime).toLocaleString()}</p> {/* Display auction end time */}
-            {auction.product.imageUrl && (
-              <img src={auction.product.imageUrl} alt={auction.product.title} width="100" />
-            )}
-
-            {/* Bid input */}
-            <input
-              type="number"
-              value={bidAmount[auction._id] || ''} // Display current bid amount or empty string
-              onChange={(e) => handleBidChange(auction._id, e.target.value)}
-              placeholder="Enter your bid"
-            />
-            <button onClick={() => handleBidSubmit(auction._id)}>Submit Bid</button>
-          </li>
+          <div className="col-md-6 mb-4" key={auction._id}>
+            <div className="card">
+              <div className="card-body">
+                <h5 className="card-title">{auction.product.title}</h5>
+                <p className="card-text">Starting Bid: {auction.startingPrice}</p>
+                <p className="card-text">End Time: {new Date(auction.endTime).toLocaleString()}</p>
+                {auction.product.imageUrl && <img src={auction.product.imageUrl} alt={auction.product.title} className="card-img-top mb-3" />}
+                <input
+                  type="number"
+                  className="form-control mb-3"
+                  value={bidAmount[auction._id] || ''}
+                  onChange={(e) => handleBidChange(auction._id, e.target.value)}
+                  placeholder="Enter your bid"
+                />
+                <button onClick={() => handleBidSubmit(auction._id)} className="btn btn-primary">Submit Bid</button>
+              </div>
+            </div>
+          </div>
         ))}
-      </ul>
-
-      {/* Existing functionality */}
-      {/* Assume there is some logic here for showing the buyer's favorite products */}
-      <ul>
-        {/* Favorite product list logic */}
-      </ul>
+      </div>
     </div>
   );
+  
 };
 
 export default BuyerDashboard;

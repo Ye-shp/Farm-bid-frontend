@@ -40,10 +40,11 @@ const CreateAuction = ({ products }) => {
   };
 
   return (
-    <div>
-      <h2>Create New Auction</h2>
-      <form onSubmit={handleCreateAuction}>
+    <div className="container mt-5">
+      <h2 className="text-center mb-4">Create New Auction</h2>
+      <form onSubmit={handleCreateAuction} className="form-group">
         <select
+          className="form-control mb-3"
           value={auctionProductId}
           onChange={(e) => setAuctionProductId(e.target.value)}
           required
@@ -57,23 +58,25 @@ const CreateAuction = ({ products }) => {
         </select>
         <input
           type="number"
+          className="form-control mb-3"
           value={startingBid}
           onChange={(e) => setStartingBid(e.target.value)}
           placeholder="Starting Bid"
           required
         />
         <input
-          type="datetime-local" 
+          type="datetime-local"
+          className="form-control mb-3"
           value={endTime}
           onChange={(e) => setEndTime(e.target.value)}
-          placeholder="End Time"
           required
         />
-        <button type="submit">Create Auction</button>
-        {newAuctionError && <p className="error">{newAuctionError}</p>}
+        <button type="submit" className="btn btn-primary">Create Auction</button>
+        {newAuctionError && <p className="text-danger mt-3">{newAuctionError}</p>}
       </form>
     </div>
   );
+  
 };
 
 export default CreateAuction;

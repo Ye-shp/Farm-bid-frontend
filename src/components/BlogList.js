@@ -20,27 +20,37 @@ const BlogList = ({ isLoggedIn }) => {
   }, []);
 
   return (
-    <div>
-      <h2>Blog Posts</h2>
+    <div className="container mt-5">
+      <h2 className="text-center mb-4">Blog Posts</h2>
       
-      {/* Show the "Create Blog Post" button only if the user is logged in */}
       {isLoggedIn && (
-        <button onClick={() => navigate('/create-blog')} className="create-post-btn">
+        <button 
+          onClick={() => navigate('/create-blog')} 
+          className="btn btn-primary mb-4 create-post-btn">
           Create New Blog Post
         </button>
       )}
-
-      {blogs.map((blog) => (
-        <div key={blog._id}>
-          <h3>
-            <Link to={`/blog/${blog._id}`}>{blog.title}</Link> {/* Corrected this link */}
-          </h3>
-          <p>Posted by <Link to={`/user/${blog.user._id}`}>{blog.user.email}</Link></p>
-          <p>{blog.content}</p>
-        </div>
-      ))}
+  
+      <div className="row">
+        {blogs.map((blog) => (
+          <div className="col-md-6 mb-4" key={blog._id}>
+            <div className="card">
+              <div className="card-body">
+                <h3 className="card-title">
+                  <Link to={`/blog/${blog._id}`} className="text-decoration-none">
+                    {blog.title}
+                  </Link>
+                </h3>
+                <p className="card-text">Posted by <Link to={`/user/${blog.user._id}`}>{blog.user.email}</Link></p>
+                <p className="card-text">{blog.content.slice(0, 100)}...</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
+  
 };
 
 export default BlogList;
