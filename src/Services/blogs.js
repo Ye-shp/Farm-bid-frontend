@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com'; // Adjust this as needed for your API
+const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com/api'; // Adjust this as needed for your API
 
 const getToken = () => localStorage.getItem('token');
 
