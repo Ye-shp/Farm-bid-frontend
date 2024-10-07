@@ -14,7 +14,7 @@ const CreateAuction = ({ products }) => {
 
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/auctions/create',
+        'https://farm-bid-3998c30f5108.herokuapp.com/api/auctions/create',
         {
           productId: auctionProductId,
           startingBid,

@@ -9,7 +9,7 @@ const FarmerAuctions = () => {
   useEffect(() => {
     const fetchAuctions = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/auctions/farmer-auctions', {
+        const response = await axios.get('https://farm-bid-3998c30f5108.herokuapp.com/api/auctions/farmer-auctions', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setAuctions(response.data);

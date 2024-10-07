@@ -10,7 +10,7 @@ const ProductList = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/products/farmer-products');// need to fix authorization problem 
+        const response = await axios.get('https://farm-bid-3998c30f5108.herokuapp.com/api/products/farmer-products');// need to fix authorization problem 
         setProducts(response.data);
       } catch (error) {
         console.error('Error fetching products:', error);

@@ -11,7 +11,7 @@ const BuyerDashboard = () => {
   useEffect(() => {
     const fetchAuctions = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/auctions', {
+        const response = await axios.get('https://farm-bid-3998c30f5108.herokuapp.com/api/auctions', {
           headers: { Authorization: `Bearer ${token}` }, // Include token in the request header
         });
         setAuctions(response.data);
@@ -53,7 +53,7 @@ const BuyerDashboard = () => {
   const handleBidSubmit = async (auctionId) => {
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/auctions/${auctionId}/bid`,
+        `https://farm-bid-3998c30f5108.herokuapp.com/api/auctions/${auctionId}/bid`,
         { bidAmount: bidAmount[auctionId] },
         { headers: { Authorization: `Bearer ${token}` } } // Include the token for authentication
       );

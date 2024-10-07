@@ -13,7 +13,7 @@ const FarmerDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const productResponse = await axios.get('http://localhost:5000/api/products/farmer-products', {
+        const productResponse = await axios.get('https://farm-bid-3998c30f5108.herokuapp.com/api/products/farmer-products', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProducts(productResponse.data);
@@ -56,7 +56,7 @@ const FarmerDashboard = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/products', formData, {
+      const response = await axios.post('https://farm-bid-3998c30f5108.herokuapp.com/api/products', formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
