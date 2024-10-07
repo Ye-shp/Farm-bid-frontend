@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com/api'; // Assuming your API is running here
-
+const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com/api'; 
 // User registration
 export const register = (data) => axios.post(`${API_URL}/auth/register`, data);
 
