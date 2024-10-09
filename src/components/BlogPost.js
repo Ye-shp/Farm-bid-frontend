@@ -39,40 +39,52 @@ const BlogPost = () => {
   }
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-4">
       {blogPost ? (
         <>
-          <h1 className="mb-4">{blogPost.title}</h1>
-          <p>{blogPost.content}</p>
-  
-          <div className="mt-5">
-            <h2>Comments</h2>
-            {blogPost.comments.map((comment) => (
-              <div key={comment._id} className="card mb-3">
-                <div className="card-body">
-                  <p><strong>{comment.user?.email || 'Anonymous'}:</strong> {comment.content}</p>
+          <div className="blog-post-container mb-4">
+            <h1 className="blog-post-title">{blogPost.title}</h1>
+            <p className="blog-post-content">{blogPost.content}</p>
+          </div>
+
+          <div className="comments-section">
+            <h2 className="comments-title">Responses</h2>
+            <div className="comments-grid">
+              {blogPost.comments.map((comment) => (
+                <div key={comment._id} className="comment-card">
+                  <div className="comment-card-body">
+                    <p className="comment-user">
+                      {comment.user?.email || 'Anonymous'}
+                    </p>
+                    <p className="comment-content">{comment.content}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-  
-            <form onSubmit={handleCommentSubmit} className="mt-4">
+              ))}
+            </div>
+
+            <form onSubmit={handleCommentSubmit} className="comment-form mt-4">
               <textarea
-                className="form-control mb-3"
+                className="form-control"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder="Write a comment"
+                placeholder="Write a response..."
                 rows="3"
               ></textarea>
-              <button type="submit" className="btn btn-primary">Post Comment</button>
+              <button type="submit" className="btn btn-primary mt-2">
+                Submit Response
+              </button>
             </form>
           </div>
         </>
       ) : (
-        <p>Loading...</p>
+        <div className="loading-spinner d-flex justify-content-center align-items-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
       )}
     </div>
   );
-  
 };
 
 export default BlogPost;

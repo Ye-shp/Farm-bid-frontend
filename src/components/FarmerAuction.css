@@ -1,0 +1,49 @@
+/* FarmerAuctions.css */
+
+/* Style the auction card */
+.auction-card {
+    border: 2px solid #343a40; /* Dark border for cards */
+    border-radius: 10px; /* Rounded corners */
+    background-color: #f8f9fa; /* Light background */
+    transition: transform 0.3s ease; /* Smooth hover effect */
+  }
+  
+  .auction-card:hover {
+    transform: scale(1.05); /* Slight zoom on hover */
+  }
+  
+  /* Center and style the auction title */
+  .auction-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #343a40;
+  }
+  
+  /* Make the badges larger for visibility */
+  .badge {
+    font-size: 1rem;
+    padding: 0.5rem;
+  }
+  
+  /* Add spacing and colors to the status and icons */
+  .bi {
+    font-size: 1.5rem;
+  }
+  
+  .text-success {
+    color: #28a745 !important;
+  }
+  
+  .text-primary {
+    color: #007bff !important;
+  }
+  
+  .text-info {
+    color: #17a2b8 !important;
+  }
+  
+  .text-secondary {
+    color: #6c757d !important;
+  }
+  

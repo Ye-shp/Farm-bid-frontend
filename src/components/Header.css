@@ -17,3 +17,36 @@
 .navbar-toggler {
   border-color: #fff;
 }
+
+.dropdown-menu {
+  background-color: #212529; /* Match dark background */
+  width: auto;
+  right: 0; /* Keep the dropdown aligned to the right */
+  position: absolute;
+}
+
+@media (max-width: 576px) {
+  .dropdown-menu {
+    position: fixed; /* Ensure it doesn't get cut off on small screens like iPhones */
+    width: 100%; /* Take full width on small screens */
+    top: 60px; /* Position it under the header */
+    left: 0;
+    right: 0;
+    max-height: 50vh; /* Limit the height to half the viewport */
+    overflow-y: auto; /* Make it scrollable if content is too long */
+    z-index: 1050; /* Ensure it's above other content */
+  }
+}
+
+.dropdown-item {
+  color: #ffffff; /* White text for better readability */
+}
+
+.dropdown-item.hover-item:hover {
+  background-color: #343a40; /* Slightly darker background on hover */
+  color: #f8f9fa; /* Light text on hover */
+}
+
+.btn-link:hover {
+  color: #f8f9fa; /* Ensure logout button text is visible on hover */
+}

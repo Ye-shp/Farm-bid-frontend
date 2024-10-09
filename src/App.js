@@ -45,7 +45,7 @@ const App = () => {
           <Route path="/blogs" element={<BlogList />} /> {/* Blog listing */}
           <Route path="/blog/:id" element={<BlogPost />} /> {/* Single blog post */}
           <Route path="/create-blog" element={<CreateBlogPost />} /> {/* Create a blog post */}
-          <Route path="/farmer-auctions" element={<FarmerAuctions />} />
+          <Route path="/farmer-auctions" element={<FarmerAuctions />} />{/*Farmers live auctions */}
         </Routes>
       </div>
     </Router>

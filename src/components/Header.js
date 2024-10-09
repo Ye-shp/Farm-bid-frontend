@@ -1,12 +1,12 @@
 // src/components/Header.js
-import React from 'react';
+import React, { useState, useEffect} from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import './Header.css'; // Assuming you have some styles
-
+import './Header.css';
 const Header = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const userRole = localStorage.getItem('role'); // Get user role from localStorage
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -14,43 +14,62 @@ const Header = () => {
     navigate('/'); // Redirect to home page after logout
   };
 
+  useEffect(() => {
+    const closeDropdown = (e) => {
+      if (!e.target.closest('.dropdown')) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('click', closeDropdown);
+    return () => {
+      document.removeEventListener('click', closeDropdown);
+    };
+  }, []);
+
+  const handleItemClick = () => {
+    setIsDropdownOpen(false); // Close the dropdown after an item is clicked
+  };
+
   return (
     <header className="navbar navbar-expand-lg navbar-dark bg-dark">
       <div className="container">
+        {/* Left side - Elipae */}
         <Link to="/" className="navbar-brand">
           Elipae
         </Link>
-        <button
-          className="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav me-auto">
-            <li className="nav-item">
-              <Link to="/blogs" className="nav-link">Blogs</Link> {/* Accessible to everyone */}
-            </li>
-            <li className="nav-item">
-              {/*<Link to="/products" className="nav-link">Products</Link> {/* Accessible to everyone */}
+
+        {/* Right side - Dropdown */}
+        <div className="dropdown ms-auto">
+          <button
+            className="btn btn-secondary dropdown-toggle"
+            type="button"
+            id="dropdownMenuButton"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            aria-expanded={isDropdownOpen}
+          >
+            Menu
+          </button>
+          <ul
+            className={`dropdown-menu dropdown-menu-end ${isDropdownOpen ? 'show' : ''}`}
+            aria-labelledby="dropdownMenuButton"
+          >
+            {/* Accessible to everyone */}
+            <li onClick={handleItemClick}>
+              <Link to="/blogs" className="dropdown-item hover-item">Blogs</Link>
             </li>
 
             {/* Show these options for logged-in farmers */}
             {token && userRole === 'farmer' && (
               <>
-                <li className="nav-item">
-                  <Link to="/farmer-dashboard" className="nav-link">Farmer Dashboard</Link>
+                <li onClick={handleItemClick}>
+                  <Link to="/farmer-dashboard" className="dropdown-item hover-item">Dashboard</Link>
                 </li>
-                <li className="nav-item">
-                  {/*<Link to="/farmer-auctions" className="nav-link">My Auctions</Link>*/}
+                <li onClick={handleItemClick}>
+                  <Link to="/create-blog" className="dropdown-item hover-item">Create Blog Post</Link>
                 </li>
-                <li className="nav-item">
-                  <Link to="/create-blog" className="nav-link">Create Blog Post</Link> {/* Farmers can create blog posts */}
+                <li onClick={handleItemClick}>
+                  <Link to= "/farmer-auctions" className="dropdown-item hover-item">My Auctions</Link>
                 </li>
               </>
             )}
@@ -58,33 +77,34 @@ const Header = () => {
             {/* Show these options for logged-in buyers */}
             {token && userRole === 'buyer' && (
               <>
-                <li className="nav-item">
-                  <Link to="/buyer-dashboard" className="nav-link">Buyer Dashboard</Link>
+                <li onClick={handleItemClick}>
+                  <Link to="/buyer-dashboard" className="dropdown-item hover-item">Buyer Dashboard</Link>
                 </li>
-                <li className="nav-item">
-                  <Link to="/buyer-auctions" className="nav-link">Browse Auctions</Link> {/* Buyers can browse all auctions */}
-                </li>
-                <li className="nav-item">
-                  <Link to="/create-blog" className="nav-link">Create Blog Post</Link> {/* Buyers can create blog posts */}
+                <li onClick={handleItemClick}>
+                  <Link to="/create-blog" className="dropdown-item hover-item">Create Blog Post</Link>
                 </li>
               </>
             )}
-          </ul>
 
-          <ul className="navbar-nav ml-auto">
             {/* Show login and register for not logged-in users */}
             {!token ? (
               <>
-                <li className="nav-item">
-                  <Link to="/login" className="nav-link">Login</Link>
+                <li onClick={handleItemClick}>
+                  <Link to="/login" className="dropdown-item hover-item">Login</Link>
                 </li>
-                <li className="nav-item">
-                  <Link to="/register" className="nav-link">Register</Link>
+                <li onClick={handleItemClick}>
+                  <Link to="/register" className="dropdown-item hover-item">Register</Link>
                 </li>
               </>
             ) : (
-              <li className="nav-item">
-                <button onClick={handleLogout} className="nav-link btn btn-link text-white">
+              <li onClick={handleItemClick}>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    handleItemClick();
+                  }}
+                  className="dropdown-item btn btn-link hover-item"
+                >
                   Logout
                 </button>
               </li>
@@ -96,4 +116,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default Header; 
