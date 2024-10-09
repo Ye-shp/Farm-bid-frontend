@@ -66,6 +66,9 @@ const Header = () => {
                   <Link to="/farmer-dashboard" className="dropdown-item hover-item">Dashboard</Link>
                 </li>
                 <li onClick={handleItemClick}>
+                  <Link to ="/user/:userId" className="dropdown-item hover-item">My profile</Link>
+                </li>
+                <li onClick={handleItemClick}>
                   <Link to="/create-blog" className="dropdown-item hover-item">Create Blog Post</Link>
                 </li>
                 <li onClick={handleItemClick}>
@@ -82,6 +85,9 @@ const Header = () => {
                 </li>
                 <li onClick={handleItemClick}>
                   <Link to="/create-blog" className="dropdown-item hover-item">Create Blog Post</Link>
+                </li>
+                <li onClick={handleItemClick}>
+                  <Link to ="/user/:userId" className="dropdown-item hover-item">My profile</Link>
                 </li>
               </>
             )}

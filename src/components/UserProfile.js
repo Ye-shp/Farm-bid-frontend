@@ -10,8 +10,11 @@ const UserProfile = () => {
     wholesaleAvailable: false,
     location: { latitude: '', longitude: '' },
     partners: [],
+    followers: [],
+    following: [],
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [loggedInUserId, setLoggedInUserId] = useState(null);
 
   useEffect(() => {
@@ -24,11 +27,16 @@ const UserProfile = () => {
           `https://farm-bid-3998c30f5108.herokuapp.com/api/users/${userId}`
         );
         setUser({
-          ...response.data,
-          socialMedia: response.data.socialMedia || { instagram: '', facebook: '', tiktok: '' },
-          location: response.data.location || { latitude: '', longitude: '' },
-          partners: response.data.partners || [],
+          ...response.data.user,
+          socialMedia: response.data.user.socialMedia || { instagram: '', facebook: '', tiktok: '' },
+          location: response.data.user.location || { latitude: '', longitude: '' },
+          partners: response.data.user.partners || [],
+          followers: response.data.user.followers || [],
+          following: response.data.user.following || [],
         });
+
+        // Check if the logged-in user is already following this user
+        setIsFollowing(response.data.user.followers.includes(userIdFromToken));
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
@@ -74,6 +82,50 @@ const UserProfile = () => {
     });
   };
 
+  const handleFollow = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      await axios.post(
+        `https://farm-bid-3998c30f5108.herokuapp.com/api/users/follow/${userId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setIsFollowing(true);
+      setUser((prevUser) => ({
+        ...prevUser,
+        followers: [...prevUser.followers, loggedInUserId],
+      }));
+    } catch (error) {
+      console.error('Error following user:', error);
+    }
+  };
+
+  const handleUnfollow = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      await axios.post(
+        `https://farm-bid-3998c30f5108.herokuapp.com/api/users/unfollow/${userId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setIsFollowing(false);
+      setUser((prevUser) => ({
+        ...prevUser,
+        followers: prevUser.followers.filter((id) => id !== loggedInUserId),
+      }));
+    } catch (error) {
+      console.error('Error unfollowing user:', error);
+    }
+  };
+
   const isOwner = loggedInUserId === userId;
 
   return (
@@ -89,6 +141,8 @@ const UserProfile = () => {
             ? `${user.location.latitude}, ${user.location.longitude}`
             : 'Location not available'}
         </p>
+        <p>Followers: {user.followers.length}</p>
+        <p>Following: {user.following.length}</p>
       </div>
 
       {user.role === 'farmer' && (
@@ -262,17 +316,25 @@ const UserProfile = () => {
             )}
           </div>
 
-          {isOwner && (
+          {isOwner ? (
             <div className="action-buttons mt-3">
               <button className="btn btn-primary me-2" onClick={() => setIsEditing(!isEditing)}>
                 {isEditing ? 'Cancel' : 'Edit Profile'}
               </button>
-
               {isEditing && (
                 <button className="btn btn-success" onClick={handleSave}>
                   Save Changes
                 </button>
               )}
+            </div>
+          ) : (
+            <div className="follow-buttons mt-3">
+              <button
+                className={`btn ${isFollowing ? 'btn-danger' : 'btn-primary'}`}
+                onClick={isFollowing ? handleUnfollow : handleFollow}
+              >
+                {isFollowing ? 'Unfollow' : 'Follow'}
+              </button>
             </div>
           )}
         </>

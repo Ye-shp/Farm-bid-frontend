@@ -48,6 +48,8 @@ const App = () => {
           <Route path="/create-blog" element={<CreateBlogPost />} /> {/* Create a blog post */}
           <Route path="/farmer-auctions" element={<FarmerAuctions />} />{/*Farmers live auctions */}
           <Route path="/user/:userId" element= {<UserProfile />} />
+          <Route path="/profile/:userId" element={<UserProfile />} />{/*For following and unfollowing */}
+
 
         </Routes>
       </div>
