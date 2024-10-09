@@ -50,9 +50,10 @@ const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
 
         // Store the token, role (from userRole), and location in localStorage
         localStorage.setItem('token', token);
-        localStorage.setItem('role', userRole);  // Store the extracted user role
-        localStorage.setItem('latitude', location.latitude);  // Store latitude
-        localStorage.setItem('longitude', location.longitude);  // Store longitude
+        localStorage.setItem('role', userRole);  
+        localStorage.setItem('latitude', location.latitude);  
+        localStorage.setItem('longitude', location.longitude);  
+        localStorage.setItem('userId', user.id);
 
         console.log('Login successful:', { userRole, token, location });  // Debugging log
 
