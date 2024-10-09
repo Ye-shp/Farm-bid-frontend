@@ -26,17 +26,19 @@ const UserProfile = () => {
         const response = await axios.get(
           `https://farm-bid-3998c30f5108.herokuapp.com/api/users/${userId}`
         );
+        const fetchedUser = response.data;
+
         setUser({
-          ...response.data.user,
-          socialMedia: response.data.user.socialMedia || { instagram: '', facebook: '', tiktok: '' },
-          location: response.data.user.location || { latitude: '', longitude: '' },
-          partners: response.data.user.partners || [],
-          followers: response.data.user.followers || [],
-          following: response.data.user.following || [],
+          ...fetchedUser,
+          socialMedia: fetchedUser.socialMedia || { instagram: '', facebook: '', tiktok: '' },
+          location: fetchedUser.location || { latitude: '', longitude: '' },
+          partners: fetchedUser.partners || [],
+          followers: fetchedUser.followers || [],
+          following: fetchedUser.following || [],
         });
 
         // Check if the logged-in user is already following this user
-        setIsFollowing(response.data.user.followers.includes(userIdFromToken));
+        setIsFollowing(fetchedUser.followers.includes(userIdFromToken));
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
