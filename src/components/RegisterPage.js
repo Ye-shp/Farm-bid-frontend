@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { register } from '../Services/api';
 import axios from 'axios';
-import './RegisterPage.css';
+import '../Styles/RegisterPage.css';
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');

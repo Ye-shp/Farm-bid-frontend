@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import CreateAuction from './CreateAuction'; // Import the dedicated auction component
-import './FarmerDashboard.css';
+import '../Styles/FarmerDashboard.css';
 
 const FarmerDashboard = () => {
   const [products, setProducts] = useState([]);

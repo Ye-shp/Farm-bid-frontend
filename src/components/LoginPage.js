@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../Services/api';  // Assuming you have the login function in Services/api
 import axios from 'axios';
-import './LoginPage.css';
+import '../Styles/LoginPage.css';
 
 const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
   const [email, setEmail] = useState('');

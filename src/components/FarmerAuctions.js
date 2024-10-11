@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './FarmerAuction.css'
+import '../Styles/FarmerAuction.css'
 
 const FarmerAuctions = () => {
   const [auctions, setAuctions] = useState([]);

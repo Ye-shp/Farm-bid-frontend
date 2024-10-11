@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import FarmerDashboard from './FarmerDashboard';
 import BuyerDashboard from './BuyerDashboard';
-import './Dashboard.css';
+import '../Styles/Dashboard.css';
 
 const Dashboard = () => {
   const [role, setRole] = useState('');

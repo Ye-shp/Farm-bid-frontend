@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import './ProductDetails.css';
+import '../Styles/ProductDetails.css';
 
 const ProductDetails = () => {
   const { id } = useParams();

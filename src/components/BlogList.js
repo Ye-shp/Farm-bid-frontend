@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getBlogPosts } from '../Services/blogs';
 import { Link, useNavigate } from 'react-router-dom';
-import './Blog.css';
+import '../Styles/Blog.css';
 
 const BlogList = ({ isLoggedIn }) => {
   const [blogs, setBlogs] = useState([]);
