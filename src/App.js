@@ -16,6 +16,8 @@ import BlogPost from './components/BlogPost'; // Single blog post
 import CreateBlogPost from './components/CreateBlogPost'; // Create a new blog post
 import FarmerAuctions from './components/FarmerAuctions';
 import UserProfile from './components/UserProfile';
+import CheckoutForm from './components/CheckoutForm';
+ 
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -49,6 +51,7 @@ const App = () => {
           <Route path="/farmer-auctions" element={<FarmerAuctions />} />{/*Farmers live auctions */}
           <Route path="/user/:userId" element= {<UserProfile />} />
           <Route path="/profile/:userId" element={<UserProfile />} />{/*For following and unfollowing */}
+          <Route path= "/CheckoutForm" element ={<CheckoutForm/>} /> {/*Payments */}
 
 
         </Routes>

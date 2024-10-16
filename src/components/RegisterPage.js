@@ -7,6 +7,7 @@ import '../Styles/RegisterPage.css';
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
+  const [uername, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('buyer'); // Default role
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
@@ -38,6 +39,7 @@ const RegisterPage = () => {
       const response = await register({ email, password, role, location });
       if (response.status === 201) {
         alert("Registration successful!");
+        setUsername('')//Create username 
         setEmail('');  // Clear the email field
         setPassword('');  // Clear the password field
         setRole('buyer');  // Reset role to default
@@ -48,7 +50,9 @@ const RegisterPage = () => {
       console.error('Registration error:', error);  // Log any errors
       if (error.response && error.response.status === 409) {
         setError("User already registered. Please log in.");
-      } else {
+      }else if (error.response&&error.respone.statu === 400){
+        setError ("Username already taken. Please choose another username")
+      }else {
         setError("An error occurred. Please try again.");
       }
     }
@@ -58,6 +62,15 @@ const RegisterPage = () => {
     <div className="container mt-5">
       <h2 className="text-center mb-4">Register</h2>
       <form onSubmit={handleRegister} className="mb-5">
+        <div className=" mb-3">
+          <input 
+          type = "text"
+          className="form-control"
+          value={Username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Choose a Username"
+          required/> 
+        </div>
         <div className="mb-3">
           <input
             type="email"
