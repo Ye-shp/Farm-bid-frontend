@@ -7,7 +7,7 @@ import '../Styles/RegisterPage.css';
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
-  const [uername, setUsername] = useState('');
+  const [Username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('buyer'); // Default role
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
