@@ -50,7 +50,7 @@ const RegisterPage = () => {
       console.error('Registration error:', error);  // Log any errors
       if (error.response && error.response.status === 409) {
         setError("User already registered. Please log in.");
-      }else if (error.response&&error.respone.statu === 400){
+      }else if (error.response&&error.response.status === 400){
         setError ("Username already taken. Please choose another username")
       }else {
         setError("An error occurred. Please try again.");

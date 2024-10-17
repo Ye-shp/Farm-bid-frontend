@@ -8,6 +8,7 @@ const UserProfile = () => {
     socialMedia: { instagram: '', facebook: '', tiktok: '' },
     description: '',
     wholesaleAvailable: false,
+    deliveryAvailable: false,
     location: { latitude: '', longitude: '' },
     partners: [],
     followers: [],
@@ -35,6 +36,7 @@ const UserProfile = () => {
           partners: fetchedUser.partners || [],
           followers: fetchedUser.followers || [],
           following: fetchedUser.following || [],
+          deliveryAvailable: fetchedUser.deliveryAvailable || false,
         });
 
         // Check if the logged-in user is already following this user
@@ -54,6 +56,7 @@ const UserProfile = () => {
         `https://farm-bid-3998c30f5108.herokuapp.com/api/users/${userId}`,
         {
           wholesaleAvailable: user.wholesaleAvailable,
+          deliveryAvailable: user.deliveryAvailable,
           description: user.description,
           socialMedia: user.socialMedia,
           partners: user.partners,
@@ -291,7 +294,29 @@ const UserProfile = () => {
               </ul>
             )}
           </div>
-
+          <div className="delivery-card card shadow-sm p-3 mb-4">
+            <h3>Delivery Availability</h3>
+            {isEditing ? (
+              <div className="form-check">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  id="deliveryAvailable"
+                  checked={user.deliveryAvailable || false}
+                  onChange={(e) => setUser({ ...user, deliveryAvailable: e.target.checked })}
+                />
+                <label className="form-check-label" htmlFor="deliveryAvailable">
+                  Offers Delivery
+                </label>
+              </div>
+            ) : (
+              <p>
+                {user.deliveryAvailable
+                  ? 'This farmer offers delivery.'
+                  : 'Delivery not available.'}
+              </p>
+            )}
+          </div>
           <div className="wholesale-card card shadow-sm p-3 mb-4">
             <h3>Wholesale Availability</h3>
             {isEditing ? (
