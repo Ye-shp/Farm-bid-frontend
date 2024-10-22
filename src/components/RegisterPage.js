@@ -7,7 +7,7 @@ import '../Styles/RegisterPage.css';
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
-  const [Username, setUsername] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('buyer'); // Default role
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
@@ -36,7 +36,7 @@ const RegisterPage = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const response = await register({ email, password, role, location });
+      const response = await register({ username, email, password, role, location });
       if (response.status === 201) {
         alert("Registration successful!");
         setUsername('')//Create username 
