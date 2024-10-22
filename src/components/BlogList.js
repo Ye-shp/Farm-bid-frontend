@@ -41,7 +41,7 @@ const BlogList = ({ isLoggedIn }) => {
                     {blog.title}
                   </Link>
                 </h3>
-                <p className="card-text">Posted by <Link to={`/user/${blog.user._id}`}>{blog.user.email}</Link></p>
+                <p className="card-text">Posted by <Link to={`/user/${blog.user._id}`}>{blog.user.username}</Link></p>
                 <p className="card-text">{blog.content.slice(0, 100)}...</p>
               </div>
             </div>

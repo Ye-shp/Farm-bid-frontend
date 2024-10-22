@@ -25,14 +25,20 @@ const BlogPost = () => {
   // Handle submitting a new comment
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
+    const token = localStorage.getItem('token');
     try {
-      const response = await addCommentToBlogPost(id, { content: comment });
+      const response = await addCommentToBlogPost(id, { content: comment }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setComments([...comments, response.data]);
       setComment(''); // Clear the comment input
     } catch (err) {
       console.error('Error adding comment:', err);
     }
   };
+  
 
   if (!blogPost) {
     return <div>Loading...</div>;
@@ -54,7 +60,7 @@ const BlogPost = () => {
                 <div key={comment._id} className="comment-card">
                   <div className="comment-card-body">
                     <p className="comment-user">
-                      {comment.user?.email || 'Anonymous'}
+                      {comment.user?.username || 'Anonymous'}
                     </p>
                     <p className="comment-content">{comment.content}</p>
                   </div>
