@@ -136,15 +136,12 @@ const UserProfile = () => {
   return (
     <div className="container mt-4">
       <div className="user-card card shadow-sm p-3 mb-4">
-        <h2 className="user-email mb-2">{user.email}</h2>
+        <h2 className="user-email mb-2">{user.username}</h2>
         <p>
-          <strong>Role:</strong> {user.role}
-        </p>
-        <p>
-          <strong>Location:</strong>{' '}
+          {/*<strong>Location:</strong>{' '}
           {user.location.latitude && user.location.longitude
             ? `${user.location.latitude}, ${user.location.longitude}`
-            : 'Location not available'}
+            : 'Location not available'}*/}
         </p>
         <p>Followers: {user.followers.length}</p>
         <p>Following: {user.following.length}</p>
