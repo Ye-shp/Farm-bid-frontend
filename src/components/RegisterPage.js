@@ -66,7 +66,7 @@ const RegisterPage = () => {
           <input 
           type = "text"
           className="form-control"
-          value={Username}
+          value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="Choose a Username"
           required/> 
