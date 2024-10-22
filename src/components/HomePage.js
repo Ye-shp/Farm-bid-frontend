@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../Styles/HomePage.css';
 import api from '../Services/api';  // Import your API service
+import FeaturedFarms from '../components/FeaturedFarms';
 
 const HomePage = () => {
   const [featuredFarms, setFeaturedFarms] = useState([]);

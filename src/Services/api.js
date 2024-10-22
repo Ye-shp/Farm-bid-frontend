@@ -18,9 +18,21 @@ export const getNearbyBuyers = (location) => {
   return axios.post(`${API_URL}/buyers/nearby`, { location });
 };
 
+// Featured farms logic 
+export const getFeaturedFarms = async () => {
+  try {
+    const response = await axios.get('/api/blogs/featured-farms');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching featured farms:', error);
+    throw error;
+  }
+};
+
 export default {
   register,
   login,
+  getFeaturedFarms,
  // getNearbyFarmers, for future use 
  // getNearbyBuyers, for future use
 };

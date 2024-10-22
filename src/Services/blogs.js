@@ -26,10 +26,29 @@ export const addCommentToBlogPost = (blogId, commentData) =>
     },
   });
 
+  export const likeBlogPost = async (blogId, token) => {
+    try {
+      const response = await axios.put(
+        `/api/blogs/${blogId}/like`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error liking the blog post:', error);
+      throw error;
+    }
+  };
+
 // Export all the functions
 export default {
   getBlogPosts,
   getBlogPost,
   createBlogPost,
   addCommentToBlogPost,
+  likeBlogPost,
 };

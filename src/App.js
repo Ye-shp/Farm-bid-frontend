@@ -17,6 +17,7 @@ import CreateBlogPost from './components/CreateBlogPost'; // Create a new blog p
 import FarmerAuctions from './components/FarmerAuctions';
 import UserProfile from './components/UserProfile';
 import CheckoutForm from './components/CheckoutForm';
+import FeaturedFarms from './components/FeaturedFarms';
  
 
 const App = () => {
@@ -52,6 +53,7 @@ const App = () => {
           <Route path="/user/:userId" element= {<UserProfile />} />
           <Route path="/profile/:userId" element={<UserProfile />} />{/*For following and unfollowing */}
           <Route path= "/CheckoutForm" element ={<CheckoutForm/>} /> {/*Payments */}
+          <Route path="/Featuredfarms" element = {<FeaturedFarms/>} />  
 
 
         </Routes>
