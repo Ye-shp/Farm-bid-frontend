@@ -21,7 +21,7 @@ export const getNearbyBuyers = (location) => {
 // Featured farms logic 
 export const getFeaturedFarms = async () => {
   try {
-    const response = await axios.get('/api/blogs/featured-farms');
+    const response = await axios.get(`${API_URL}/blogs/featured-farms`);
     return response.data;
   } catch (error) {
     console.error('Error fetching featured farms:', error);
