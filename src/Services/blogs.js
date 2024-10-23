@@ -20,7 +20,7 @@ export const createBlogPost = (data) =>
 
 // Add a comment to a blog post
 export const addCommentToBlogPost = (blogId, commentData) =>
-  axios.post(`${API_URL}/blogs/${blogId}/comment`, commentData, {
+  axios.post(`${API_URL}/blogs/${blogId}/comments`, commentData, {
     headers: {
       Authorization: `Bearer ${getToken()}`, // Attach token for authenticated requests
     },

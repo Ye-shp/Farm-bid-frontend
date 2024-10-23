@@ -138,8 +138,8 @@ const UserProfile = () => {
       <div className="user-card card shadow-sm p-3 mb-4">
         <h2 className="user-email mb-2">{user.username}</h2>
         <p>
-          {/*<strong>Location:</strong>{' '}
-          {user.location.latitude && user.location.longitude
+          <strong>Location:</strong>{' '}
+          {/*{user.location.latitude && user.location.longitude
             ? `${user.location.latitude}, ${user.location.longitude}`
             : 'Location not available'}*/}
         </p>
