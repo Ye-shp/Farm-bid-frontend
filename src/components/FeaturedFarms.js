@@ -1,5 +1,7 @@
+// FeaturedFarms.js
+
 import React, { useEffect, useState } from 'react';
-import { getFeaturedFarms } from '../Services/api';
+import { getFeaturedFarms } from '../Services/api'; // Use named import
 import '../Styles/FeaturedFarms.css'; // Add any necessary styles
 
 const FeaturedFarms = () => {
