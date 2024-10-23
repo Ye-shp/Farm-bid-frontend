@@ -5,7 +5,8 @@ import '../Styles/Header.css';
 const Header = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-  const userRole = localStorage.getItem('role'); // Get user role from localStorage
+  const userRole = localStorage.getItem('role'); 
+  const userId = localStorage.getItem('userId');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleLogout = () => {
@@ -66,7 +67,7 @@ const Header = () => {
                   <Link to="/farmer-dashboard" className="dropdown-item hover-item">Dashboard</Link>
                 </li>
                 <li onClick={handleItemClick}>
-                  <Link to ="/user/:userId" className="dropdown-item hover-item">My profile</Link>
+                  <Link to={`/user/${userId}`} className="dropdown-item hover-item">My Profile</Link> {/* Dynamic Profile Link */}
                 </li>
                 <li onClick={handleItemClick}>
                   <Link to="/create-blog" className="dropdown-item hover-item">Create Blog Post</Link>

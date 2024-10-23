@@ -35,28 +35,36 @@ const RegisterPage = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+  
+    // Validate that username is not empty
+    if (!username || username.trim() === "") {
+      setError("Username is required and cannot be empty.");
+      return;
+    }
+  
     try {
       const response = await register({ username, email, password, role, location });
       if (response.status === 201) {
         alert("Registration successful!");
-        setUsername('')//Create username 
-        setEmail('');  // Clear the email field
-        setPassword('');  // Clear the password field
-        setRole('buyer');  // Reset role to default
-        setError(null);  // Clear any error messages
-        navigate('/login'); // Redirect to login page
+        setUsername('');
+        setEmail(''); 
+        setPassword(''); 
+        setRole('buyer'); 
+        setError(null);  
+        navigate('/login'); 
       }
     } catch (error) {
-      console.error('Registration error:', error);  // Log any errors
+      console.error('Registration error:', error); 
       if (error.response && error.response.status === 409) {
         setError("User already registered. Please log in.");
-      }else if (error.response&&error.response.status === 400){
-        setError ("Username already taken. Please choose another username")
-      }else {
+      } else if (error.response && error.response.status === 400) {
+        setError("Username already taken. Please choose another username.");
+      } else {
         setError("An error occurred. Please try again.");
       }
     }
   };
+  
 
   return (
     <div className="container mt-5">
