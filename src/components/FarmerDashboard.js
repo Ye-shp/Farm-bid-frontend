@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import CreateAuction from './CreateAuction'; // Import the dedicated auction component
+import CreateAuction from './CreateAuction'; // dedicated auction component
 import '../Styles/FarmerDashboard.css';
 
 const FarmerDashboard = () => {
   const [products, setProducts] = useState([]);
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
   const [newProduct, setNewProduct] = useState({ title: '', description: '', image: null });
+  const [notifications, setNotifications] = useState([]);
   const token = localStorage.getItem('token');
 
   // Fetch farmer's products
@@ -71,61 +72,107 @@ const FarmerDashboard = () => {
     }
   };
 
-  return (
-    <div className="container mt-5">
-      <h2 className="text-center mb-4">My Products</h2>
-      <div className="row">
-        {products.map(product => (
-          <div className="col-md-6 mb-4" key={product._id}>
-            <div className="card">
-              {product.imageUrl && <img src={product.imageUrl} className="card-img-top" alt={product.title} />}
-              <div className="card-body">
-                <h4 className="card-title">{product.title}</h4>
-                <p className="card-text">{product.description}</p>
+    // Notifications
+    useEffect(() => {
+      const fetchNotifications = async () => {
+        try {
+          const response = await axios.get('https://farm-bid-3998c30f5108.herokuapp.com/api/notifications', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setNotifications(response.data);
+        } catch (error) {
+          console.error('Error fetching notifications:', error);
+        }
+      };
+  
+      fetchNotifications();
+    }, [token]);
+
+    return (
+      <div className="container mt-5">
+        <h2 className="text-center mb-4">My Products</h2>
+        {/* Notifications Bell */}
+        <div className="notifications-bell">
+          <h4>Notifications</h4>
+          <ul>
+            {notifications.length > 0 ? (
+              notifications.map((notification) => (
+                <li key={notification._id}>{notification.message}</li>
+              ))
+            ) : (
+              <li>No new notifications</li>
+            )}
+          </ul>
+        </div>
+        
+        {/* Products Section */}
+        <div className="row mt-5">
+          {products.map((product) => (
+            <div className="col-md-6 mb-4" key={product._id}>
+              <div className="card">
+                {product.imageUrl && (
+                  <img
+                    src={product.imageUrl}
+                    className="card-img-top"
+                    alt={product.title}
+                  />
+                )}
+                <div className="card-body">
+                  <h4 className="card-title">{product.title}</h4>
+                  <p className="card-text">{product.description}</p>
+                </div>
               </div>
             </div>
+          ))}
+        </div>
+    
+        {/* Create Product Section */}
+        <h2 className="text-center mb-4">Create New Product</h2>
+        <form onSubmit={handleCreateProduct} className="mb-5">
+          <div className="mb-3">
+            <input
+              type="text"
+              className="form-control"
+              name="title"
+              value={newProduct.title}
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, title: e.target.value })
+              }
+              placeholder="Title"
+              required
+            />
           </div>
-        ))}
+          <div className="mb-3">
+            <textarea
+              className="form-control"
+              name="description"
+              value={newProduct.description}
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, description: e.target.value })
+              }
+              placeholder="Description"
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <input
+              type="file"
+              className="form-control"
+              name="image"
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, image: e.target.files[0] })
+              }
+              required
+            />
+          </div>
+          <button type="submit" className="btn btn-primary">
+            Create Product
+          </button>
+        </form>
+    
+        <CreateAuction products={products} />
       </div>
-  
-      <h2 className="text-center mb-4">Create New Product</h2>
-      <form onSubmit={handleCreateProduct} className="mb-5">
-        <div className="mb-3">
-          <input
-            type="text"
-            className="form-control"
-            name="title"
-            value={newProduct.title}
-            onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
-            placeholder="Title"
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <textarea
-            className="form-control"
-            name="description"
-            value={newProduct.description}
-            onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-            placeholder="Description"
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <input
-            type="file"
-            className="form-control"
-            name="image"
-            onChange={(e) => setNewProduct({ ...newProduct, image: e.target.files[0] })}
-            required
-          />
-        </div>
-        <button type="submit" className="btn btn-primary">Create Product</button>
-      </form>
-      
-      <CreateAuction products={products} />
-    </div>
-  );
+    );
   
 };
 
