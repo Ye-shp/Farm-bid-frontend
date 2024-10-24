@@ -30,7 +30,7 @@ const FarmerDashboard = () => {
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3'); // Replace with your actual token
+        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3'); 
         const loc = response.data.loc.split(',');
         setLocation({
           latitude: loc[0],

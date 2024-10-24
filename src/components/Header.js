@@ -88,7 +88,7 @@ const Header = () => {
                   <Link to="/create-blog" className="dropdown-item hover-item">Create Blog Post</Link>
                 </li>
                 <li onClick={handleItemClick}>
-                  <Link to ="/user/:userId" className="dropdown-item hover-item">My profile</Link>
+                  <Link to = {`/user/${userId}`} className="dropdown-item hover-item">My profile</Link>
                 </li>
               </>
             )}

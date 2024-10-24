@@ -28,8 +28,8 @@ export const addCommentToBlogPost = (blogId, commentData) =>
 
   export const likeBlogPost = async (blogId, token) => {
     try {
-      const response = await axios.put(
-        `/api/blogs/${blogId}/like`,
+      const response = await axios.post(
+        `${API_URL}/blogs/${blogId}/like`,
         {},
         {
           headers: {
