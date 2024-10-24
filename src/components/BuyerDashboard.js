@@ -5,6 +5,7 @@ import '../Styles/BuyerDashboard.css';
 const BuyerDashboard = () => {
   const [auctions, setAuctions] = useState([]);
   const [bidAmount, setBidAmount] = useState({}); // State to track bid amounts for each auction
+  const [notifications, setNotifications] =useState ([]); 
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
   const token = localStorage.getItem('token'); // Get the token from local storage
 
@@ -64,10 +65,38 @@ const BuyerDashboard = () => {
       alert('Error submitting bid.');
     }
   };
+//NOtifications 
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await axios.get('https://farm-bid-3998c30f5108.herokuapp.com/api/notifications', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setNotifications(response.data);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+
+    fetchNotifications();
+  }, [token]);
 
   return (
     <div className="container-fluid mt-5">
       <h2 className="text-center mb-4">Available Auctions</h2>
+        <div className="notifications-bell">
+        <h4>Notifications</h4>
+        <ul>
+          {notifications.length > 0 ? (
+            notifications.map((notification) => (
+              <li key={notification._id}>{notification.message}</li>
+            ))
+          ) : (
+            <li>No new notifications</li>
+          )}
+        </ul>
+      </div>
       <div className="row g-4">
         {auctions.map((auction) => (
           <div className="col-lg-4 col-md-6 col-sm-12" key={auction._id}>
