@@ -29,7 +29,7 @@ const CreateBlogPost = () => {
 
   return (
     <div className="container mt-5">
-      <h2 className="text-center mb-4">Create Blog Post</h2>
+      <h2 className="text-center mb-4">Create Feild Note</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <form onSubmit={handleSubmit}>
         <div className="form-group mb-3">
@@ -52,7 +52,7 @@ const CreateBlogPost = () => {
             rows="5"
           />
         </div>
-        <button type="submit" className="btn btn-primary">Create Blog</button>
+        <button type="submit" className="btn btn-primary">Create Feild Note</button>
       </form>
     </div>
   );  

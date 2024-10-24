@@ -27,7 +27,7 @@ const BlogList = ({ isLoggedIn }) => {
         <button 
           onClick={() => navigate('/create-blog')} 
           className="btn btn-primary mb-4 create-post-btn">
-          Create New Blog Post
+          Create New Feild Note 
         </button>
       )}
   
