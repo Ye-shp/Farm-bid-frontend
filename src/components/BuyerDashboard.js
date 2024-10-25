@@ -8,6 +8,7 @@ const BuyerDashboard = () => {
   const [notifications, setNotifications] =useState ([]); 
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
   const token = localStorage.getItem('token'); // Get the token from local storage
+  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com/api'; 
 
   useEffect(() => {
     const fetchAuctions = async () => {
@@ -65,6 +66,7 @@ const BuyerDashboard = () => {
       alert('Error submitting bid.');
     }
   };
+
 //NOtifications 
 
   useEffect(() => {
@@ -82,15 +84,39 @@ const BuyerDashboard = () => {
     fetchNotifications();
   }, [token]);
 
+
+  const markAsRead = async (notificationId) => {
+    try {
+      await axios.put(`${API_URL}/notifications/${notificationId}/read`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) =>
+          notification._id === notificationId ? { ...notification, read: true } : notification
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
   return (
     <div className="container-fluid mt-5">
       <h2 className="text-center mb-4">Available Auctions</h2>
-        <div className="notifications-bell">
+      <div className="notifications-bell">
         <h4>Notifications</h4>
         <ul>
           {notifications.length > 0 ? (
             notifications.map((notification) => (
-              <li key={notification._id}>{notification.message}</li>
+              <li
+                key={notification._id}
+                onClick={() => markAsRead(notification._id)}
+                className={`notification ${notification.read ? 'read' : 'unread'}`}
+              >
+                {notification.message}
+              </li>
             ))
           ) : (
             <li>No new notifications</li>
@@ -150,7 +176,7 @@ const BuyerDashboard = () => {
         ))}
       </div>
     </div>
-  );
+  );  
 };
 
 export default BuyerDashboard;

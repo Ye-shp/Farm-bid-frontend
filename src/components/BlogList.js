@@ -21,13 +21,13 @@ const BlogList = ({ isLoggedIn }) => {
 
   return (
     <div className="container mt-5">
-      <h2 className="text-center mb-4">Blog Posts</h2>
+      <h2 className="text-center mb-4">Field Notes</h2>
       
       {isLoggedIn && (
         <button 
           onClick={() => navigate('/create-blog')} 
           className="btn btn-primary mb-4 create-post-btn">
-          Create New Feild Note 
+          Create New Field Note 
         </button>
       )}
   

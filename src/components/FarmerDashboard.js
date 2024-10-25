@@ -9,6 +9,7 @@ const FarmerDashboard = () => {
   const [newProduct, setNewProduct] = useState({ title: '', description: '', image: null });
   const [notifications, setNotifications] = useState([]);
   const token = localStorage.getItem('token');
+  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com/api'; 
 
   // Fetch farmer's products
   useEffect(() => {
@@ -88,6 +89,23 @@ const FarmerDashboard = () => {
       fetchNotifications();
     }, [token]);
 
+    const markAsRead = async (notificationId) => {
+      try {
+        await axios.put(`${API_URL}/notifications/${notificationId}/read`, {}, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setNotifications((prevNotifications) =>
+          prevNotifications.map((notification) =>
+            notification._id === notificationId ? { ...notification, read: true } : notification
+          )
+        );
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    };
+
     return (
       <div className="container mt-5">
         <h2 className="text-center mb-4">My Products</h2>
@@ -97,14 +115,20 @@ const FarmerDashboard = () => {
           <ul>
             {notifications.length > 0 ? (
               notifications.map((notification) => (
-                <li key={notification._id}>{notification.message}</li>
+                <li
+                  key={notification._id}
+                  onClick={() => markAsRead(notification._id)}
+                  className={`notification ${notification.read ? 'read' : 'unread'}`}
+                >
+                  {notification.message}
+                </li>
               ))
             ) : (
               <li>No new notifications</li>
             )}
           </ul>
         </div>
-        
+    
         {/* Products Section */}
         <div className="row mt-5">
           {products.map((product) => (
@@ -172,8 +196,7 @@ const FarmerDashboard = () => {
     
         <CreateAuction products={products} />
       </div>
-    );
-  
+    );    
 };
 
 export default FarmerDashboard;
