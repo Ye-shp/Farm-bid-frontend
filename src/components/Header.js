@@ -57,7 +57,7 @@ const Header = () => {
           >
             {/* Accessible to everyone */}
             <li onClick={handleItemClick}>
-              <Link to="/blogs" className="dropdown-item hover-item">Blogs</Link>
+              <Link to="/blogs" className="dropdown-item hover-item">Field Notes</Link>
             </li>
 
             {/* Show these options for logged-in farmers */}
@@ -70,7 +70,7 @@ const Header = () => {
                   <Link to={`/user/${userId}`} className="dropdown-item hover-item">My Profile</Link> {/* Dynamic Profile Link */}
                 </li>
                 <li onClick={handleItemClick}>
-                  <Link to="/create-blog" className="dropdown-item hover-item">Create Blog Post</Link>
+                  <Link to="/create-blog" className="dropdown-item hover-item">Create Field Notes</Link>
                 </li>
                 <li onClick={handleItemClick}>
                   <Link to= "/farmer-auctions" className="dropdown-item hover-item">My Auctions</Link>
