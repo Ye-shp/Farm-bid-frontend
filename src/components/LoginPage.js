@@ -22,7 +22,6 @@ const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
           latitude: loc[0],
           longitude: loc[1]
         });
-        console.log('Location fetched:', loc);  // Log the location for debugging
       } catch (error) {
         console.error("Error fetching location:", error);
         setError("Unable to fetch location from IP address.");
@@ -35,12 +34,7 @@ const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
   // Handle the login submission
   const handleLogin = async (e) => {
     e.preventDefault();  // Prevent default form submission
-    console.log('Login button clicked');  // Debugging log to check button responsiveness
-
     try {
-      // Log the login details
-      console.log('Attempting login with:', { email, password });
-
       // Perform the login request with just email and password
       const response = await login({ email, password }); 
 

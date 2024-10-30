@@ -7,18 +7,18 @@ const HomePage = () => {
   const [featuredFarms, setFeaturedFarms] = useState([]);
 
   useEffect(() => {
-    // Fetch the featured farms from the API
     const fetchFeaturedFarms = async () => {
       try {
-        const response = await api.get('/api/featured-farms'); // Adjust the endpoint to match your backend
-        setFeaturedFarms(response.data);  // Update the state with fetched farms
+        const response = await api.getFeaturedFarms(); // Correct usage of the default import
+        setFeaturedFarms(response.data); // Set the farms data from response
       } catch (error) {
         console.error('Error fetching featured farms:', error);
       }
     };
-
+  
     fetchFeaturedFarms();
   }, []);
+  
 
   return (
     <div className="container text-center my-5">
