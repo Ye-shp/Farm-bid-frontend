@@ -19,7 +19,7 @@ const BlogPost = () => {
         setBlogPost(response.data);
         setComments(response.data.comments || []); // Load comments
       } catch (err) {
-        console.error('Error fetching blog post:', err);
+        console.error('Error fetching field note:', err);
       }
     };
     fetchBlog();
