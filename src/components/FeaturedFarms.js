@@ -1,8 +1,9 @@
 // FeaturedFarms.js
 
 import React, { useEffect, useState } from 'react';
-import { getFeaturedFarms } from '../Services/api'; // Use named import
+import getFeaturedFarms  from '../Services/api'; // Use named import
 import '../Styles/FeaturedFarms.css'; // Add any necessary styles
+import api from '../Services/api'
 
 const FeaturedFarms = () => {
   const [farms, setFarms] = useState([]);
@@ -11,7 +12,7 @@ const FeaturedFarms = () => {
   useEffect(() => {
     const fetchFarms = async () => {
       try {
-        const featuredFarms = await getFeaturedFarms();
+        const featuredFarms = await api.getFeaturedFarms();
         setFarms(featuredFarms);
       } catch (error) {
         setError('Unable to fetch featured farms. Please try again later.');

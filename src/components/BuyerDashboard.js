@@ -13,15 +13,18 @@ const BuyerDashboard = () => {
   useEffect(() => {
     const fetchAuctions = async () => {
       try {
-        const response = await axios.get('https://farm-bid-3998c30f5108.herokuapp.com/api/auctions', {
-          headers: { Authorization: `Bearer ${token}` }, // Include token in the request header
+        const response = await axios.get(`${API_URL}/auctions`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        setAuctions(response.data);
+  
+        // Filter active auctions properly
+        const activeAuctions = response.data.filter((auction) => auction.status === 'active');
+        setAuctions(activeAuctions);
       } catch (error) {
         console.error('Error fetching auctions:', error);
       }
     };
-
+  
     fetchAuctions();
   }, [token]);
 
@@ -105,6 +108,8 @@ const BuyerDashboard = () => {
   return (
     <div className="container-fluid mt-5">
       <h2 className="text-center mb-4">Available Auctions</h2>
+
+      {/* Notifications Section */}
       <div className="notifications-bell">
         <h4>Notifications</h4>
         <ul>
@@ -123,6 +128,8 @@ const BuyerDashboard = () => {
           )}
         </ul>
       </div>
+
+      {/* Auctions Section */}
       <div className="row g-4">
         {auctions.map((auction) => (
           <div className="col-lg-4 col-md-6 col-sm-12" key={auction._id}>
@@ -155,6 +162,15 @@ const BuyerDashboard = () => {
                   </p>
                   <i className="bi bi-graph-up-arrow text-primary"></i>
                 </div>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <p className="card-text mb-0">
+                    <strong>Status:</strong>
+                    <span className={`badge ${auction.status === 'active' ? 'bg-info' : 'bg-secondary'} ms-2`}>
+                      {auction.status}
+                    </span>
+                  </p>
+                  <i className={`bi ${auction.status === 'active' ? 'bi-check-circle-fill text-info' : 'bi-x-circle-fill text-secondary'}`}></i>
+                </div>
                 <div className="mt-auto">
                   <input
                     type="number"
@@ -176,7 +192,7 @@ const BuyerDashboard = () => {
         ))}
       </div>
     </div>
-  );  
+  );
 };
 
 export default BuyerDashboard;
