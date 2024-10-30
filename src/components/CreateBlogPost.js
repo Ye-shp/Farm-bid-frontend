@@ -14,7 +14,7 @@ const CreateBlogPost = () => {
     const token = localStorage.getItem('token'); // Assuming you're storing the token in localStorage
 
     if (!token) {
-      setError('You need to be logged in to create a blog post');
+      setError('You need to be logged in to create a field note');
       return;
     }
 
@@ -23,7 +23,7 @@ const CreateBlogPost = () => {
       await createBlogPost(postData, token); // Pass the token to the API
       navigate('/blogs'); // Redirect to blog list after creation
     } catch (err) {
-      setError('Failed to create blog post');
+      setError('Failed to create field note');
     }
   };
 
