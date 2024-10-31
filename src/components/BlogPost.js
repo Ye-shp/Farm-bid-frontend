@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { getBlogPost, addCommentToBlogPost, likeBlogPost} from '../Services/blogs';
 
 const BlogPost = () => {
@@ -40,6 +40,20 @@ const BlogPost = () => {
     } catch (err) {
       console.error('Error adding comment:', err);
     }
+  };
+
+  const renderCommentContent = (content) => {
+    return content.split(/(\s+)/).map((word, index) => {
+      if (word.startsWith('@')) {
+        const username = word.slice(1);
+        return (
+          <Link key={index} to={`/user/${username}`}>
+            {word}
+          </Link>
+        );
+      }
+      return word;
+    });
   };
 
   const handleLike = async () => {
@@ -99,7 +113,7 @@ const BlogPost = () => {
                         {comment.user?.username || 'Anonymous'} -{' '}
                         <span className="comment-date">{new Date(comment.createdAt).toLocaleDateString()}</span>
                       </p>
-                      <p className="comment-content">{comment.content}</p>
+                      <p className="comment-content">{renderCommentContent(comment.content)}</p>
                     </div>
                   </div>
                 ))
