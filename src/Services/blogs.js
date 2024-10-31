@@ -26,23 +26,34 @@ export const addCommentToBlogPost = (blogId, commentData) =>
     },
   });
 
-  export const likeBlogPost = async (blogId, token) => {
-    try {
-      const response = await axios.post(
-        `${API_URL}/blogs/${blogId}/like`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error liking the blog post:', error);
-      throw error;
-    }
-  };
+export const likeBlogPost = async (blogId, token) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/blogs/${blogId}/like`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error liking the blog post:', error);
+    throw error;
+  }
+};
+
+export const getUserBlogPosts = async (userId) => {
+  try {
+    const response = await axios.get(`/api/blogs/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user blogs:', error);
+    throw error;
+  }
+};
+
 
 // Export all the functions
 export default {
@@ -51,4 +62,5 @@ export default {
   createBlogPost,
   addCommentToBlogPost,
   likeBlogPost,
+  getUserBlogPosts,
 };

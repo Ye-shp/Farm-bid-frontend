@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
+import { getUserBlogPosts } from '../Services/blogs';
 
 const UserProfile = () => {
   const { userId } = useParams();
@@ -14,6 +15,7 @@ const UserProfile = () => {
     followers: [],
     following: [],
   });
+  const [userBlogs, setUserBlogs] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loggedInUserId, setLoggedInUserId] = useState(null);
@@ -39,18 +41,49 @@ const UserProfile = () => {
           deliveryAvailable: fetchedUser.deliveryAvailable || false,
         });
 
+        // Fetch user's blog posts
+        const blogResponse = await axios.get(
+          `https://farm-bid-3998c30f5108.herokuapp.com/api/blogs/user/${userId}`
+        );
+        setUserBlogs(blogResponse.data);
+
         // Check if the logged-in user is already following this user
         setIsFollowing(fetchedUser.followers.includes(userIdFromToken));
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        if (error.response) {
+          console.error('Server responded with an error:', error.response.data);
+        } else if (error.request) {
+          console.error('No response received from server:', error.request);
+        } else {
+          console.error('Error setting up request:', error.message);
+        }
       }
     };
 
     fetchUser();
+
+    return () => {
+      // Cleanup function to prevent memory leaks
+      setUser({
+        socialMedia: { instagram: '', facebook: '', tiktok: '' },
+        description: '',
+        wholesaleAvailable: false,
+        deliveryAvailable: false,
+        location: { latitude: '', longitude: '' },
+        partners: [],
+        followers: [],
+        following: [],
+      });
+      setIsFollowing(false);
+    };
   }, [userId]);
 
   const handleSave = async () => {
     const token = localStorage.getItem('token');
+    if (!token) {
+      alert('You need to be logged in to perform this action.');
+      return;
+    }
     try {
       await axios.put(
         `https://farm-bid-3998c30f5108.herokuapp.com/api/users/${userId}`,
@@ -70,7 +103,12 @@ const UserProfile = () => {
       setIsEditing(false);
       alert('Profile updated successfully');
     } catch (error) {
-      console.error('Error updating profile:', error.response?.data || error.message);
+      if (error.response && error.response.status === 401) {
+        alert('Session expired. Please log in again.');
+        localStorage.removeItem('token');
+      } else {
+        console.error('Error updating profile:', error.response?.data || error.message);
+      }
     }
   };
 
@@ -89,6 +127,10 @@ const UserProfile = () => {
 
   const handleFollow = async () => {
     const token = localStorage.getItem('token');
+    if (!token) {
+      alert('You need to be logged in to perform this action.');
+      return;
+    }
     try {
       await axios.post(
         `https://farm-bid-3998c30f5108.herokuapp.com/api/users/follow/${userId}`,
@@ -105,12 +147,21 @@ const UserProfile = () => {
         followers: [...prevUser.followers, loggedInUserId],
       }));
     } catch (error) {
-      console.error('Error following user:', error);
+      if (error.response && error.response.status === 401) {
+        alert('Session expired. Please log in again.');
+        localStorage.removeItem('token');
+      } else {
+        console.error('Error following user:', error.response?.data || error.message);
+      }
     }
   };
 
   const handleUnfollow = async () => {
     const token = localStorage.getItem('token');
+    if (!token) {
+      alert('You need to be logged in to perform this action.');
+      return;
+    }
     try {
       await axios.post(
         `https://farm-bid-3998c30f5108.herokuapp.com/api/users/unfollow/${userId}`,
@@ -127,7 +178,12 @@ const UserProfile = () => {
         followers: prevUser.followers.filter((id) => id !== loggedInUserId),
       }));
     } catch (error) {
-      console.error('Error unfollowing user:', error);
+      if (error.response && error.response.status === 401) {
+        alert('Session expired. Please log in again.');
+        localStorage.removeItem('token');
+      } else {
+        console.error('Error unfollowing user:', error.response?.data || error.message);
+      }
     }
   };
 
@@ -146,7 +202,27 @@ const UserProfile = () => {
         <p>Followers: {user.followers.length}</p>
         <p>Following: {user.following.length}</p>
       </div>
-
+  
+      <div className="blogs-card card shadow-sm p-3 mb-4">
+        <h3>{user.username}'s Blog Posts</h3>
+        {userBlogs.length > 0 ? (
+          <ul className="list-unstyled">
+            {userBlogs.map((blog) => (
+              <li key={blog._id} className="mb-3">
+                <h4>
+                  <Link to={`/blog/${blog._id}`} className="text-decoration-none">
+                    {blog.title}
+                  </Link>
+                </h4>
+                <p>{blog.content.slice(0, 100)}...</p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>Hasn't posted any Field Notes yet</p>
+        )}
+      </div>
+  
       {user.role === 'farmer' && (
         <>
           <div className="about-card card shadow-sm p-3 mb-4">
@@ -154,9 +230,7 @@ const UserProfile = () => {
             {isEditing ? (
               <textarea
                 value={user.description || ''}
-                onChange={(e) =>
-                  setUser({ ...user, description: e.target.value })
-                }
+                onChange={(e) => setUser({ ...user, description: e.target.value })}
                 className="form-control"
                 rows="3"
               />
@@ -164,7 +238,7 @@ const UserProfile = () => {
               <p>{user.description || 'No description provided yet.'}</p>
             )}
           </div>
-
+  
           <div className="social-media-card card shadow-sm p-3 mb-4">
             <h3>Social Media</h3>
             {isEditing ? (
@@ -218,24 +292,39 @@ const UserProfile = () => {
             ) : (
               <div className="social-media-links">
                 {user.socialMedia.instagram && (
-                  <a href={user.socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary mb-2">
+                  <a
+                    href={user.socialMedia.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-outline-secondary mb-2"
+                  >
                     Instagram
                   </a>
                 )}
                 {user.socialMedia.facebook && (
-                  <a href={user.socialMedia.facebook} target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary mb-2">
+                  <a
+                    href={user.socialMedia.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-outline-secondary mb-2"
+                  >
                     Facebook
                   </a>
                 )}
                 {user.socialMedia.tiktok && (
-                  <a href={user.socialMedia.tiktok} target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary mb-2">
+                  <a
+                    href={user.socialMedia.tiktok}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-outline-secondary mb-2"
+                  >
                     TikTok
                   </a>
                 )}
               </div>
             )}
           </div>
-
+  
           <div className="partners-card card shadow-sm p-3 mb-4">
             <h3>Partners</h3>
             {isEditing ? (
@@ -245,27 +334,21 @@ const UserProfile = () => {
                     <input
                       type="text"
                       value={partner.name || ''}
-                      onChange={(e) =>
-                        handlePartnerChange(index, 'name', e.target.value)
-                      }
+                      onChange={(e) => handlePartnerChange(index, 'name', e.target.value)}
                       placeholder="Partner Name"
                       className="form-control mb-1"
                     />
                     <input
                       type="text"
                       value={partner.location || ''}
-                      onChange={(e) =>
-                        handlePartnerChange(index, 'location', e.target.value)
-                      }
+                      onChange={(e) => handlePartnerChange(index, 'location', e.target.value)}
                       placeholder="Location"
                       className="form-control mb-1"
                     />
                     <input
                       type="text"
                       value={partner.description || ''}
-                      onChange={(e) =>
-                        handlePartnerChange(index, 'description', e.target.value)
-                      }
+                      onChange={(e) => handlePartnerChange(index, 'description', e.target.value)}
                       placeholder="Description"
                       className="form-control"
                     />
@@ -291,6 +374,7 @@ const UserProfile = () => {
               </ul>
             )}
           </div>
+  
           <div className="delivery-card card shadow-sm p-3 mb-4">
             <h3>Delivery Availability</h3>
             {isEditing ? (
@@ -314,6 +398,7 @@ const UserProfile = () => {
               </p>
             )}
           </div>
+  
           <div className="wholesale-card card shadow-sm p-3 mb-4">
             <h3>Wholesale Availability</h3>
             {isEditing ? (
@@ -323,9 +408,7 @@ const UserProfile = () => {
                   className="form-check-input"
                   id="wholesaleAvailable"
                   checked={user.wholesaleAvailable || false}
-                  onChange={(e) =>
-                    setUser({ ...user, wholesaleAvailable: e.target.checked })
-                  }
+                  onChange={(e) => setUser({ ...user, wholesaleAvailable: e.target.checked })}
                 />
                 <label className="form-check-label" htmlFor="wholesaleAvailable">
                   Offers Wholesale
@@ -339,7 +422,7 @@ const UserProfile = () => {
               </p>
             )}
           </div>
-
+  
           {isOwner ? (
             <div className="action-buttons mt-3">
               <button className="btn btn-primary me-2" onClick={() => setIsEditing(!isEditing)}>
@@ -364,7 +447,7 @@ const UserProfile = () => {
         </>
       )}
     </div>
-  );
+  );  
 };
 
 export default UserProfile;
