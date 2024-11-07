@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';  // Import Bootstrap CSS
 import 'bootstrap/dist/js/bootstrap.bundle.min'; // Import Bootstrap JS bundle (includes Popper.js)
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
 import Header from './components/Header';
 import HomePage from './components/HomePage';
 import LoginPage from './components/LoginPage';
@@ -18,7 +20,11 @@ import FarmerAuctions from './components/FarmerAuctions';
 import UserProfile from './components/UserProfile';
 import CheckoutForm from './components/CheckoutForm';
 import FeaturedFarms from './components/FeaturedFarms';
+import Payouts from './components/Payout';
  
+
+const stripePromise = loadStripe('pk_live_51Q9hx7ApVL7y3rvg85x9cvnfNETqgxw7qYxRrBJeD7rOg0d0M0WJnNMRF4TouN5RYAgwQ0HfQefNwZ5AEGXPIlF600UXzQ8rKx')
+
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -51,11 +57,17 @@ const App = () => {
           <Route path="/create-blog" element={<CreateBlogPost />} /> {/* Create a blog post */}
           <Route path="/farmer-auctions" element={<FarmerAuctions />} />{/*Farmers live auctions */}
           <Route path="/user/:userId" element= {<UserProfile />} />
-          <Route path="/profile/:userId" element={<UserProfile />} />{/*For following and unfollowing */}
-          <Route path= "/CheckoutForm" element ={<CheckoutForm/>} /> {/*Payments */}
-          <Route path="/Featuredfarms" element = {<FeaturedFarms/>} />  
-
-
+          <Route path="/profile/:userId" element={<UserProfile />} />{/*For following and unfollowing */}          
+          <Route path="/Featuredfarms" element = {<FeaturedFarms/>} />            
+          <Route path="/Payout" element={<Payouts/>}/>
+           <Route 
+            path="/CheckoutForm" 
+            element={
+              <Elements stripe={stripePromise}>
+                <CheckoutForm />
+              </Elements>
+            } 
+          />
         </Routes>
       </div>
     </Router>

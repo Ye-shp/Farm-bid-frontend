@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import '../Styles/CheckoutForm.css';
 
 const CheckoutForm = () => {
   const stripe = useStripe();
@@ -16,7 +17,6 @@ const CheckoutForm = () => {
       return; // Stripe.js hasn't loaded yet.
     }
 
-    // Get the CardElement and create a payment method
     const cardElement = elements.getElement(CardElement);
     const { error, paymentMethod } = await stripe.createPaymentMethod({
       type: 'card',
@@ -63,14 +63,15 @@ const CheckoutForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <CardElement />
-      <button type="submit" disabled={isProcessing || !stripe}>
-        {isProcessing ? 'Processing...' : 'Pay'}
+    <form onSubmit={handleSubmit} className="checkout-form">
+      <h2 className="form-title">Complete Your Payment</h2>
+      <CardElement className="card-element" />
+      <button type="submit" disabled={isProcessing || !stripe} className="submit-button">
+        {isProcessing ? 'Processing...' : 'Pay Now'}
       </button>
 
-      {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
-      {paymentSuccess && <div style={{ color: 'green' }}>Payment successful!</div>}
+      {errorMessage && <div className="error-message">{errorMessage}</div>}
+      {paymentSuccess && <div className="success-message">Payment successful!</div>}
     </form>
   );
 };
