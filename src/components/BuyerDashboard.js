@@ -5,7 +5,7 @@ import '../Styles/BuyerDashboard.css';
 const BuyerDashboard = () => {
   const [auctions, setAuctions] = useState([]);
   const [bidAmount, setBidAmount] = useState({}); // State to track bid amounts for each auction
-  const [notifications, setNotifications] =useState ([]); 
+  const [notifications, setNotifications] = useState([]); 
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
   const token = localStorage.getItem('token'); // Get the token from local storage
   const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com/api'; 
@@ -70,8 +70,7 @@ const BuyerDashboard = () => {
     }
   };
 
-//NOtifications 
-
+  // Notifications
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -86,7 +85,6 @@ const BuyerDashboard = () => {
 
     fetchNotifications();
   }, [token]);
-
 
   const markAsRead = async (notificationId) => {
     try {
@@ -134,19 +132,21 @@ const BuyerDashboard = () => {
         {auctions.map((auction) => (
           <div className="col-lg-4 col-md-6 col-sm-12" key={auction._id}>
             <div className="card auction-card h-100 shadow-lg">
-              {auction.product.imageUrl && (
+              {auction.product && auction.product.imageUrl ? (
                 <img
                   src={auction.product.imageUrl}
                   alt={auction.product.title}
                   className="card-img-top auction-image"
                 />
+              ) : (
+                <div className="placeholder-image">Image Not Available</div>
               )}
               <div className="card-body d-flex flex-column">
                 <h5 className="card-title text-center auction-title">
-                  {auction.product.title}
+                  {auction.product?.title || 'Untitled Product'}
                 </h5>
                 <p className="card-text text-muted text-center">
-                  {auction.product.description}
+                  {auction.product?.description || 'No description available'}
                 </p>
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <p className="card-text mb-0">

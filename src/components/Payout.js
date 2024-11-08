@@ -8,7 +8,11 @@ const Payouts = () => {
   const [amount, setAmount] = useState('');
   const [email, setEmail] = useState('');
   const [accountCreated, setAccountCreated] = useState(false); // Track if account is created
+  const [bankAccountAdded, setBankAccountAdded] = useState(false); // Track if bank account is added
   const [message, setMessage] = useState(null);
+  const [accountNumber, setAccountNumber] = useState('');
+  const [routingNumber, setRoutingNumber] = useState('');
+  const [holderName, setHolderName] = useState('');
 
   useEffect(() => {
     // Fetch seller balance and payout history
@@ -21,11 +25,16 @@ const Payouts = () => {
   }, []);
 
   const handlePayoutRequest = () => {
+    if (!bankAccountAdded) {
+      setMessage('Please add a bank account before requesting a payout.');
+      return;
+    }
+
     api.requestPayout({ amount: parseInt(amount, 10) * 100 })
       .then((response) => {
         if (response.data.success) {
           setMessage('Payout requested successfully!');
-          setAmount(''); 
+          setAmount('');
         } else {
           setMessage('Error processing payout.');
         }
@@ -49,6 +58,25 @@ const Payouts = () => {
       .catch((error) => {
         console.error('Error creating connected account:', error);
         setMessage('Error creating connected account.');
+      });
+  };
+
+  const handleAddBankAccount = () => {
+    api.addBankAccount({
+      accountId: '<CONNECTED_ACCOUNT_ID>', // You will need to dynamically assign this
+      bankAccountDetails: {
+        accountNumber,
+        routingNumber,
+        holderName,
+      },
+    })
+      .then((response) => {
+        setMessage('Bank account added successfully!');
+        setBankAccountAdded(true); // Update state to show bank account has been added
+      })
+      .catch((error) => {
+        console.error('Error adding bank account:', error);
+        setMessage('Error adding bank account.');
       });
   };
 
@@ -79,7 +107,32 @@ const Payouts = () => {
         </>
       )}
 
-      {accountCreated && (
+      {accountCreated && !bankAccountAdded && (
+        <>
+          <h2>Add Bank Account</h2>
+          <input
+            type="text"
+            value={holderName}
+            onChange={(e) => setHolderName(e.target.value)}
+            placeholder="Account Holder Name"
+          />
+          <input
+            type="text"
+            value={accountNumber}
+            onChange={(e) => setAccountNumber(e.target.value)}
+            placeholder="Account Number"
+          />
+          <input
+            type="text"
+            value={routingNumber}
+            onChange={(e) => setRoutingNumber(e.target.value)}
+            placeholder="Routing Number"
+          />
+          <button onClick={handleAddBankAccount}>Add Bank Account</button>
+        </>
+      )}
+
+      {accountCreated && bankAccountAdded && (
         <>
           <h2>Request Payout</h2>
           <input

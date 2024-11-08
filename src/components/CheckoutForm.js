@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import '../Styles/CheckoutForm.css';
+import api from '../Services/api';
 
 const CheckoutForm = () => {
   const stripe = useStripe();
@@ -8,6 +9,7 @@ const CheckoutForm = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [clientSecret, setClientSecret] = useState(null);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -31,19 +33,26 @@ const CheckoutForm = () => {
     }
 
     // Send the payment method to your backend to create a payment intent
-    const response = await fetch('/create-payment-intent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: 5000 }), // Example amount in cents, $50
-    });
-
-    const paymentIntent = await response.json();
+    try {
+      const response = await api.createPaymentIntent({ amount: 5000 }); // Example amount
+      const clientSecret = response.data.clientSecret;
+      setClientSecret(clientSecret);
+    } catch (error) {
+      console.error("Failed to create payment intent:", error);
+      setIsProcessing(false);
+      return;
+    }
 
     // Confirm the card payment using the client secret from the backend
-    const { error: confirmError, paymentIntent: confirmedPayment } = await stripe.confirmCardPayment(
-      paymentIntent.clientSecret,
+    const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
+      clientSecret,
       {
-        payment_method: paymentMethod.id,
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: paymentMethod.billing_details?.name || 'Customer', // Ensure name is collected from user
+          },
+        },
       }
     );
 
@@ -54,9 +63,11 @@ const CheckoutForm = () => {
       return;
     }
 
-    if (confirmedPayment.status === 'succeeded') {
+    if (paymentIntent.status === 'succeeded') {
       setPaymentSuccess(true);
       setErrorMessage(null);
+      console.log("Payment succeeded!");
+      // Optionally update auction status or redirect user
     }
 
     setIsProcessing(false);
