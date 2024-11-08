@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import '../Styles/Payout.css';
+import api from '../../src/Services/api';
 
 const Payouts = () => {
   const [balance, setBalance] = useState(0);
@@ -11,24 +12,18 @@ const Payouts = () => {
 
   useEffect(() => {
     // Fetch seller balance and payout history
-    fetch('/api/payout/seller-balance')
-      .then((response) => response.json())
-      .then((data) => {
-        setBalance(data.balance);
-        setPayoutHistory(data.payoutHistory);
+    api.getSellerBalance()
+      .then((response) => {
+        setBalance(response.data.balance);
+        setPayoutHistory(response.data.payoutHistory);
       })
       .catch((error) => console.error('Error fetching payout data:', error));
   }, []);
 
   const handlePayoutRequest = () => {
-    fetch('/api/payout/request-payout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: parseInt(amount, 10) * 100 }), // Amount in cents
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
+    api.requestPayout({ amount: parseInt(amount, 10) * 100 })
+      .then((response) => {
+        if (response.data.success) {
           setMessage('Payout requested successfully!');
           setAmount(''); 
         } else {
@@ -42,21 +37,16 @@ const Payouts = () => {
   };
 
   const handleCreateAccount = () => {
-    fetch('/api/payout/create-connected-account', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }), // Send seller's email to create connected account
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.accountId) {
+    api.createConnectedAccount({ email })
+      .then((response) => {
+        if (response.data.accountId) {
           setAccountCreated(true);
           setMessage('Connected account created successfully!');
         } else {
           setMessage('Error creating connected account.');
         }
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('Error creating connected account:', error);
         setMessage('Error creating connected account.');
       });

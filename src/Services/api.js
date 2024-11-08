@@ -28,11 +28,25 @@ export const getFeaturedFarms = async () => {
     throw error;
   }
 };
+//stripe 
+// Create payment intent (Stripe)
+export const createPaymentIntent = (data) => axios.post(`${API_URL}/payments/create-payment-intent`, data);
+
+// Request payout
+export const requestPayout = (data) => axios.post(`${API_URL}/payout/request`, data);
+
+// Create connected account (Stripe)
+export const createConnectedAccount = (data) => axios.post(`${API_URL}/payout/create-connected-account`, data);
+
+export const getSellerBalance = () => axios.get(`${API_URL}/payout/seller-balance`);
 
 export default {
   register,
   login,
   getFeaturedFarms,
- // getNearbyFarmers, for future use 
- // getNearbyBuyers, for future use
+  createPaymentIntent,
+  requestPayout,
+  createConnectedAccount,
+  getSellerBalance,
+ 
 };
