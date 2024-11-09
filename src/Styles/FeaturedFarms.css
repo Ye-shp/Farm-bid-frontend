@@ -1,31 +1,110 @@
-.featured-farms {
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 10px;
-    margin: 20px 0;
-  }
-  
-  .farms-list {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-  }
-  
-  .farm-card {
-    padding: 15px;
-    background-color: #ffffff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    width: 30%;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .farm-card h3 {
-    margin-top: 0;
-    font-size: 1.5em;
-  }
-  
-  .farm-card p {
-    margin: 5px 0;
-  }
-  
+.featured-farms-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.featured-farms-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.featured-farms-header h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.featured-farms-header p {
+  color: #666;
+}
+
+.farms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  padding: 20px;
+}
+
+.farm-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.farm-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.farm-card-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2563eb;
+  margin: 0;
+}
+
+.featured-badge {
+  background-color: #dbeafe;
+  color: #2563eb;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.farm-card-content {
+  flex-grow: 1;
+}
+
+.farm-description {
+  color: #4b5563;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.farm-engagement {
+  color: #6b7280;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.farm-card-footer {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.farm-email {
+  color: #4b5563;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.view-profile-button {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  background-color: #2563eb;
+  color: white;
+  text-align: center;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+  font-weight: 500;
+}
+
+.view-profile-button:hover {
+  background-color: #1d4ed8;
+}
