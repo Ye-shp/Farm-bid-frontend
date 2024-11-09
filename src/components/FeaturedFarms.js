@@ -81,7 +81,7 @@ const FeaturedFarms = () => {
                       ✉️ {farm.email}
                     </div>
                   )}
-                  <Link to={`/farm/${farmId}`} className="view-profile-button">
+                   <Link to={`/user/${farmId}`} className="view-profile-button">
                     View Profile
                   </Link>
                 </div>
