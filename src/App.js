@@ -21,6 +21,9 @@ import UserProfile from './components/UserProfile';
 import CheckoutForm from './components/CheckoutForm';
 import FeaturedFarms from './components/FeaturedFarms';
 import Payouts from './components/Payout';
+import CreateContract from './components/CreateContract';
+import OpenContractsList from './components/OpenContractList';
+import FulfillContract from './components/FulfillContract';
  
 
 const stripePromise = loadStripe('pk_live_51Q9hx7ApVL7y3rvg85x9cvnfNETqgxw7qYxRrBJeD7rOg0d0M0WJnNMRF4TouN5RYAgwQ0HfQefNwZ5AEGXPIlF600UXzQ8rKx')
@@ -57,9 +60,12 @@ const App = () => {
           <Route path="/create-blog" element={<CreateBlogPost />} /> {/* Create a blog post */}
           <Route path="/farmer-auctions" element={<FarmerAuctions />} />{/*Farmers live auctions */}
           <Route path="/user/:userId" element= {<UserProfile />} />
-          <Route path="/profile/:userId" element={<UserProfile />} />{/*For following and unfollowing */}          
+          <Route path="/profile/:userId" element={<UserProfile />} />{/*For following and unfollowing */}      
+          <Route path="/createContract" element= {<CreateContract/>} />  
+          <Route path="/OpenContractList" element= {<OpenContractsList/>} />    
           <Route path="/Featuredfarms" element = {<FeaturedFarms/>} />            
           <Route path="/Payout" element={<Payouts/>}/>
+          <Route path="/fulfill-contract/:contractId" element={<FulfillContract/>}/>
            <Route 
             path="/CheckoutForm" 
             element={

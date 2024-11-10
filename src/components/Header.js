@@ -78,6 +78,9 @@ const Header = () => {
                 <li onclick= {handleItemClick}>
                   <Link to="/Payout" className= "dropdown-item hover-item">Payout</Link>
                 </li>
+                <li>
+                  <Link to= "/OpenContractList" className=' "dropdown-item hover-item'>Open Contracts</Link>
+                </li>                
               </>
             )}
 
@@ -95,6 +98,9 @@ const Header = () => {
                 </li>
                 <li onClick={handleItemClick}>
                   <Link to = {`/user/${userId}`} className="dropdown-item hover-item">My profile</Link>
+                </li>
+                <li onclick= {handleItemClick}>
+                  <Link to = {"/createContract"} className= "dropdown-item hover-item">Create Contract</Link>
                 </li>
               </>
             )}
