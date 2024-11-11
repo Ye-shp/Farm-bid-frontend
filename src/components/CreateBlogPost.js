@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
-import { createBlogPost } from '../Services/blogs';
 import { useNavigate } from 'react-router-dom';
+import { createBlogPost } from '../Services/blogs';
+import {
+  Container,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Box,
+  Alert,
+  Stack
+} from '@mui/material';
+import CreateIcon from '@mui/icons-material/Create';
 
 const CreateBlogPost = () => {
   const [title, setTitle] = useState('');
@@ -10,8 +21,7 @@ const CreateBlogPost = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const token = localStorage.getItem('token'); // Assuming you're storing the token in localStorage
+    const token = localStorage.getItem('token');
 
     if (!token) {
       setError('You need to be logged in to create a field note');
@@ -20,42 +30,86 @@ const CreateBlogPost = () => {
 
     try {
       const postData = { title, content, createdAt: new Date() };
-      await createBlogPost(postData, token); // Pass the token to the API
-      navigate('/blogs'); // Redirect to blog list after creation
+      await createBlogPost(postData, token);
+      navigate('/blogs');
     } catch (err) {
       setError('Failed to create field note');
     }
   };
 
   return (
-    <div className="container mt-5">
-      <h2 className="text-center mb-4">Create Feild Note</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <div className="form-group mb-3">
-          <input
-            type="text"
-            className="form-control"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title"
-            required
-          />
-        </div>
-        <div className="form-group mb-3">
-          <textarea
-            className="form-control"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Write your content here"
-            required
-            rows="5"
-          />
-        </div>
-        <button type="submit" className="btn btn-primary">Create Feild Note</button>
-      </form>
-    </div>
-  );  
+    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          p: 4,
+          backgroundColor: 'background.paper',
+          borderRadius: 2
+        }}
+      >
+        <Stack spacing={3}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <CreateIcon color="primary" />
+            <Typography variant="h4" component="h1">
+              Create Field Note
+            </Typography>
+          </Box>
+
+          {error && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <Box component="form" onSubmit={handleSubmit} noValidate>
+            <Stack spacing={3}>
+              <TextField
+                fullWidth
+                label="Title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                variant="outlined"
+                required
+                InputProps={{
+                  sx: { borderRadius: 1 }
+                }}
+              />
+
+              <TextField
+                fullWidth
+                label="Content"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                variant="outlined"
+                required
+                multiline
+                rows={8}
+                InputProps={{
+                  sx: { borderRadius: 1 }
+                }}
+              />
+
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                startIcon={<CreateIcon />}
+                sx={{
+                  mt: 2,
+                  py: 1.5,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: 1
+                }}
+              >
+                Create Field Note
+              </Button>
+            </Stack>
+          </Box>
+        </Stack>
+      </Paper>
+    </Container>
+  );
 };
 
 export default CreateBlogPost;

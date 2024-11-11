@@ -1,148 +1,344 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Container,
+  Grid,
+  Card,
+  CardContent,
+  CardMedia,
+  Typography,
+  Button,
+  TextField,
+  Box,
+  Paper,
+  IconButton,
+  Divider,
+  Alert,
+  Fade,
+  CircularProgress,
+  useTheme,
+  Chip
+} from '@mui/material';
+import {
+  Add as AddIcon,
+  Upload as UploadIcon,
+  LocationOn as LocationIcon,
+  Error as ErrorIcon,
+  Image as ImageIcon
+} from '@mui/icons-material';
 import axios from 'axios';
-import CreateAuction from './CreateAuction'; // dedicated auction component
-import '../Styles/FarmerDashboard.css';
+import CreateAuction from './CreateAuction';
 
 const FarmerDashboard = () => {
+  const theme = useTheme();
   const [products, setProducts] = useState([]);
-  const [location, setLocation] = useState({ latitude: '', longitude: '' });
-  const [newProduct, setNewProduct] = useState({ title: '', description: '', image: null });
+  const [location, setLocation] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(false);
   const token = localStorage.getItem('token');
 
+  const [newProduct, setNewProduct] = useState({
+    title: '',
+    description: '',
+    image: null,
+    previewUrl: null
+  });
 
   // Fetch farmer's products
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const productResponse = await axios.get('https://farm-bid-3998c30f5108.herokuapp.com/api/products/farmer-products', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        setLoading(true);
+        const productResponse = await axios.get(
+          'https://farm-bid-3998c30f5108.herokuapp.com/api/products/farmer-products',
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setProducts(productResponse.data);
-      } catch (error) {
-        console.error('Error fetching farmer data:', error);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load products. Please try again later.');
+        console.error('Error fetching farmer data:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchData();
   }, [token]);
 
-  // Fetch location for farmer
+  // Fetch location
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3'); 
-        const loc = response.data.loc.split(',');
+        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3');
+        const [lat, lng] = response.data.loc.split(',');
         setLocation({
-          latitude: loc[0],
-          longitude: loc[1]
+          latitude: lat,
+          longitude: lng,
+          city: response.data.city,
+          region: response.data.region
         });
-      } catch (error) {
-        console.error('Error fetching location:', error);
+      } catch (err) {
+        console.error('Error fetching location:', err);
       }
     };
 
     fetchLocation();
   }, []);
 
-  // Handle product creation with image upload
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setNewProduct({
+        ...newProduct,
+        image: file,
+        previewUrl: URL.createObjectURL(file)
+      });
+    }
+  };
+
   const handleCreateProduct = async (e) => {
     e.preventDefault();
+    setUploadProgress(true);
 
-    // Form data to handle image upload
     const formData = new FormData();
     formData.append('title', newProduct.title);
     formData.append('description', newProduct.description);
     if (newProduct.image) {
-      formData.append('image', newProduct.image); // Append image to the form
+      formData.append('image', newProduct.image);
     }
 
     try {
-      const response = await axios.post('https://farm-bid-3998c30f5108.herokuapp.com/api/products', formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await axios.post(
+        'https://farm-bid-3998c30f5108.herokuapp.com/api/products',
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
 
-      setProducts([...products, response.data]); // Update product list
-      setNewProduct({ title: '', description: '', image: null }); // Reset form
-    } catch (error) {
-      console.error('Error creating product:', error);
-      alert('Error creating product. Please try again.');
+      setProducts([...products, response.data]);
+      setNewProduct({ title: '', description: '', image: null, previewUrl: null });
+      setError(null);
+    } catch (err) {
+      setError('Failed to create product. Please try again.');
+      console.error('Error creating product:', err);
+    } finally {
+      setUploadProgress(false);
     }
   };
 
+  if (loading) {
     return (
-      <div className="container mt-5">
-        <h2 className="text-center mb-4">My Products</h2>
-        {/* Products Section */}
-        <div className="row mt-5">
-          {products.map((product) => (
-            <div className="col-md-6 mb-4" key={product._id}>
-              <div className="card">
-                {product.imageUrl && (
-                  <img
-                    src={product.imageUrl}
-                    className="card-img-top"
-                    alt={product.title}
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="80vh"
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Fade in timeout={1000}>
+        <Box>
+          {/* Header Section */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              mb: 4,
+              bgcolor: theme.palette.primary.main,
+              color: 'white',
+              borderRadius: 2,
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <Typography variant="h4" component="h1" gutterBottom>
+              Farmer Dashboard
+            </Typography>
+            {location && (
+              <Box display="flex" alignItems="center" gap={1}>
+                <LocationIcon />
+                <Typography variant="subtitle1">
+                  {location.city}, {location.region}
+                </Typography>
+              </Box>
+            )}
+          </Paper>
+
+          {error && (
+            <Alert 
+              severity="error" 
+              sx={{ mb: 4 }}
+              action={
+                <Button color="inherit" size="small" onClick={() => setError(null)}>
+                  DISMISS
+                </Button>
+              }
+            >
+              {error}
+            </Alert>
+          )}
+
+          {/* Create Product Section */}
+          <Paper elevation={0} sx={{ p: 3, mb: 4, border: '1px solid', borderColor: 'grey.200' }}>
+            <Typography variant="h5" gutterBottom>
+              Add New Product
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            
+            <form onSubmit={handleCreateProduct}>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Product Title"
+                    value={newProduct.title}
+                    onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
+                    required
+                    variant="outlined"
                   />
-                )}
-                <div className="card-body">
-                  <h4 className="card-title">{product.title}</h4>
-                  <p className="card-text">{product.description}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-    
-        {/* Create Product Section */}
-        <h2 className="text-center mb-4">Create New Product</h2>
-        <form onSubmit={handleCreateProduct} className="mb-5">
-          <div className="mb-3">
-            <input
-              type="text"
-              className="form-control"
-              name="title"
-              value={newProduct.title}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, title: e.target.value })
-              }
-              placeholder="Title"
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <textarea
-              className="form-control"
-              name="description"
-              value={newProduct.description}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, description: e.target.value })
-              }
-              placeholder="Description"
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <input
-              type="file"
-              className="form-control"
-              name="image"
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, image: e.target.files[0] })
-              }
-              required
-            />
-          </div>
-          <button type="submit" className="btn btn-primary">
-            Create Product
-          </button>
-        </form>
-    
-        <CreateAuction products={products} />
-      </div>
-    );    
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Description"
+                    value={newProduct.description}
+                    onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                    required
+                    multiline
+                    rows={4}
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      border: '2px dashed',
+                      borderColor: 'grey.300',
+                      borderRadius: 2,
+                      p: 3,
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                      },
+                    }}
+                    component="label"
+                  >
+                    <input
+                      type="file"
+                      hidden
+                      onChange={handleImageChange}
+                      accept="image/*"
+                    />
+                    {newProduct.previewUrl ? (
+                      <Box>
+                        <img
+                          src={newProduct.previewUrl}
+                          alt="Preview"
+                          style={{ maxWidth: '200px', maxHeight: '200px' }}
+                        />
+                        <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                          Click to change image
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Box>
+                        <UploadIcon sx={{ fontSize: 40, color: 'grey.500', mb: 1 }} />
+                        <Typography>Drop an image or click to upload</Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    disabled={uploadProgress}
+                    startIcon={uploadProgress ? <CircularProgress size={20} /> : <AddIcon />}
+                  >
+                    {uploadProgress ? 'Creating Product...' : 'Create Product'}
+                  </Button>
+                </Grid>
+              </Grid>
+            </form>
+          </Paper>
+
+          {/* Products Grid */}
+          <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+            My Products ({products.length})
+          </Typography>
+          <Grid container spacing={3}>
+            {products.map((product) => (
+              <Grid item xs={12} sm={6} md={4} key={product._id}>
+                <Card 
+                  elevation={0}
+                  sx={{ 
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    transition: 'transform 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                    },
+                    border: '1px solid',
+                    borderColor: 'grey.200',
+                  }}
+                >
+                  {product.imageUrl ? (
+                    <CardMedia
+                      component="img"
+                      height="200"
+                      image={product.imageUrl}
+                      alt={product.title}
+                      sx={{ objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        height: 200,
+                        bgcolor: 'grey.100',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <ImageIcon sx={{ fontSize: 60, color: 'grey.400' }} />
+                    </Box>
+                  )}
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    <Typography variant="h6" gutterBottom>
+                      {product.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {product.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+
+          {/* Auctions Section */}
+          <Box sx={{ mt: 6 }}>
+            <CreateAuction products={products} />
+          </Box>
+        </Box>
+      </Fade>
+    </Container>
+  );
 };
 
 export default FarmerDashboard;

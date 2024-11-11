@@ -1,0 +1,46 @@
+/* CreateContract.css */
+
+.create-contract-container {
+    min-height: 100vh;
+    background-color: #f9fafb; /* Equivalent to bg-gray-50 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  
+  .create-contract-card {
+    width: 100%;
+    max-width: 40rem;
+  }
+  
+  .card-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  .card-description {
+    text-align: center;
+  }
+  
+  .form-space {
+    margin-bottom: 1.5rem;
+  }
+  
+  .label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .input {
+    width: 100%;
+    padding: 0.5rem;
+  }
+  
+  .button {
+    width: 100%;
+    padding: 0.75rem;
+  }
+  
