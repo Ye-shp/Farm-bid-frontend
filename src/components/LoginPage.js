@@ -1,7 +1,6 @@
-// src/components/LoginPage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../Services/api';  // Assuming you have the login function in Services/api
+import { login } from '../Services/api';
 import axios from 'axios';
 import {
   Container,
@@ -12,8 +11,10 @@ import {
   Paper,
   Alert,
   useTheme,
-  CircularProgress
+  CircularProgress,
+  InputAdornment
 } from '@mui/material';
+import { Email, Lock } from '@mui/icons-material';
 
 const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
   const [email, setEmail] = useState('');
@@ -24,7 +25,6 @@ const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
   const navigate = useNavigate();
   const theme = useTheme();
 
-  // Fetch user location (for matchmaking)
   useEffect(() => {
     const fetchLocation = async () => {
       try {
@@ -39,35 +39,29 @@ const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
         setError("Unable to fetch location from IP address.");
       }
     };
-
     fetchLocation();
   }, []);
 
-  // Handle the login submission
   const handleLogin = async (e) => {
-    e.preventDefault();  // Prevent default form submission
+    e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      // Perform the login request with just email and password
       const response = await login({ email, password });
 
       if (response.status === 200) {
-        const { token, user } = response.data;  // Get token and user from response
-        const userRole = user.role;  // Extract the role from the user object
+        const { token, user } = response.data;
+        const userRole = user.role;
 
-        // Store the token, role (from userRole), and location in localStorage
         localStorage.setItem('token', token);
         localStorage.setItem('role', userRole);
         localStorage.setItem('latitude', location.latitude);
         localStorage.setItem('longitude', location.longitude);
         localStorage.setItem('userId', user.id);
 
-        // Set the logged-in state in App.js
         setIsLoggedIn(true);
         setUserRole(userRole);
 
-        // Redirect based on userRole
         if (userRole === 'farmer') {
           navigate('/farmer-dashboard');
         } else if (userRole === 'buyer') {
@@ -99,6 +93,13 @@ const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
             margin="normal"
             required
             inputProps={{ 'aria-label': 'Email' }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Email />
+                </InputAdornment>
+              ),
+            }}
           />
           <TextField
             fullWidth
@@ -110,6 +111,13 @@ const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
             margin="normal"
             required
             inputProps={{ 'aria-label': 'Password' }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Lock />
+                </InputAdornment>
+              ),
+            }}
           />
           {error && (
             <Alert severity="error" sx={{ mt: 2 }}>

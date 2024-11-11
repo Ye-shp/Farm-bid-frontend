@@ -1,25 +1,24 @@
-// src/components/RegisterPage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { register } from '../Services/api';
 import axios from 'axios';
-import '../Styles/RegisterPage.css';
+import { Box, Button, Container, Grid, Select, MenuItem, TextField, Typography, Alert, InputAdornment } from '@mui/material';
+import { Person, Email, Lock, Store, ShoppingCart } from '@mui/icons-material';
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('buyer'); // Default role
+  const [role, setRole] = useState('buyer');
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Use ipinfo.io API to get user's location based on their IP
   useEffect(() => {
     const fetchLocation = async () => {
       try {
         const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3');
-        const loc = response.data.loc.split(','); // loc is returned as "latitude,longitude"
+        const loc = response.data.loc.split(',');
         setLocation({
           latitude: loc[0],
           longitude: loc[1]
@@ -29,32 +28,28 @@ const RegisterPage = () => {
         setError("Unable to fetch location from IP address.");
       }
     };
-
     fetchLocation();
   }, []);
 
   const handleRegister = async (e) => {
     e.preventDefault();
-  
-    // Validate that username is not empty
     if (!username || username.trim() === "") {
       setError("Username is required and cannot be empty.");
       return;
     }
-  
     try {
       const response = await register({ username, email, password, role, location });
       if (response.status === 201) {
         alert("Registration successful!");
         setUsername('');
-        setEmail(''); 
-        setPassword(''); 
-        setRole('buyer'); 
-        setError(null);  
-        navigate('/login'); 
+        setEmail('');
+        setPassword('');
+        setRole('buyer');
+        setError(null);
+        navigate('/login');
       }
     } catch (error) {
-      console.error('Registration error:', error); 
+      console.error('Registration error:', error);
       if (error.response && error.response.status === 409) {
         setError("User already registered. Please log in.");
       } else if (error.response && error.response.status === 400) {
@@ -64,57 +59,99 @@ const RegisterPage = () => {
       }
     }
   };
-  
 
   return (
-    <div className="container mt-5">
-      <h2 className="text-center mb-4">Register</h2>
-      <form onSubmit={handleRegister} className="mb-5">
-        <div className=" mb-3">
-          <input 
-          type = "text"
-          className="form-control"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Choose a Username"
-          required/> 
-        </div>
-        <div className="mb-3">
-          <input
-            type="email"
-            className="form-control"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <input
-            type="password"
-            className="form-control"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <select 
-            className="form-select"
-            value={role} 
-            onChange={(e) => setRole(e.target.value)} 
-            required>
-            <option value="buyer">Buyer</option>
-            <option value="farmer">Farmer</option>
-          </select>
-        </div>
-        <button type="submit" className="btn btn-primary">Register</button>
-        {error && <p className="text-danger mt-3">{error}</p>}
-      </form>
-    </div>
+    <Container maxWidth="sm">
+      <Box sx={{ mt: 5, p: 3, boxShadow: 3, borderRadius: 2 }}>
+        <Typography variant="h4" align="center" gutterBottom>
+          Register
+        </Typography>
+        <form onSubmit={handleRegister}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Username"
+                variant="outlined"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Person />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                variant="outlined"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Email />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Password"
+                type="password"
+                variant="outlined"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Lock />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Select
+                fullWidth
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                displayEmpty
+                startAdornment={
+                  <InputAdornment position="start">
+                    {role === 'buyer' ? <ShoppingCart /> : <Store />}
+                  </InputAdornment>
+                }
+              >
+                <MenuItem value="buyer">Buyer</MenuItem>
+                <MenuItem value="farmer">Farmer</MenuItem>
+              </Select>
+            </Grid>
+            {error && (
+              <Grid item xs={12}>
+                <Alert severity="error">{error}</Alert>
+              </Grid>
+            )}
+            <Grid item xs={12}>
+              <Button type="submit" variant="contained" color="primary" fullWidth>
+                Register
+              </Button>
+            </Grid>
+          </Grid>
+        </form>
+      </Box>
+    </Container>
   );
-  
 };
 
 export default RegisterPage;

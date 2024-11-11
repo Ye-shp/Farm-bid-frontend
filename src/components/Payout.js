@@ -1,21 +1,37 @@
 import React, { useEffect, useState } from 'react';
 import '../Styles/Payout.css';
 import api from '../../src/Services/api';
+import {
+  Container,
+  Box,
+  Typography,
+  Button,
+  TextField,
+  Alert,
+  Paper,
+  useTheme,
+  Grid,
+  List,
+  ListItem,
+  ListItemText,
+  InputAdornment
+} from '@mui/material';
+import { AttachMoney, AccountBalance, Email, AccountCircle } from '@mui/icons-material';
 
 const Payouts = () => {
   const [balance, setBalance] = useState(0);
   const [payoutHistory, setPayoutHistory] = useState([]);
   const [amount, setAmount] = useState('');
   const [email, setEmail] = useState('');
-  const [accountCreated, setAccountCreated] = useState(false); // Track if account is created
-  const [bankAccountAdded, setBankAccountAdded] = useState(false); // Track if bank account is added
+  const [accountCreated, setAccountCreated] = useState(false);
+  const [bankAccountAdded, setBankAccountAdded] = useState(false);
   const [message, setMessage] = useState(null);
   const [accountNumber, setAccountNumber] = useState('');
   const [routingNumber, setRoutingNumber] = useState('');
   const [holderName, setHolderName] = useState('');
+  const theme = useTheme();
 
   useEffect(() => {
-    // Fetch seller balance and payout history
     api.getSellerBalance()
       .then((response) => {
         setBalance(response.data.balance);
@@ -63,7 +79,7 @@ const Payouts = () => {
 
   const handleAddBankAccount = () => {
     api.addBankAccount({
-      accountId: '<CONNECTED_ACCOUNT_ID>', // You will need to dynamically assign this
+      accountId: '<CONNECTED_ACCOUNT_ID>',
       bankAccountDetails: {
         accountNumber,
         routingNumber,
@@ -72,7 +88,7 @@ const Payouts = () => {
     })
       .then((response) => {
         setMessage('Bank account added successfully!');
-        setBankAccountAdded(true); // Update state to show bank account has been added
+        setBankAccountAdded(true);
       })
       .catch((error) => {
         console.error('Error adding bank account:', error);
@@ -81,72 +97,176 @@ const Payouts = () => {
   };
 
   return (
-    <div className="payouts-page">
-      <h2>Your Balance</h2>
-      <p>${(balance / 100).toFixed(2)}</p>
+    <Container maxWidth="md" sx={{ mt: 5 }}>
+      <Paper elevation={3} sx={{ p: 4, borderRadius: theme.shape.borderRadius * 2 }}>
+        <Typography variant="h4" align="center" gutterBottom>
+          Your Balance
+        </Typography>
+        <Typography variant="h3" align="center" color="primary" gutterBottom>
+          ${((balance) / 100).toFixed(2)}
+        </Typography>
 
-      <h2>Payout History</h2>
-      <ul>
-        {payoutHistory.map((payout) => (
-          <li key={payout.id}>
-            ${payout.amount / 100} - {new Date(payout.date).toLocaleDateString()}
-          </li>
-        ))}
-      </ul>
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            Payout History
+          </Typography>
+          <List>
+            {payoutHistory.map((payout) => (
+              <ListItem key={payout.id}>
+                <ListItemText
+                  primary={`$${(payout.amount / 100).toFixed(2)}`}
+                  secondary={new Date(payout.date).toLocaleDateString()}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
 
-      {!accountCreated && (
-        <>
-          <h2>Create Connected Account</h2>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
-          />
-          <button onClick={handleCreateAccount}>Create Account</button>
-        </>
-      )}
+        {!accountCreated && (
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h5" gutterBottom>
+              Create Connected Account
+            </Typography>
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              variant="outlined"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Email />
+                  </InputAdornment>
+                ),
+              }}
+              required
+              sx={{ mb: 2 }}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleCreateAccount}
+              fullWidth
+              sx={{ py: 1.5 }}
+            >
+              Create Account
+            </Button>
+          </Box>
+        )}
 
-      {accountCreated && !bankAccountAdded && (
-        <>
-          <h2>Add Bank Account</h2>
-          <input
-            type="text"
-            value={holderName}
-            onChange={(e) => setHolderName(e.target.value)}
-            placeholder="Account Holder Name"
-          />
-          <input
-            type="text"
-            value={accountNumber}
-            onChange={(e) => setAccountNumber(e.target.value)}
-            placeholder="Account Number"
-          />
-          <input
-            type="text"
-            value={routingNumber}
-            onChange={(e) => setRoutingNumber(e.target.value)}
-            placeholder="Routing Number"
-          />
-          <button onClick={handleAddBankAccount}>Add Bank Account</button>
-        </>
-      )}
+        {accountCreated && !bankAccountAdded && (
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h5" gutterBottom>
+              Add Bank Account
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Account Holder Name"
+                  variant="outlined"
+                  value={holderName}
+                  onChange={(e) => setHolderName(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <AccountCircle />
+                      </InputAdornment>
+                    ),
+                  }}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Account Number"
+                  variant="outlined"
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <AccountBalance />
+                      </InputAdornment>
+                    ),
+                  }}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Routing Number"
+                  variant="outlined"
+                  value={routingNumber}
+                  onChange={(e) => setRoutingNumber(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <AccountBalance />
+                      </InputAdornment>
+                    ),
+                  }}
+                  required
+                />
+              </Grid>
+            </Grid>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleAddBankAccount}
+              fullWidth
+              sx={{ mt: 3, py: 1.5 }}
+            >
+              Add Bank Account
+            </Button>
+          </Box>
+        )}
 
-      {accountCreated && bankAccountAdded && (
-        <>
-          <h2>Request Payout</h2>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="Enter amount in dollars"
-          />
-          <button onClick={handlePayoutRequest}>Request Payout</button>
-        </>
-      )}
+        {accountCreated && bankAccountAdded && (
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h5" gutterBottom>
+              Request Payout
+            </Typography>
+            <TextField
+              fullWidth
+              label="Amount"
+              type="number"
+              variant="outlined"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <AttachMoney />
+                  </InputAdornment>
+                ),
+              }}
+              required
+              sx={{ mb: 2 }}
+            />
+            <Button
+              variant="contained"
+              color="success"
+              onClick={handlePayoutRequest}
+              fullWidth
+              sx={{ py: 1.5 }}
+            >
+              Request Payout
+            </Button>
+          </Box>
+        )}
 
-      {message && <p className="message">{message}</p>}
-    </div>
+        {message && (
+          <Alert severity="info" sx={{ mt: 4 }}>
+            {message}
+          </Alert>
+        )}
+      </Paper>
+    </Container>
   );
 };
 
