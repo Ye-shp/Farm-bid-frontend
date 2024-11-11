@@ -36,32 +36,38 @@ const Header = () => {
   const userRole = localStorage.getItem('role');
   const userId = localStorage.getItem('userId');
   const [anchorEl, setAnchorEl] = useState(null);
+  const [mobileMenuAnchorEl, setMobileMenuAnchorEl] = useState(null);
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
+  const handleMobileMenuOpen = (event) => {
+    setMobileMenuAnchorEl(event.currentTarget);
+  };
+
   const handleMenuClose = () => {
     setAnchorEl(null);
+    setMobileMenuAnchorEl(null);
   };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
+    localStorage.removeItem('userId');
     navigate('/');
     handleMenuClose();
   };
 
   const isCurrentPath = (path) => location.pathname === path;
 
-  // Common navigation items that should be visible
   const getVisibleNavItems = () => {
     if (!token) {
       return [
         { label: 'Field Notes', path: '/blogs', icon: <ArticleIcon sx={{ mr: 0.5 }} /> }
       ];
     }
-    
+
     if (userRole === 'farmer') {
       return [
         { label: 'Dashboard', path: '/farmer-dashboard', icon: <DashboardIcon sx={{ mr: 0.5 }} /> },
@@ -70,7 +76,7 @@ const Header = () => {
         { label: 'Contracts', path: '/OpenContractList', icon: <DescriptionIcon sx={{ mr: 0.5 }} /> }
       ];
     }
-    
+
     if (userRole === 'buyer') {
       return [
         { label: 'Dashboard', path: '/buyer-dashboard', icon: <DashboardIcon sx={{ mr: 0.5 }} /> },
@@ -78,37 +84,22 @@ const Header = () => {
         { label: 'Contracts', path: '/createContract', icon: <DescriptionIcon sx={{ mr: 0.5 }} /> }
       ];
     }
-    
+
     return [];
   };
 
-  // Menu items for the dropdown
-  const getMenuItems = () => {
-    if (!token) {
-      return [
-        { label: 'Login', path: '/login', icon: <LoginIcon /> },
-        { label: 'Register', path: '/register', icon: <HowToRegIcon /> }
-      ];
-    }
-    
-    if (userRole === 'farmer') {
-      return [
-        { label: 'Create Field Notes', path: '/create-blog', icon: <ArticleIcon /> },
-        { label: 'My Profile', path: `/user/${userId}`, icon: <PersonIcon /> },
-        { label: 'Payout', path: '/Payout', icon: <PaymentsIcon /> }
-      ];
-    }
-    
-    if (userRole === 'buyer') {
-      return [
-        { label: 'Create Field Notes', path: '/create-blog', icon: <ArticleIcon /> },
-        { label: 'My Profile', path: `/user/${userId}`, icon: <PersonIcon /> },
-        { label: 'Checkout', path: '/CheckoutForm', icon: <PaymentsIcon /> }
-      ];
-    }
-    
-    return [];
-  };
+  const menuItems = !token ? [
+    { label: 'Login', path: '/login', icon: <LoginIcon /> },
+    { label: 'Register', path: '/register', icon: <HowToRegIcon /> }
+  ] : userRole === 'farmer' ? [
+    { label: 'Create Field Notes', path: '/create-blog', icon: <ArticleIcon /> },
+    { label: 'My Profile', path: `/user/${userId}`, icon: <PersonIcon /> },
+    { label: 'Payout', path: '/Payout', icon: <PaymentsIcon /> }
+  ] : userRole === 'buyer' ? [
+    { label: 'Create Field Notes', path: '/create-blog', icon: <ArticleIcon /> },
+    { label: 'My Profile', path: `/user/${userId}`, icon: <PersonIcon /> },
+    { label: 'Checkout', path: '/CheckoutForm', icon: <PaymentsIcon /> }
+  ] : [];
 
   return (
     <AppBar 
@@ -148,7 +139,7 @@ const Header = () => {
               Elipae
             </Typography>
 
-            {/* Visible Navigation Items */}
+            {/* Desktop Navigation Items */}
             <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
               {getVisibleNavItems().map((item) => (
                 <Button
@@ -182,7 +173,7 @@ const Header = () => {
             <IconButton
               color="inherit"
               sx={{ display: { xs: 'flex', md: 'none' } }}
-              onClick={handleMenuOpen}
+              onClick={handleMobileMenuOpen}
             >
               <MenuIcon />
             </IconButton>
@@ -201,6 +192,7 @@ const Header = () => {
                 </Avatar>
               </IconButton>
               
+              {/* Desktop Menu */}
               <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
@@ -221,8 +213,7 @@ const Header = () => {
                   }
                 }}
               >
-                {/* Menu Items */}
-                {getMenuItems().map((item) => (
+                {menuItems.map((item) => (
                   <MenuItem
                     key={item.path}
                     component={Link}
@@ -241,7 +232,6 @@ const Header = () => {
                   </MenuItem>
                 ))}
 
-                {/* Logout Option for Logged In Users */}
                 {token && (
                   <>
                     <Divider sx={{ my: 1 }} />
@@ -259,6 +249,37 @@ const Header = () => {
                     </MenuItem>
                   </>
                 )}
+              </Menu>
+
+              {/* Mobile Menu */}
+              <Menu
+                anchorEl={mobileMenuAnchorEl}
+                open={Boolean(mobileMenuAnchorEl)}
+                onClose={handleMenuClose}
+                TransitionComponent={Fade}
+                PaperProps={{
+                  elevation: 3,
+                  sx: {
+                    mt: 1.5,
+                    minWidth: 200,
+                    borderRadius: 2,
+                  }
+                }}
+              >
+                {getVisibleNavItems().map((item) => (
+                  <MenuItem
+                    key={item.path}
+                    component={Link}
+                    to={item.path}
+                    onClick={handleMenuClose}
+                    selected={isCurrentPath(item.path)}
+                  >
+                    <ListItemIcon>
+                      {item.icon}
+                    </ListItemIcon>
+                    {item.label}
+                  </MenuItem>
+                ))}
               </Menu>
             </Box>
           </Box>

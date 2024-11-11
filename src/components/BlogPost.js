@@ -1,23 +1,92 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getBlogPost, addCommentToBlogPost, likeBlogPost} from '../Services/blogs';
+import { getBlogPost, addCommentToBlogPost, likeBlogPost } from '../Services/blogs';
+import {
+  Container,
+  Typography,
+  Box,
+  Avatar,
+  Button,
+  TextField,
+  Card,
+  CardContent,
+  Divider,
+  IconButton,
+  styled,
+  alpha
+} from '@mui/material';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import ShareIcon from '@mui/icons-material/Share';
+
+const PostContainer = styled(Container)(({ theme }) => ({
+  paddingTop: theme.spacing(8),
+  paddingBottom: theme.spacing(8),
+}));
+
+const PostHeader = styled(Box)(({ theme }) => ({
+  marginBottom: theme.spacing(6),
+}));
+
+const AuthorSection = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  marginBottom: theme.spacing(4),
+}));
+
+const AuthorInfo = styled(Box)(({ theme }) => ({
+  marginLeft: theme.spacing(2),
+}));
+
+const PostContent = styled(Typography)(({ theme }) => ({
+  fontSize: '1.2rem',
+  lineHeight: 1.8,
+  color: alpha(theme.palette.text.primary, 0.87),
+  marginBottom: theme.spacing(4),
+}));
+
+const MetricsBar = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(3),
+  padding: theme.spacing(2, 0),
+  borderTop: `1px solid ${theme.palette.divider}`,
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  marginBottom: theme.spacing(4),
+}));
+
+const CommentCard = styled(Card)(({ theme }) => ({
+  marginBottom: theme.spacing(2),
+  '&:hover': {
+    backgroundColor: alpha(theme.palette.primary.main, 0.03),
+  },
+}));
+
+const CommentForm = styled(Box)(({ theme }) => ({
+  marginTop: theme.spacing(4),
+  padding: theme.spacing(3),
+  backgroundColor: alpha(theme.palette.background.paper, 0.8),
+  borderRadius: theme.shape.borderRadius,
+}));
 
 const BlogPost = () => {
   const { id } = useParams();
   const [blogPost, setBlogPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [comment, setComment] = useState('');
-  const [likes , setLikes] = useState('0');
+  const [likes, setLikes] = useState(0);
   const [hasLiked, setHasLiked] = useState(false);
 
-
-  // Fetch blog post and comments
   useEffect(() => {
     const fetchBlog = async () => {
       try {
         const response = await getBlogPost(id);
         setBlogPost(response.data);
-        setComments(response.data.comments || []); // Load comments
+        setComments(response.data.comments || []);
+        setLikes(response.data.likes?.length || 0);
+        const userId = localStorage.getItem('userId');
+        setHasLiked(response.data.likes?.includes(userId));
       } catch (err) {
         console.error('Error fetching field note:', err);
       }
@@ -25,35 +94,18 @@ const BlogPost = () => {
     fetchBlog();
   }, [id]);
 
-  // Handle submitting a new comment
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
     try {
       const response = await addCommentToBlogPost(id, { content: comment }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
       setComments([...comments, response.data]);
-      setComment(''); // Clear the comment input
+      setComment('');
     } catch (err) {
       console.error('Error adding comment:', err);
     }
-  };
-
-  const renderCommentContent = (content) => {
-    return content.split(/(\s+)/).map((word, index) => {
-      if (word.startsWith('@')) {
-        const username = word.slice(1);
-        return (
-          <Link key={index} to={`/user/${username}`}>
-            {word}
-          </Link>
-        );
-      }
-      return word;
-    });
   };
 
   const handleLike = async () => {
@@ -64,91 +116,125 @@ const BlogPost = () => {
       const userId = localStorage.getItem('userId');
       setHasLiked(updatedBlog.likes.includes(userId));
     } catch (err) {
-      console.error('Error liking the blog post:', err);
+      console.error('Error liking the post:', err);
     }
   };
 
   if (!blogPost) {
-    return <div>Loading...</div>;
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <Typography variant="h6">Loading...</Typography>
+      </Box>
+    );
   }
 
   return (
-    <div className="container mt-4">
-      {blogPost ? (
-        <>
-          <div className="blog-post-container mb-4">
-            {/* Blog Title */}
-            <h1 className="blog-post-title">{blogPost.title}</h1>
-  
-            {/* Blog Author and Created Date */}
-            <p className="blog-post-author">
-              By {blogPost.user?.username || 'Anonymous'} on {new Date(blogPost.createdAt).toLocaleDateString()}
-            </p>
-  
-            {/* Blog Content */}
-            <p className="blog-post-content">{blogPost.content}</p>
-  
-            {/* Blog Metrics - Views and Likes */}
-            <div className="blog-metrics mb-3">
-              <span className="views-count">
-                <i className="fa fa-eye"></i> {blogPost.views} views
-              </span>
-              <span className="likes-count ms-3">
-                <button onClick={handleLike} className="btn btn-outline-primary btn-sm">
-                  {hasLiked ? 'Unlike' : 'Like'} ({likes})
-                </button>
-              </span>
-            </div>
-          </div>
-  
-          {/* Comments Section */}
-          <div className="comments-section">
-            <h2 className="comments-title">Responses ({comments.length})</h2>
-            <div className="comments-grid">
-              {comments.length > 0 ? (
-                comments.map((comment) => (
-                  <div key={comment._id} className="comment-card">
-                    <div className="comment-card-body">
-                      <p className="comment-user">
-                        {comment.user?.username || 'Anonymous'} -{' '}
-                        <span className="comment-date">{new Date(comment.createdAt).toLocaleDateString()}</span>
-                      </p>
-                      <p className="comment-content">{renderCommentContent(comment.content)}</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p>No comments yet. Be the first to respond!</p>
-              )}
-            </div>
-  
-            {/* Comment Form */}
-            <form onSubmit={handleCommentSubmit} className="comment-form mt-4">
-              <textarea
-                className="form-control"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Write a response..."
-                rows="3"
-                required
-              ></textarea>
-              <button type="submit" className="btn btn-primary mt-2">
-                Submit Response
-              </button>
-            </form>
-          </div>
-        </>
-      ) : (
-        // Loading Spinner
-        <div className="loading-spinner d-flex justify-content-center align-items-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+    <PostContainer maxWidth="md">
+      <PostHeader>
+        <Typography variant="h3" gutterBottom>
+          {blogPost.title}
+        </Typography>
+        
+        <AuthorSection>
+          <Avatar
+            src={`https://api.dicebear.com/7.x/initials/svg?seed=${blogPost.user?.username}`}
+            sx={{ width: 56, height: 56 }}
+          />
+          <AuthorInfo>
+            <Typography variant="subtitle1" fontWeight="bold">
+              {blogPost.user?.username || 'Anonymous'}
+            </Typography>
+            <Typography variant="caption" color="textSecondary">
+              {new Date(blogPost.createdAt).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </Typography>
+          </AuthorInfo>
+        </AuthorSection>
 
+        <PostContent variant="body1">
+          {blogPost.content}
+        </PostContent>
+
+        <MetricsBar>
+          <Box display="flex" alignItems="center">
+            <IconButton onClick={handleLike} color={hasLiked ? 'primary' : 'default'}>
+              {hasLiked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+            </IconButton>
+            <Typography variant="body2">{likes}</Typography>
+          </Box>
+          
+          <Box display="flex" alignItems="center">
+            <IconButton>
+              <VisibilityIcon />
+            </IconButton>
+            <Typography variant="body2">{blogPost.views || 0}</Typography>
+          </Box>
+
+          <Box display="flex" alignItems="center">
+            <IconButton>
+              <ShareIcon />
+            </IconButton>
+            <Typography variant="body2">Share</Typography>
+          </Box>
+        </MetricsBar>
+      </PostHeader>
+
+      <Box mb={6}>
+        <Typography variant="h5" gutterBottom>
+          Responses ({comments.length})
+        </Typography>
+        
+        {comments.map((comment) => (
+          <CommentCard key={comment._id} variant="outlined">
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={1}>
+                <Avatar
+                  src={`https://api.dicebear.com/7.x/initials/svg?seed=${comment.user?.username}`}
+                  sx={{ width: 32, height: 32, marginRight: 1 }}
+                />
+                <Typography variant="subtitle2">
+                  {comment.user?.username || 'Anonymous'}
+                </Typography>
+                <Typography variant="caption" color="textSecondary" sx={{ ml: 1 }}>
+                  {new Date(comment.createdAt).toLocaleDateString()}
+                </Typography>
+              </Box>
+              <Typography variant="body2">
+                {comment.content}
+              </Typography>
+            </CardContent>
+          </CommentCard>
+        ))}
+
+        <CommentForm component="form" onSubmit={handleCommentSubmit}>
+          <Typography variant="h6" gutterBottom>
+            Add a response
+          </Typography>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="What are your thoughts?"
+            variant="outlined"
+            sx={{ mb: 2 }}
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            disabled={!comment.trim()}
+          >
+            Publish
+          </Button>
+        </CommentForm>
+      </Box>
+    </PostContainer>
+  );
 };
 
 export default BlogPost;
