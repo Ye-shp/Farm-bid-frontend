@@ -1,20 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import '../Styles/FarmerAuction.css'
+import { Container, Typography, Box, Card, CardContent, Button, Grid, Badge, IconButton, Paper, Tooltip, Chip, CardMedia, Collapse } from '@mui/material';
+import { CheckCircle, Cancel, AttachMoney, TrendingUp, ExpandMore, ExpandLess, MarkEmailRead } from '@mui/icons-material';
+import { makeStyles } from '@mui/styles';
+
+const useStyles = makeStyles({
+  card: {
+    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+    '&:hover': {
+      transform: 'scale(1.05)',
+      boxShadow: '0 10px 20px rgba(0, 0, 0, 0.2)',
+    },
+  },
+  notificationBox: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '16px',
+    marginBottom: '8px',
+    backgroundColor: '#f5f5f5',
+    borderRadius: '8px',
+    transition: 'background-color 0.3s ease',
+    '&.unread': {
+      backgroundColor: '#e3f2fd',
+    },
+  },
+  badge: {
+    fontSize: '1.2rem',
+  },
+  auctionTitle: {
+    fontWeight: 'bold',
+    color: '#3f51b5',
+  },
+  statusIcon: {
+    fontSize: '2rem',
+  },
+  notificationButton: {
+    marginLeft: '16px',
+  },
+});
 
 const FarmerAuctions = () => {
+  const classes = useStyles();
   const [auctions, setAuctions] = useState([]);
   const token = localStorage.getItem('token');
   const [notifications, setNotifications] = useState([]);
+  const [notificationsOpen, setNotificationsOpen] = useState(true);
   const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com/api';
 
   useEffect(() => {
     const fetchAuctions = async () => {
       try {
-        const response = await axios.get('https://farm-bid-3998c30f5108.herokuapp.com/api/auctions/farmer-auctions', {
+        const response = await axios.get(`${API_URL}/auctions/farmer-auctions`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log(response); // Log the full response to debug
         setAuctions(response.data);
       } catch (error) {
         console.error('Error fetching auctions:', error);
@@ -24,11 +63,10 @@ const FarmerAuctions = () => {
     fetchAuctions();
   }, [token]);
 
-  // Notifications
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await axios.get('https://farm-bid-3998c30f5108.herokuapp.com/api/notifications', {
+        const response = await axios.get(`${API_URL}/notifications`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setNotifications(response.data);
@@ -58,88 +96,119 @@ const FarmerAuctions = () => {
   };
 
   return (
-    <div className="container mt-4">
-      <h2 className="mb-4 text-center">My Auctions</h2>
+    <Container sx={{ mt: 4 }} maxWidth="lg">
+      <Typography variant="h3" align="center" gutterBottom color="primary">
+        My Auctions
+      </Typography>
 
       {/* Notifications Section */}
-      <div className="notifications mb-4">
-        <h4>Notifications</h4>
-        {notifications.length > 0 ? (
-          <ul className="list-group">
-            {notifications.map((notification) => (
-              <li
-                key={notification._id}
-                className={`list-group-item d-flex justify-content-between align-items-center ${
-                  notification.read ? '' : 'bg-light'
-                }`}
-              >
-                <span>{notification.message}</span>
-                {!notification.read && (
-                  <button
-                    className="btn btn-sm btn-primary"
-                    onClick={() => markAsRead(notification._id)}
-                  >
-                    Mark as Read
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No notifications found.</p>
-        )}
-      </div>
+      <Box mb={4}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+          <Typography variant="h5">
+            Notifications
+          </Typography>
+          <IconButton onClick={() => setNotificationsOpen(!notificationsOpen)}>
+            {notificationsOpen ? <ExpandLess /> : <ExpandMore />}
+          </IconButton>
+        </Box>
+        <Collapse in={notificationsOpen} timeout="auto" unmountOnExit>
+          {notifications.length > 0 ? (
+            <Box>
+              {notifications.map((notification) => (
+                <Paper
+                  key={notification._id}
+                  elevation={3}
+                  className={`${classes.notificationBox} ${notification.read ? '' : 'unread'}`}
+                  sx={{
+                    bgcolor: notification.read ? 'background.paper' : 'grey.100',
+                  }}
+                >
+                  <Box display="flex" alignItems="center" width="100%">
+                    <Typography flexGrow={1}>{notification.message}</Typography>
+                    {!notification.read && (
+                      <Tooltip title="Mark as Read">
+                        <IconButton
+                          color="primary"
+                          className={classes.notificationButton}
+                          onClick={() => markAsRead(notification._id)}
+                        >
+                          <MarkEmailRead />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
+                </Paper>
+              ))}
+            </Box>
+          ) : (
+            <Typography>No notifications found.</Typography>
+          )}
+        </Collapse>
+      </Box>
 
       {/* Auctions Section */}
-      <div className="row">
+      <Grid container spacing={4}>
         {auctions.length > 0 ? (
           auctions.map((auction) => (
-            <div className="col-md-6 mb-4" key={auction._id}>
-              <div className="card auction-card h-100 shadow-lg">
-                <div className="card-body">
-                  <h5 className="card-title text-center auction-title">
+            <Grid item xs={12} md={6} key={auction._id}>
+              <Card className={classes.card} sx={{ height: '100%', boxShadow: 3 }}>
+                <CardMedia
+                  component="img"
+                  height="200"
+                  image={auction.product.imageUrl || 'https://via.placeholder.com/200'}
+                  alt={auction.product.title}
+                />
+                <CardContent>
+                  <Typography variant="h5" align="center" gutterBottom className={classes.auctionTitle}>
                     {auction.product.title}
-                  </h5>
-                  <div className="d-flex justify-content-between align-items-center">
-                    <p className="card-text">
+                  </Typography>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Typography variant="body1">
                       <strong>Starting Bid:</strong>
-                      <span className="badge bg-success ms-2">${auction.startingBid}</span>
-                    </p>
-                    <i className="bi bi-cash-stack text-success"></i>
-                  </div>
-                  <div className="d-flex justify-content-between align-items-center">
-                    <p className="card-text">
+                    </Typography>
+                    <Chip label={`$${auction.startingBid || 'N/A'}`} color="success" size="medium" className={classes.badge} />
+                    <Tooltip title="Starting Bid">
+                      <IconButton color="success">
+                        <AttachMoney className={classes.statusIcon} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Typography variant="body1">
                       <strong>Highest Bid:</strong>
-                      <span className="badge bg-primary ms-2">${auction.highestBid}</span>
-                    </p>
-                    <i className="bi bi-graph-up-arrow text-primary"></i>
-                  </div>
-                  <div className="d-flex justify-content-between align-items-center">
-                    <p className="card-text">
+                    </Typography>
+                    <Chip label={`$${auction.highestBid || 'N/A'}`} color="primary" size="medium" className={classes.badge} />
+                    <Tooltip title="Highest Bid">
+                      <IconButton color="primary">
+                        <TrendingUp className={classes.statusIcon} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="body1">
                       <strong>Status:</strong>
-                      <span
-                        className={`badge ${
-                          auction.status === 'active' ? 'bg-info' : 'bg-secondary'
-                        } ms-2`}
-                      >
-                        {auction.status}
-                      </span>
-                    </p>
-                    <i
-                      className={`bi ${
-                        auction.status === 'active' ? 'bi-check-circle-fill text-info' : 'bi-x-circle-fill text-secondary'
-                      }`}
-                    ></i>
-                  </div>
-                </div>
-              </div>
-            </div>
+                    </Typography>
+                    <Chip
+                      label={auction.status}
+                      color={auction.status === 'active' ? 'info' : 'secondary'}
+                      size="medium"
+                      className={classes.badge}
+                    />
+                    <Tooltip title={auction.status === 'active' ? 'Active' : 'Inactive'}>
+                      <IconButton color={auction.status === 'active' ? 'info' : 'secondary'}>
+                        {auction.status === 'active' ? <CheckCircle className={classes.statusIcon} /> : <Cancel className={classes.statusIcon} />}
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
           ))
         ) : (
-          <p className="text-center">No auctions found.</p>
+          <Typography align="center">No auctions found.</Typography>
         )}
-      </div>
-    </div>
+      </Grid>
+    </Container>
   );
 };
 

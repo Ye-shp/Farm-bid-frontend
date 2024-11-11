@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import { useParams } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -13,96 +12,146 @@ import {
   Switch,
   Typography,
   Avatar,
-  IconButton,
   Divider,
+  Alert,
 } from '@mui/material';
 import { TabContext, TabPanel } from '@mui/lab';
 import {
   Instagram as InstagramIcon,
   Facebook as FacebookIcon,
+  VideoCall as TiktokIcon,
   LocationOn as LocationOnIcon,
   Group as GroupIcon,
   Share as ShareIcon,
   LocalShipping as TruckIcon,
   Store as StoreIcon,
+  Agriculture as FarmerIcon,
+  Business as PartnersIcon,
 } from '@mui/icons-material';
 
 const UserProfile = () => {
   const { userId } = useParams();
   const [user, setUser] = useState({
+    username: '',
     socialMedia: { instagram: '', facebook: '', tiktok: '' },
     description: '',
     wholesaleAvailable: false,
     deliveryAvailable: false,
-    location: { latitude: '', longitude: '' },
+    location: { address: '', city: '', state: '', country: '' },
     partners: [],
     followers: [],
     following: [],
+    isFarmer: false,
   });
   const [userBlogs, setUserBlogs] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [tabValue, setTabValue] = useState('0');
-
+  
   useEffect(() => {
     const userIdFromToken = localStorage.getItem('userId');
     setLoggedInUserId(userIdFromToken);
 
     const fetchUser = async () => {
       try {
-        const response = await axios.get(
+        const response = await fetch(
           `https://farm-bid-3998c30f5108.herokuapp.com/api/users/${userId}`
         );
-        const fetchedUser = response.data;
+        const fetchedUser = await response.json();
 
         setUser({
           ...fetchedUser,
           socialMedia: fetchedUser.socialMedia || { instagram: '', facebook: '', tiktok: '' },
-          location: fetchedUser.location || { latitude: '', longitude: '' },
+          location: fetchedUser.location || { address: '', city: '', state: '', country: '' },
           partners: fetchedUser.partners || [],
           followers: fetchedUser.followers || [],
           following: fetchedUser.following || [],
           deliveryAvailable: fetchedUser.deliveryAvailable || false,
           wholesaleAvailable: fetchedUser.wholesaleAvailable || false,
+          isFarmer: fetchedUser.isFarmer || false,
         });
 
-        // Fetch user's blog posts
-        const blogResponse = await axios.get(
+        const blogResponse = await fetch(
           `https://farm-bid-3998c30f5108.herokuapp.com/api/blogs/user/${userId}`
         );
-        setUserBlogs(blogResponse.data);
-
-        // Check if the logged-in user is already following this user
+        const blogData = await blogResponse.json();
+        setUserBlogs(blogData);
         setIsFollowing(fetchedUser.followers.includes(userIdFromToken));
       } catch (error) {
-        if (error.response) {
-          console.error('Server responded with an error:', error.response.data);
-        } else if (error.request) {
-          console.error('No response received from server:', error.request);
-        } else {
-          console.error('Error setting up request:', error.message);
-        }
+        console.error('Error fetching user data:', error);
       }
     };
 
     fetchUser();
+  }, [userId]);
 
-    return () => {
-      // Cleanup function to prevent memory leaks
-      setUser({
-        socialMedia: { instagram: '', facebook: '', tiktok: '' },
-        description: '',
-        wholesaleAvailable: false,
-        deliveryAvailable: false,
-        location: { latitude: '', longitude: '' },
-        partners: [],
-        followers: [],
-        following: [],
+  const handleFollow = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`https://farm-bid-3998c30f5108.herokuapp.com/api/users/${userId}/follow`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      setIsFollowing(true);
+      setUser(prev => ({
+        ...prev,
+        followers: [...prev.followers, loggedInUserId]
+      }));
+    } catch (error) {
+      console.error('Error following user:', error);
+    }
+  };
+
+  const handleUnfollow = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`https://farm-bid-3998c30f5108.herokuapp.com/api/users/${userId}/unfollow`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       setIsFollowing(false);
-    };
-  }, [userId]);
+      setUser(prev => ({
+        ...prev,
+        followers: prev.followers.filter(id => id !== loggedInUserId)
+      }));
+    } catch (error) {
+      console.error('Error unfollowing user:', error);
+    }
+  };
+
+  const getTabs = () => {
+    const commonTabs = [
+      <Tab label="Posts" value="0" key="posts" />,
+      <Tab label="About" value="1" key="about" />
+    ];
+
+    if (user.isFarmer) {
+      return [
+        ...commonTabs,
+        <Tab label="Partners" value="2" key="partners" />, 
+        <Tab label="Services" value="3" key="services" />,
+        <Tab label="Social Media" value="4" key="social" />
+      ];
+    }
+
+    return commonTabs;
+  };
+
+  const formatLocation = (location) => {
+    const parts = [];
+    if (location.address) parts.push(location.address);
+    if (location.city) parts.push(location.city);
+    if (location.state) parts.push(location.state);
+    if (location.country) parts.push(location.country);
+    return parts.join(', ') || 'Location not available';
+  };
 
   const handleSave = async () => {
     const token = localStorage.getItem('token');
@@ -111,104 +160,156 @@ const UserProfile = () => {
       return;
     }
     try {
-      await axios.put(
+      await fetch(
         `https://farm-bid-3998c30f5108.herokuapp.com/api/users/${userId}`,
         {
-          wholesaleAvailable: user.wholesaleAvailable,
-          deliveryAvailable: user.deliveryAvailable,
-          description: user.description,
-          socialMedia: user.socialMedia,
-          partners: user.partners,
-        },
-        {
+          method: 'PUT',
           headers: {
-            Authorization: `Bearer ${token}`,
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           },
+          body: JSON.stringify({
+            wholesaleAvailable: user.wholesaleAvailable,
+            deliveryAvailable: user.deliveryAvailable,
+            description: user.description,
+            socialMedia: user.socialMedia,
+            partners: user.partners,
+            location: user.location,
+          })
         }
       );
       setIsEditing(false);
       alert('Profile updated successfully');
     } catch (error) {
-      if (error.response && error.response.status === 401) {
-        alert('Session expired. Please log in again.');
-        localStorage.removeItem('token');
-      } else {
-        console.error('Error updating profile:', error.response?.data || error.message);
-      }
+      console.error('Error updating profile:', error);
+      alert('Error updating profile');
     }
   };
 
-  const handleFollow = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('You need to be logged in to perform this action.');
-      return;
-    }
-    try {
-      await axios.post(
-        `https://farm-bid-3998c30f5108.herokuapp.com/api/users/follow/${userId}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      setIsFollowing(true);
-      setUser((prevUser) => ({
-        ...prevUser,
-        followers: [...prevUser.followers, loggedInUserId],
-      }));
-    } catch (error) {
-      if (error.response && error.response.status === 401) {
-        alert('Session expired. Please log in again.');
-        localStorage.removeItem('token');
-      } else {
-        console.error('Error following user:', error.response?.data || error.message);
-      }
-    }
-  };
+  const renderPartnersList = () => (
+    <Card>
+      <CardHeader 
+        title="Business Partners" 
+        subheader="Companies and farms we work with"
+        avatar={<PartnersIcon />}
+      />
+      <CardContent>
+        {user.partners && user.partners.length > 0 ? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {user.partners.map((partner, index) => (
+              <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography>{partner.name}</Typography>
+                {isEditing && isOwner && (
+                  <Button 
+                    size="small" 
+                    color="error" 
+                    onClick={() => {
+                      setUser({
+                        ...user,
+                        partners: user.partners.filter((_, i) => i !== index)
+                      });
+                    }}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </Box>
+            ))}
+          </Box>
+        ) : (
+          <Typography color="text.secondary">No partners listed yet.</Typography>
+        )}
+        {isEditing && isOwner && (
+          <Box sx={{ mt: 2 }}>
+            <TextField
+              label="Add new partner"
+              placeholder="Partner name"
+              fullWidth
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && e.target.value) {
+                  setUser({
+                    ...user,
+                    partners: [...user.partners, { name: e.target.value }]
+                  });
+                  e.target.value = '';
+                }
+              }}
+            />
+          </Box>
+        )}
+      </CardContent>
+    </Card>
+  );
 
-  const handleUnfollow = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('You need to be logged in to perform this action.');
-      return;
-    }
-    try {
-      await axios.post(
-        `https://farm-bid-3998c30f5108.herokuapp.com/api/users/unfollow/${userId}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      setIsFollowing(false);
-      setUser((prevUser) => ({
-        ...prevUser,
-        followers: prevUser.followers.filter((id) => id !== loggedInUserId),
-      }));
-    } catch (error) {
-      if (error.response && error.response.status === 401) {
-        alert('Session expired. Please log in again.');
-        localStorage.removeItem('token');
-      } else {
-        console.error('Error unfollowing user:', error.response?.data || error.message);
-      }
-    }
-  };
-
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-  };
+  const renderSocialMediaLinks = () => (
+    <Card>
+      <CardHeader title="Social Media Links" />
+      <CardContent>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <InstagramIcon color="action" />
+            {isEditing && isOwner ? (
+              <TextField
+                label="Instagram"
+                value={user.socialMedia.instagram || ''}
+                onChange={(e) => setUser({
+                  ...user,
+                  socialMedia: { ...user.socialMedia, instagram: e.target.value }
+                })}
+                fullWidth
+              />
+            ) : (
+              <Typography>
+                {user.socialMedia.instagram || 'Not provided'}
+              </Typography>
+            )}
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <FacebookIcon color="action" />
+            {isEditing && isOwner ? (
+              <TextField
+                label="Facebook"
+                value={user.socialMedia.facebook || ''}
+                onChange={(e) => setUser({
+                  ...user,
+                  socialMedia: { ...user.socialMedia, facebook: e.target.value }
+                })}
+                fullWidth
+              />
+            ) : (
+              <Typography>
+                {user.socialMedia.facebook || 'Not provided'}
+              </Typography>
+            )}
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TiktokIcon color="action" />
+            {isEditing && isOwner ? (
+              <TextField
+                label="TikTok"
+                value={user.socialMedia.tiktok || ''}
+                onChange={(e) => setUser({
+                  ...user,
+                  socialMedia: { ...user.socialMedia, tiktok: e.target.value }
+                })}
+                fullWidth
+              />
+            ) : (
+              <Typography>
+                {user.socialMedia.tiktok || 'Not provided'}
+              </Typography>
+            )}
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
 
   const isOwner = loggedInUserId === userId;
 
   return (
     <Box sx={{ maxWidth: '800px', margin: 'auto', padding: 4 }}>
-      {/* Header Card */}
+      {/* Profile Header */}
       <Card>
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
@@ -220,11 +321,14 @@ const UserProfile = () => {
                 <Box>
                   <Typography variant="h5" component="div" fontWeight="bold">
                     {user.username}
+                    {user.isFarmer && (
+                      <FarmerIcon sx={{ ml: 1, color: 'green' }} titleAccess="Verified Farmer" />
+                    )}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                     <LocationOnIcon sx={{ mr: 1 }} />
                     <Typography variant="body2" color="text.secondary">
-                      Location not available
+                      {formatLocation(user.location)}
                     </Typography>
                   </Box>
                 </Box>
@@ -257,42 +361,83 @@ const UserProfile = () => {
         </CardContent>
       </Card>
 
+      {/* Location Edit Form - Only for Farmers */}
+      {isEditing && isOwner && user.isFarmer && (
+        <Card sx={{ mt: 2 }}>
+          <CardHeader title="Edit Location" />
+          <CardContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                label="Address"
+                value={user.location.address}
+                onChange={(e) => setUser({
+                  ...user,
+                  location: { ...user.location, address: e.target.value }
+                })}
+                fullWidth
+              />
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  label="City"
+                  value={user.location.city}
+                  onChange={(e) => setUser({
+                    ...user,
+                    location: { ...user.location, city: e.target.value }
+                  })}
+                  fullWidth
+                />
+                <TextField
+                  label="State"
+                  value={user.location.state}
+                  onChange={(e) => setUser({
+                    ...user,
+                    location: { ...user.location, state: e.target.value }
+                  })}
+                  fullWidth
+                />
+              </Box>
+              <TextField
+                label="Country"
+                value={user.location.country}
+                onChange={(e) => setUser({
+                  ...user,
+                  location: { ...user.location, country: e.target.value }
+                })}
+                fullWidth
+              />
+            </Box>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Main Content Tabs */}
       <TabContext value={tabValue}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="user profile tabs" sx={{ mt: 4 }}>
-          <Tab label="Posts" value="0" />
-          <Tab label="About" value="1" />
-          <Tab label="Partners" value="2" />
-          <Tab label="Services" value="3" />
-          <Tab label="Social Media" value="4" />
-        </Tabs>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mt: 4 }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={(e, newValue) => setTabValue(newValue)} 
+            aria-label="user profile tabs"
+          >
+            {getTabs()}
+          </Tabs>
+        </Box>
 
         {/* Posts Tab */}
         <TabPanel value="0">
-          <Card>
-            <CardHeader title="Field Notes" />
-            <CardContent>
-              {userBlogs.length > 0 ? (
-                userBlogs.map((blog) => (
-                  <Box key={blog._id} sx={{ mb: 2 }}>
-                    <Link to={`/blog/${blog._id}`} style={{ textDecoration: 'none' }}>
-                      <Typography variant="h6" color="primary">
-                        {blog.title}
-                      </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.secondary">
-                      {blog.content.slice(0, 100)}...
-                    </Typography>
-                    <Divider sx={{ my: 2 }} />
-                  </Box>
-                ))
-              ) : (
-                <Typography variant="body2" color="text.secondary">
-                  No Field Notes posted yet.
-                </Typography>
-              )}
-            </CardContent>
-          </Card>
+          {userBlogs.length > 0 ? (
+            userBlogs.map((blog) => (
+              <Card key={blog._id} sx={{ mb: 2 }}>
+                <CardContent>
+                  <Typography variant="h6">{blog.title}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {blog.content}
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Alert severity="info">No posts available.</Alert>
+          )}
         </TabPanel>
 
         {/* About Tab */}
@@ -300,7 +445,7 @@ const UserProfile = () => {
           <Card>
             <CardHeader title="About" />
             <CardContent>
-              {isEditing ? (
+              {isEditing && isOwner ? (
                 <TextField
                   value={user.description || ''}
                   onChange={(e) => setUser({ ...user, description: e.target.value })}
@@ -314,263 +459,100 @@ const UserProfile = () => {
                   {user.description || 'No description provided yet.'}
                 </Typography>
               )}
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6">Location</Typography>
-              <Typography variant="body2" color="text.secondary">
-                {user.location.latitude && user.location.longitude
-                  ? `Latitude: ${user.location.latitude}, Longitude: ${user.location.longitude}`
-                  : 'Location not available'}
-              </Typography>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6">Social Media</Typography>
-              <Box sx={{ mt: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Instagram: {user.socialMedia.instagram || 'Not provided'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Facebook: {user.socialMedia.facebook || 'Not provided'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  TikTok: {user.socialMedia.tiktok || 'Not provided'}
-                </Typography>
-              </Box>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6">Services</Typography>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-                <Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <TruckIcon />
-                    <Typography variant="body1">Delivery Service</Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary">
-                    {user.deliveryAvailable ? 'Available' : 'Unavailable'}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
-                    <StoreIcon />
-                    <Typography variant="body1">Wholesale</Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary">
-                    {user.wholesaleAvailable ? 'Available' : 'Unavailable'}
-                  </Typography>
-                </Box>
-              </Box>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6">Partners</Typography>
-              {user.partners.length > 0 ? (
-                user.partners.map((partner, index) => (
-                  <Box key={index} sx={{ mb: 2 }}>
-                    <Typography variant="h6">{partner.name}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {partner.location}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {partner.description}
-                    </Typography>
-                    <Divider sx={{ my: 2 }} />
-                  </Box>
-                ))
-              ) : (
-                <Typography variant="body2" color="text.secondary">
-                  No partners listed yet.
-                </Typography>
-              )}
             </CardContent>
           </Card>
         </TabPanel>
 
-        {/* Partners Tab */}
+        {/* Partners Tab - Only for Farmers */}
         <TabPanel value="2">
-          <Card>
-            <CardHeader title="Partners" subheader="Organizations we work with" />
-            <CardContent>
-              {isEditing ? (
-                <Box>
-                  {user.partners.map((partner, index) => (
-                    <Box key={index} sx={{ mb: 2 }}>
-                      <TextField
-                        label="Partner Name"
-                        value={partner.name || ''}
-                        onChange={(e) => {
-                          const updatedPartners = [...user.partners];
-                          updatedPartners[index].name = e.target.value;
-                          setUser({ ...user, partners: updatedPartners });
-                        }}
-                        fullWidth
-                        sx={{ mb: 1 }}
-                      />
-                      <TextField
-                        label="Location"
-                        value={partner.location || ''}
-                        onChange={(e) => {
-                          const updatedPartners = [...user.partners];
-                          updatedPartners[index].location = e.target.value;
-                          setUser({ ...user, partners: updatedPartners });
-                        }}
-                        fullWidth
-                        sx={{ mb: 1 }}
-                      />
-                      <TextField
-                        label="Description"
-                        value={partner.description || ''}
-                        onChange={(e) => {
-                          const updatedPartners = [...user.partners];
-                          updatedPartners[index].description = e.target.value;
-                          setUser({ ...user, partners: updatedPartners });
-                        }}
-                        fullWidth
-                        multiline
-                        rows={2}
-                      />
-                      <Divider sx={{ my: 2 }} />
+          {user.isFarmer ? (
+            renderPartnersList()
+          ) : (
+            <Alert severity="info">Partners tab is only available for farmer profiles.</Alert>
+          )}
+        </TabPanel>
+
+        {/* Services Tab - Only for Farmers */}
+        <TabPanel value="3">
+          {user.isFarmer ? (
+            <Card>
+              <CardHeader title="Farmer Services" subheader="Available services and options" />
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <TruckIcon />
+                      <Typography variant="body1">Delivery Service</Typography>
                     </Box>
-                  ))}
-                  <Button
-                    variant="outlined"
-                    onClick={() =>
-                      setUser({
-                        ...user,
-                        partners: [...user.partners, { name: '', location: '', description: '' }],
-                      })
-                    }
-                  >
-                    Add Partner
-                  </Button>
-                </Box>
-              ) : (
-                <Box>
-                  {user.partners.length > 0 ? (
-                    user.partners.map((partner, index) => (
-                      <Box key={index} sx={{ mb: 2 }}>
-                        <Typography variant="h6">{partner.name}</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {partner.location}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {partner.description}
-                        </Typography>
-                        <Divider sx={{ my: 2 }} />
-                      </Box>
-                    ))
-                  ) : (
                     <Typography variant="body2" color="text.secondary">
-                      No partners listed yet.
+                      Offer delivery to customers
+                    </Typography>
+                  </Box>
+                  {isEditing && isOwner ? (
+                    <Switch
+                      checked={user.deliveryAvailable}
+                      onChange={(e) => setUser({ ...user, deliveryAvailable: e.target.checked })}
+                    />
+                  ) : (
+                    <Typography color={user.deliveryAvailable ? 'success.main' : 'error.main'}>
+                      {user.deliveryAvailable ? 'Available' : 'Unavailable'}
                     </Typography>
                   )}
                 </Box>
-              )}
-            </CardContent>
-          </Card>
+                <Divider />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+                  <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <StoreIcon />
+                      <Typography variant="body1">Wholesale</Typography>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Bulk orders for businesses
+                    </Typography>
+                  </Box>
+                  {isEditing && isOwner ? (
+                    <Switch
+                      checked={user.wholesaleAvailable}
+                      onChange={(e) => setUser({ ...user, wholesaleAvailable: e.target.checked })}
+                    />
+                  ) : (
+                    <Typography color={user.wholesaleAvailable ? 'success.main' : 'error.main'}>
+                      {user.wholesaleAvailable ? 'Available' : 'Unavailable'}
+                    </Typography>
+                  )}
+                </Box>
+              </CardContent>
+            </Card>
+          ) : (
+            <Alert severity="info">Services tab is only available for farmer profiles.</Alert>
+          )}
         </TabPanel>
 
-        {/* Services Tab */}
-        <TabPanel value="3">
-          <Card>
-            <CardHeader title="Services" subheader="Available services and options" />
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <TruckIcon />
-                    <Typography variant="body1">Delivery Service</Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Offer delivery to customers
-                  </Typography>
-                </Box>
-                {isEditing ? (
-                  <Switch
-                    checked={user.deliveryAvailable}
-                    onChange={(e) => setUser({ ...user, deliveryAvailable: e.target.checked })}
-                  />
-                ) : (
-                  <Typography color={user.deliveryAvailable ? 'green' : 'red'}>
-                    {user.deliveryAvailable ? 'Available' : 'Unavailable'}
-                  </Typography>
-                )}
-              </Box>
-              <Divider />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-                <Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <StoreIcon />
-                    <Typography variant="body1">Wholesale</Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Bulk orders for businesses
-                  </Typography>
-                </Box>
-                {isEditing ? (
-                  <Switch
-                    checked={user.wholesaleAvailable}
-                    onChange={(e) => setUser({ ...user, wholesaleAvailable: e.target.checked })}
-                  />
-                ) : (
-                  <Typography color={user.wholesaleAvailable ? 'green' : 'red'}>
-                    {user.wholesaleAvailable ? 'Available' : 'Unavailable'}
-                  </Typography>
-                )}
-              </Box>
-            </CardContent>
-          </Card>
-        </TabPanel>
-
-        {/* Social Media Tab */}
+        {/* Social Media Tab - Only for Farmers */}
         <TabPanel value="4">
-          <Card>
-            <CardHeader title="Social Media Links" />
-            <CardContent>
-              {isEditing ? (
-                <Box>
-                  <TextField
-                    label="Instagram"
-                    value={user.socialMedia.instagram || ''}
-                    onChange={(e) => setUser({ ...user, socialMedia: { ...user.socialMedia, instagram: e.target.value } })}
-                    fullWidth
-                    sx={{ mb: 2 }}
-                  />
-                  <TextField
-                    label="Facebook"
-                    value={user.socialMedia.facebook || ''}
-                    onChange={(e) => setUser({ ...user, socialMedia: { ...user.socialMedia, facebook: e.target.value } })}
-                    fullWidth
-                    sx={{ mb: 2 }}
-                  />
-                  <TextField
-                    label="TikTok"
-                    value={user.socialMedia.tiktok || ''}
-                    onChange={(e) => setUser({ ...user, socialMedia: { ...user.socialMedia, tiktok: e.target.value } })}
-                    fullWidth
-                    sx={{ mb: 2 }}
-                  />
-                </Box>
-              ) : (
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Instagram: {user.socialMedia.instagram || 'Not provided'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Facebook: {user.socialMedia.facebook || 'Not provided'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    TikTok: {user.socialMedia.tiktok || 'Not provided'}
-                  </Typography>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
+          {user.isFarmer ? (
+            renderSocialMediaLinks()
+          ) : (
+            <Alert severity="info">Social media tab is only available for farmer profiles.</Alert>
+          )}
         </TabPanel>
       </TabContext>
 
       {/* Edit Controls */}
       {isOwner && (
         <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
-          <Button variant={isEditing ? 'outlined' : 'contained'} onClick={() => setIsEditing(!isEditing)}>
+          <Button 
+            variant={isEditing ? 'outlined' : 'contained'} 
+            onClick={() => setIsEditing(!isEditing)}
+          >
             {isEditing ? 'Cancel' : 'Edit Profile'}
           </Button>
           {isEditing && (
-            <Button variant="contained" onClick={handleSave}>
+            <Button 
+              variant="contained" 
+              color="primary"
+              onClick={handleSave}
+            >
               Save Changes
             </Button>
           )}

@@ -15,7 +15,12 @@ import {
   Divider,
   ListItemIcon,
   useTheme,
-  Badge
+  Badge,
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemButton
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -27,6 +32,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import DescriptionIcon from '@mui/icons-material/Description';
+import CloseIcon from '@mui/icons-material/Close';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -36,19 +42,18 @@ const Header = () => {
   const userRole = localStorage.getItem('role');
   const userId = localStorage.getItem('userId');
   const [anchorEl, setAnchorEl] = useState(null);
-  const [mobileMenuAnchorEl, setMobileMenuAnchorEl] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleMobileMenuOpen = (event) => {
-    setMobileMenuAnchorEl(event.currentTarget);
-  };
-
   const handleMenuClose = () => {
     setAnchorEl(null);
-    setMobileMenuAnchorEl(null);
+  };
+
+  const handleDrawerToggle = () => {
+    setDrawerOpen(!drawerOpen);
   };
 
   const handleLogout = () => {
@@ -57,6 +62,7 @@ const Header = () => {
     localStorage.removeItem('userId');
     navigate('/');
     handleMenuClose();
+    setDrawerOpen(false);
   };
 
   const isCurrentPath = (path) => location.pathname === path;
@@ -64,24 +70,24 @@ const Header = () => {
   const getVisibleNavItems = () => {
     if (!token) {
       return [
-        { label: 'Field Notes', path: '/blogs', icon: <ArticleIcon sx={{ mr: 0.5 }} /> }
+        { label: 'Field Notes', path: '/blogs', icon: <ArticleIcon /> }
       ];
     }
 
     if (userRole === 'farmer') {
       return [
-        { label: 'Dashboard', path: '/farmer-dashboard', icon: <DashboardIcon sx={{ mr: 0.5 }} /> },
-        { label: 'Field Notes', path: '/blogs', icon: <ArticleIcon sx={{ mr: 0.5 }} /> },
-        { label: 'Auctions', path: '/farmer-auctions', icon: <GavelIcon sx={{ mr: 0.5 }} /> },
-        { label: 'Contracts', path: '/OpenContractList', icon: <DescriptionIcon sx={{ mr: 0.5 }} /> }
+        { label: 'Dashboard', path: '/farmer-dashboard', icon: <DashboardIcon /> },
+        { label: 'Field Notes', path: '/blogs', icon: <ArticleIcon /> },
+        { label: 'Auctions', path: '/farmer-auctions', icon: <GavelIcon /> },
+        { label: 'Contracts', path: '/OpenContractList', icon: <DescriptionIcon /> }
       ];
     }
 
     if (userRole === 'buyer') {
       return [
-        { label: 'Dashboard', path: '/buyer-dashboard', icon: <DashboardIcon sx={{ mr: 0.5 }} /> },
-        { label: 'Field Notes', path: '/blogs', icon: <ArticleIcon sx={{ mr: 0.5 }} /> },
-        { label: 'Contracts', path: '/createContract', icon: <DescriptionIcon sx={{ mr: 0.5 }} /> }
+        { label: 'Dashboard', path: '/buyer-dashboard', icon: <DashboardIcon /> },
+        { label: 'Field Notes', path: '/blogs', icon: <ArticleIcon /> },
+        { label: 'Contracts', path: '/createContract', icon: <DescriptionIcon /> }
       ];
     }
 
@@ -101,141 +107,160 @@ const Header = () => {
     { label: 'Checkout', path: '/CheckoutForm', icon: <PaymentsIcon /> }
   ] : [];
 
-  return (
-    <AppBar 
-      position="fixed" 
+  const allMenuItems = [...getVisibleNavItems(), ...menuItems];
+  if (token) {
+    allMenuItems.push({ label: 'Logout', path: null, icon: <LogoutIcon />, onClick: handleLogout });
+  }
+
+  const desktopMenuItems = menuItems.map((item) => (
+    <MenuItem
+      key={item.path}
+      component={Link}
+      to={item.path}
+      onClick={handleMenuClose}
+      selected={isCurrentPath(item.path)}
       sx={{
-        backgroundColor: 'background.paper',
-        borderBottom: 1,
-        borderColor: 'divider',
+        color: isCurrentPath(item.path) ? 'primary.main' : 'text.primary',
+        '&:hover': { backgroundColor: 'action.hover' }
       }}
     >
-      <Container maxWidth="lg">
-        <Toolbar 
-          disableGutters 
-          sx={{ 
-            justifyContent: 'space-between',
-            minHeight: 64,
-          }}
-        >
-          {/* Logo Section */}
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography
-              variant="h5"
-              component={Link}
-              to="/"
-              sx={{
-                textDecoration: 'none',
-                color: 'primary.main',
-                fontWeight: 700,
-                letterSpacing: 1,
-                mr: 4,
-                transition: 'color 0.2s',
-                '&:hover': {
-                  color: 'primary.dark',
-                }
-              }}
-            >
-              Elipae
-            </Typography>
+      <ListItemIcon sx={{ color: 'inherit' }}>
+        {item.icon}
+      </ListItemIcon>
+      {item.label}
+    </MenuItem>
+  ));
 
-            {/* Desktop Navigation Items */}
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
-              {getVisibleNavItems().map((item) => (
-                <Button
-                  key={item.path}
-                  component={Link}
-                  to={item.path}
-                  color="inherit"
-                  startIcon={item.icon}
-                  sx={{
-                    minWidth: 100,
-                    px: 2,
-                    py: 1,
-                    borderRadius: 1,
-                    textTransform: 'none',
-                    backgroundColor: isCurrentPath(item.path) ? 'action.selected' : 'transparent',
-                    color: isCurrentPath(item.path) ? 'primary.main' : 'text.primary',
-                    '&:hover': {
-                      backgroundColor: 'action.hover',
-                    },
-                  }}
-                >
-                  {item.label}
-                </Button>
-              ))}
-            </Box>
-          </Box>
-
-          {/* Right Side - User Menu */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {/* Mobile Menu Button */}
-            <IconButton
-              color="inherit"
-              sx={{ display: { xs: 'flex', md: 'none' } }}
-              onClick={handleMobileMenuOpen}
-            >
-              <MenuIcon />
-            </IconButton>
-
-            {/* User Avatar & Menu */}
-            <Box>
-              <IconButton onClick={handleMenuOpen}>
-                <Avatar 
-                  sx={{ 
-                    bgcolor: token ? 'primary.main' : 'grey.300',
-                    width: 40,
-                    height: 40,
-                  }}
-                >
-                  {token ? userRole?.[0]?.toUpperCase() : <PersonIcon />}
-                </Avatar>
-              </IconButton>
-              
-              {/* Desktop Menu */}
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-                TransitionComponent={Fade}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                PaperProps={{
-                  elevation: 3,
-                  sx: {
-                    mt: 1.5,
-                    minWidth: 200,
-                    borderRadius: 2,
-                    '& .MuiMenuItem-root': {
-                      py: 1.5,
-                      px: 2,
-                    }
+  return (
+    <Box sx={{ mb: { xs: 7, sm: 8 } }}>
+      <AppBar 
+        position="fixed" 
+        sx={{
+          backgroundColor: 'background.paper',
+          borderBottom: 1,
+          borderColor: 'divider',
+          zIndex: theme.zIndex.drawer + 1,
+        }}
+      >
+        <Container maxWidth="lg">
+          <Toolbar 
+            disableGutters 
+            sx={{ 
+              justifyContent: 'space-between',
+              minHeight: { xs: 56, sm: 64 },
+            }}
+          >
+            {/* Logo Section */}
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Typography
+                variant="h5"
+                component={Link}
+                to="/"
+                sx={{
+                  textDecoration: 'none',
+                  color: 'primary.main',
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  mr: 4,
+                  transition: 'color 0.2s',
+                  '&:hover': {
+                    color: 'primary.dark',
                   }
                 }}
               >
-                {menuItems.map((item) => (
-                  <MenuItem
+                Elipae
+              </Typography>
+
+              {/* Desktop Navigation Items */}
+              <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
+                {getVisibleNavItems().map((item) => (
+                  <Button
                     key={item.path}
                     component={Link}
                     to={item.path}
-                    onClick={handleMenuClose}
-                    selected={isCurrentPath(item.path)}
+                    color="inherit"
+                    startIcon={item.icon}
                     sx={{
+                      minWidth: 100,
+                      px: 2,
+                      py: 1,
+                      borderRadius: 1,
+                      textTransform: 'none',
+                      backgroundColor: isCurrentPath(item.path) ? 'action.selected' : 'transparent',
                       color: isCurrentPath(item.path) ? 'primary.main' : 'text.primary',
-                      '&:hover': { backgroundColor: 'action.hover' }
+                      '&:hover': {
+                        backgroundColor: 'action.hover',
+                      },
                     }}
                   >
-                    <ListItemIcon sx={{ color: 'inherit' }}>
-                      {item.icon}
-                    </ListItemIcon>
                     {item.label}
-                  </MenuItem>
+                  </Button>
                 ))}
+              </Box>
+            </Box>
 
-                {token && (
-                  <>
-                    <Divider sx={{ my: 1 }} />
+            {/* Right Side - User Menu */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {/* Mobile Menu Button with Label */}
+              <Button
+                onClick={handleDrawerToggle}
+                startIcon={<MenuIcon />}
+                sx={{
+                  display: { xs: 'flex', md: 'none' },
+                  color: 'text.primary',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  px: 2,
+                  py: 1,
+                  textTransform: 'none',
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                  },
+                }}
+              >
+                Menu
+              </Button>
+
+              {/* Desktop User Menu */}
+              <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+                <IconButton onClick={handleMenuOpen}>
+                  <Avatar 
+                    sx={{ 
+                      bgcolor: token ? 'primary.main' : 'grey.300',
+                      width: 40,
+                      height: 40,
+                    }}
+                  >
+                    {token ? userRole?.[0]?.toUpperCase() : <PersonIcon />}
+                  </Avatar>
+                </IconButton>
+                
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl)}
+                  onClose={handleMenuClose}
+                  TransitionComponent={Fade}
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                  PaperProps={{
+                    elevation: 3,
+                    sx: {
+                      mt: 1.5,
+                      minWidth: 200,
+                      borderRadius: 2,
+                      '& .MuiMenuItem-root': {
+                        py: 1.5,
+                        px: 2,
+                      }
+                    }
+                  }}
+                >
+                  {desktopMenuItems}
+                  {token && [
+                    <Divider key="divider" sx={{ my: 1 }} />,
                     <MenuItem
+                      key="logout"
                       onClick={handleLogout}
                       sx={{ 
                         color: 'error.main',
@@ -247,45 +272,83 @@ const Header = () => {
                       </ListItemIcon>
                       Logout
                     </MenuItem>
-                  </>
-                )}
-              </Menu>
+                  ]}
+                </Menu>
+              </Box>
+            </Box>
+          </Toolbar>
+        </Container>
+      </AppBar>
 
-              {/* Mobile Menu */}
-              <Menu
-                anchorEl={mobileMenuAnchorEl}
-                open={Boolean(mobileMenuAnchorEl)}
-                onClose={handleMenuClose}
-                TransitionComponent={Fade}
-                PaperProps={{
-                  elevation: 3,
-                  sx: {
-                    mt: 1.5,
-                    minWidth: 200,
-                    borderRadius: 2,
-                  }
+      {/* Mobile Drawer */}
+      <Drawer
+        variant="temporary"
+        anchor="right"
+        open={drawerOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': { 
+            boxSizing: 'border-box', 
+            width: 280,
+            backgroundColor: 'background.paper',
+          },
+        }}
+      >
+        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h6" color="primary">
+            Menu
+          </Typography>
+          <IconButton onClick={handleDrawerToggle}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <Divider />
+        <List sx={{ pt: 1 }}>
+          {allMenuItems.map((item) => (
+            <ListItem 
+              key={item.label} 
+              disablePadding
+              onClick={() => {
+                if (item.onClick) {
+                  item.onClick();
+                } else {
+                  navigate(item.path);
+                  handleDrawerToggle();
+                }
+              }}
+            >
+              <ListItemButton
+                selected={item.path && isCurrentPath(item.path)}
+                sx={{
+                  py: 1.5,
+                  px: 3,
+                  color: item.label === 'Logout' ? 'error.main' : 
+                         (item.path && isCurrentPath(item.path)) ? 'primary.main' : 'text.primary',
+                  '&.Mui-selected': {
+                    backgroundColor: 'action.selected',
+                  },
+                  '&:hover': {
+                    backgroundColor: item.label === 'Logout' ? 'error.lighter' : 'action.hover',
+                  },
                 }}
               >
-                {getVisibleNavItems().map((item) => (
-                  <MenuItem
-                    key={item.path}
-                    component={Link}
-                    to={item.path}
-                    onClick={handleMenuClose}
-                    selected={isCurrentPath(item.path)}
-                  >
-                    <ListItemIcon>
-                      {item.icon}
-                    </ListItemIcon>
-                    {item.label}
-                  </MenuItem>
-                ))}
-              </Menu>
-            </Box>
-          </Box>
-        </Toolbar>
-      </Container>
-    </AppBar>
+                <ListItemIcon sx={{ 
+                  color: 'inherit',
+                  minWidth: 40,
+                }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText primary={item.label} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+      </Drawer>
+    </Box>
   );
 };
 
