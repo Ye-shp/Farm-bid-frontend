@@ -1,7 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import { getBlogPosts } from '../Services/blogs';
 import { Link, useNavigate } from 'react-router-dom';
-import '../Styles/Blog.css';
+import {
+  Box,
+  Typography,
+  Button,
+  Grid,
+  Card,
+  CardContent,
+  CardActionArea,
+  Avatar,
+  styled
+} from '@mui/material';
+
+// Replacing makeStyles with styled
+const Container = styled(Box)(({ theme }) => ({
+  marginTop: theme.spacing(5),
+}));
+
+const CreatePostButton = styled(Button)(({ theme }) => ({
+  marginBottom: theme.spacing(4),
+}));
+
+const StyledCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+}));
+
+const CardTitle = styled(Typography)(({ theme }) => ({
+  fontWeight: 'bold',
+}));
+
+const CardText = styled(Typography)(({ theme }) => ({
+  marginTop: theme.spacing(1),
+}));
+
+const AuthorLink = styled(Link)(({ theme }) => ({
+  textDecoration: 'none',
+  color: theme.palette.primary.main,
+}));
 
 const BlogList = ({ isLoggedIn }) => {
   const [blogs, setBlogs] = useState([]);
@@ -20,37 +56,47 @@ const BlogList = ({ isLoggedIn }) => {
   }, []);
 
   return (
-    <div className="container mt-5">
-      <h2 className="text-center mb-4">Field Notes</h2>
-      
+    <Container>
+      <Typography variant="h4" align="center" gutterBottom>
+        Field Notes
+      </Typography>
+
       {isLoggedIn && (
-        <button 
-          onClick={() => navigate('/create-blog')} 
-          className="btn btn-primary mb-4 create-post-btn">
-          Create New Field Note 
-        </button>
+        <CreatePostButton
+          variant="contained"
+          color="primary"
+          onClick={() => navigate('/create-blog')}
+        >
+          Create New Field Note
+        </CreatePostButton>
       )}
-  
-      <div className="row">
+
+      <Grid container spacing={4}>
         {blogs.map((blog) => (
-          <div className="col-md-6 mb-4" key={blog._id}>
-            <div className="card">
-              <div className="card-body">
-                <h3 className="card-title">
-                  <Link to={`/blog/${blog._id}`} className="text-decoration-none">
+          <Grid item xs={12} md={6} key={blog._id}>
+            <StyledCard>
+              <CardActionArea component={Link} to={`/blog/${blog._id}`}>
+                <CardContent>
+                  <CardTitle variant="h5">
                     {blog.title}
-                  </Link>
-                </h3>
-                <p className="card-text">Posted by <Link to={`/user/${blog.user._id}`}>{blog.user.username}</Link></p>
-                <p className="card-text">{blog.content.slice(0, 100)}...</p>
-              </div>
-            </div>
-          </div>
+                  </CardTitle>
+                  <CardText variant="body2">
+                    Posted by{' '}
+                    <AuthorLink to={`/user/${blog.user._id}`}>
+                      {blog.user.username}
+                    </AuthorLink>
+                  </CardText>
+                  <CardText variant="body2" color="textSecondary">
+                    {blog.content.slice(0, 100)}...
+                  </CardText>
+                </CardContent>
+              </CardActionArea>
+            </StyledCard>
+          </Grid>
         ))}
-      </div>
-    </div>
+      </Grid>
+    </Container>
   );
-  
 };
 
 export default BlogList;

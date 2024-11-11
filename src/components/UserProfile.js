@@ -1,7 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { getUserBlogPosts } from '../Services/blogs';
+import {
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  Button,
+  Tabs,
+  Tab,
+  TextField,
+  Switch,
+  Typography,
+  Avatar,
+  IconButton,
+  Divider,
+} from '@mui/material';
+import { TabContext, TabPanel } from '@mui/lab';
+import {
+  Instagram as InstagramIcon,
+  Facebook as FacebookIcon,
+  LocationOn as LocationOnIcon,
+  Group as GroupIcon,
+  Share as ShareIcon,
+  LocalShipping as TruckIcon,
+  Store as StoreIcon,
+} from '@mui/icons-material';
 
 const UserProfile = () => {
   const { userId } = useParams();
@@ -19,6 +43,7 @@ const UserProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loggedInUserId, setLoggedInUserId] = useState(null);
+  const [tabValue, setTabValue] = useState('0');
 
   useEffect(() => {
     const userIdFromToken = localStorage.getItem('userId');
@@ -39,6 +64,7 @@ const UserProfile = () => {
           followers: fetchedUser.followers || [],
           following: fetchedUser.following || [],
           deliveryAvailable: fetchedUser.deliveryAvailable || false,
+          wholesaleAvailable: fetchedUser.wholesaleAvailable || false,
         });
 
         // Fetch user's blog posts
@@ -112,19 +138,6 @@ const UserProfile = () => {
     }
   };
 
-  const handlePartnerChange = (index, field, value) => {
-    const updatedPartners = [...user.partners];
-    updatedPartners[index] = { ...updatedPartners[index], [field]: value };
-    setUser({ ...user, partners: updatedPartners });
-  };
-
-  const addNewPartner = () => {
-    setUser({
-      ...user,
-      partners: [...user.partners, { name: '', location: '', description: '' }],
-    });
-  };
-
   const handleFollow = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -187,267 +200,384 @@ const UserProfile = () => {
     }
   };
 
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
   const isOwner = loggedInUserId === userId;
 
   return (
-    <div className="container mt-4">
-      <div className="user-card card shadow-sm p-3 mb-4">
-        <h2 className="user-email mb-2">{user.username}</h2>
-        <p>
-          <strong>Location:</strong>{' '}
-          {/*{user.location.latitude && user.location.longitude
-            ? `${user.location.latitude}, ${user.location.longitude}`
-            : 'Location not available'}*/}
-        </p>
-        <p>Followers: {user.followers.length}</p>
-        <p>Following: {user.following.length}</p>
-      </div>
-  
-      <div className="blogs-card card shadow-sm p-3 mb-4">
-        <h3>{user.username}'s Blog Posts</h3>
-        {userBlogs.length > 0 ? (
-          <ul className="list-unstyled">
-            {userBlogs.map((blog) => (
-              <li key={blog._id} className="mb-3">
-                <h4>
-                  <Link to={`/blog/${blog._id}`} className="text-decoration-none">
-                    {blog.title}
-                  </Link>
-                </h4>
-                <p>{blog.content.slice(0, 100)}...</p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>Hasn't posted any Field Notes yet</p>
-        )}
-      </div>
-  
-      {user.role === 'farmer' && (
-        <>
-          <div className="about-card card shadow-sm p-3 mb-4">
-            <h3>About Me</h3>
-            {isEditing ? (
-              <textarea
-                value={user.description || ''}
-                onChange={(e) => setUser({ ...user, description: e.target.value })}
-                className="form-control"
-                rows="3"
-              />
-            ) : (
-              <p>{user.description || 'No description provided yet.'}</p>
-            )}
-          </div>
-  
-          <div className="social-media-card card shadow-sm p-3 mb-4">
-            <h3>Social Media</h3>
-            {isEditing ? (
-              <div className="social-media-inputs">
-                <input
-                  type="text"
-                  value={user.socialMedia.instagram || ''}
-                  onChange={(e) =>
-                    setUser({
-                      ...user,
-                      socialMedia: {
-                        ...user.socialMedia,
-                        instagram: e.target.value,
-                      },
-                    })
-                  }
-                  placeholder="Instagram"
-                  className="form-control mb-2"
-                />
-                <input
-                  type="text"
-                  value={user.socialMedia.facebook || ''}
-                  onChange={(e) =>
-                    setUser({
-                      ...user,
-                      socialMedia: {
-                        ...user.socialMedia,
-                        facebook: e.target.value,
-                      },
-                    })
-                  }
-                  placeholder="Facebook"
-                  className="form-control mb-2"
-                />
-                <input
-                  type="text"
-                  value={user.socialMedia.tiktok || ''}
-                  onChange={(e) =>
-                    setUser({
-                      ...user,
-                      socialMedia: {
-                        ...user.socialMedia,
-                        tiktok: e.target.value,
-                      },
-                    })
-                  }
-                  placeholder="TikTok"
-                  className="form-control mb-2"
-                />
-              </div>
-            ) : (
-              <div className="social-media-links">
-                {user.socialMedia.instagram && (
-                  <a
-                    href={user.socialMedia.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-outline-secondary mb-2"
+    <Box sx={{ maxWidth: '800px', margin: 'auto', padding: 4 }}>
+      {/* Header Card */}
+      <Card>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+            <Avatar sx={{ width: 96, height: 96 }}>
+              {user.username?.charAt(0).toUpperCase()}
+            </Avatar>
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <Box>
+                  <Typography variant="h5" component="div" fontWeight="bold">
+                    {user.username}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                    <LocationOnIcon sx={{ mr: 1 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      Location not available
+                    </Typography>
+                  </Box>
+                </Box>
+                {!isOwner && (
+                  <Button
+                    variant={isFollowing ? 'contained' : 'outlined'}
+                    color={isFollowing ? 'error' : 'primary'}
+                    onClick={isFollowing ? handleUnfollow : handleFollow}
                   >
-                    Instagram
-                  </a>
+                    {isFollowing ? 'Unfollow' : 'Follow'}
+                  </Button>
                 )}
-                {user.socialMedia.facebook && (
-                  <a
-                    href={user.socialMedia.facebook}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-outline-secondary mb-2"
-                  >
-                    Facebook
-                  </a>
-                )}
-                {user.socialMedia.tiktok && (
-                  <a
-                    href={user.socialMedia.tiktok}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-outline-secondary mb-2"
-                  >
-                    TikTok
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
-  
-          <div className="partners-card card shadow-sm p-3 mb-4">
-            <h3>Partners</h3>
-            {isEditing ? (
-              <>
-                {user.partners.map((partner, index) => (
-                  <div key={index} className="partner-input mb-3">
-                    <input
-                      type="text"
-                      value={partner.name || ''}
-                      onChange={(e) => handlePartnerChange(index, 'name', e.target.value)}
-                      placeholder="Partner Name"
-                      className="form-control mb-1"
-                    />
-                    <input
-                      type="text"
-                      value={partner.location || ''}
-                      onChange={(e) => handlePartnerChange(index, 'location', e.target.value)}
-                      placeholder="Location"
-                      className="form-control mb-1"
-                    />
-                    <input
-                      type="text"
-                      value={partner.description || ''}
-                      onChange={(e) => handlePartnerChange(index, 'description', e.target.value)}
-                      placeholder="Description"
-                      className="form-control"
-                    />
-                  </div>
-                ))}
-                <button className="btn btn-secondary mt-2" onClick={addNewPartner}>
-                  Add New Partner
-                </button>
-              </>
-            ) : (
-              <ul className="list-unstyled">
-                {user.partners.length > 0 ? (
-                  user.partners.map((partner, index) => (
-                    <li key={index} className="mb-3">
-                      <strong>{partner.name}</strong> - {partner.location}
-                      <br />
-                      <em>{partner.description}</em>
-                    </li>
-                  ))
-                ) : (
-                  <p>No partners listed yet.</p>
-                )}
-              </ul>
-            )}
-          </div>
-  
-          <div className="delivery-card card shadow-sm p-3 mb-4">
-            <h3>Delivery Availability</h3>
-            {isEditing ? (
-              <div className="form-check">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  id="deliveryAvailable"
-                  checked={user.deliveryAvailable || false}
-                  onChange={(e) => setUser({ ...user, deliveryAvailable: e.target.checked })}
-                />
-                <label className="form-check-label" htmlFor="deliveryAvailable">
-                  Offers Delivery
-                </label>
-              </div>
-            ) : (
-              <p>
-                {user.deliveryAvailable
-                  ? 'This farmer offers delivery.'
-                  : 'Delivery not available.'}
-              </p>
-            )}
-          </div>
-  
-          <div className="wholesale-card card shadow-sm p-3 mb-4">
-            <h3>Wholesale Availability</h3>
-            {isEditing ? (
-              <div className="form-check">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  id="wholesaleAvailable"
-                  checked={user.wholesaleAvailable || false}
-                  onChange={(e) => setUser({ ...user, wholesaleAvailable: e.target.checked })}
-                />
-                <label className="form-check-label" htmlFor="wholesaleAvailable">
-                  Offers Wholesale
-                </label>
-              </div>
-            ) : (
-              <p>
-                {user.wholesaleAvailable
-                  ? 'This farmer offers wholesale.'
-                  : 'Wholesale not available.'}
-              </p>
-            )}
-          </div>
-  
-          {isOwner ? (
-            <div className="action-buttons mt-3">
-              <button className="btn btn-primary me-2" onClick={() => setIsEditing(!isEditing)}>
-                {isEditing ? 'Cancel' : 'Edit Profile'}
-              </button>
-              {isEditing && (
-                <button className="btn btn-success" onClick={handleSave}>
-                  Save Changes
-                </button>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <GroupIcon />
+                  <Typography variant="body2">
+                    <strong>{user.followers.length}</strong> followers
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ShareIcon />
+                  <Typography variant="body2">
+                    <strong>{user.following.length}</strong> following
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+
+      {/* Main Content Tabs */}
+      <TabContext value={tabValue}>
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label="user profile tabs" sx={{ mt: 4 }}>
+          <Tab label="Posts" value="0" />
+          <Tab label="About" value="1" />
+          <Tab label="Partners" value="2" />
+          <Tab label="Services" value="3" />
+          <Tab label="Social Media" value="4" />
+        </Tabs>
+
+        {/* Posts Tab */}
+        <TabPanel value="0">
+          <Card>
+            <CardHeader title="Field Notes" />
+            <CardContent>
+              {userBlogs.length > 0 ? (
+                userBlogs.map((blog) => (
+                  <Box key={blog._id} sx={{ mb: 2 }}>
+                    <Link to={`/blog/${blog._id}`} style={{ textDecoration: 'none' }}>
+                      <Typography variant="h6" color="primary">
+                        {blog.title}
+                      </Typography>
+                    </Link>
+                    <Typography variant="body2" color="text.secondary">
+                      {blog.content.slice(0, 100)}...
+                    </Typography>
+                    <Divider sx={{ my: 2 }} />
+                  </Box>
+                ))
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No Field Notes posted yet.
+                </Typography>
               )}
-            </div>
-          ) : (
-            <div className="follow-buttons mt-3">
-              <button
-                className={`btn ${isFollowing ? 'btn-danger' : 'btn-primary'}`}
-                onClick={isFollowing ? handleUnfollow : handleFollow}
-              >
-                {isFollowing ? 'Unfollow' : 'Follow'}
-              </button>
-            </div>
+            </CardContent>
+          </Card>
+        </TabPanel>
+
+        {/* About Tab */}
+        <TabPanel value="1">
+          <Card>
+            <CardHeader title="About" />
+            <CardContent>
+              {isEditing ? (
+                <TextField
+                  value={user.description || ''}
+                  onChange={(e) => setUser({ ...user, description: e.target.value })}
+                  placeholder="Tell us about yourself..."
+                  fullWidth
+                  multiline
+                  rows={4}
+                />
+              ) : (
+                <Typography variant="body1" color="text.secondary">
+                  {user.description || 'No description provided yet.'}
+                </Typography>
+              )}
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="h6">Location</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {user.location.latitude && user.location.longitude
+                  ? `Latitude: ${user.location.latitude}, Longitude: ${user.location.longitude}`
+                  : 'Location not available'}
+              </Typography>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="h6">Social Media</Typography>
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Instagram: {user.socialMedia.instagram || 'Not provided'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Facebook: {user.socialMedia.facebook || 'Not provided'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  TikTok: {user.socialMedia.tiktok || 'Not provided'}
+                </Typography>
+              </Box>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="h6">Services</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TruckIcon />
+                    <Typography variant="body1">Delivery Service</Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {user.deliveryAvailable ? 'Available' : 'Unavailable'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
+                    <StoreIcon />
+                    <Typography variant="body1">Wholesale</Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {user.wholesaleAvailable ? 'Available' : 'Unavailable'}
+                  </Typography>
+                </Box>
+              </Box>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="h6">Partners</Typography>
+              {user.partners.length > 0 ? (
+                user.partners.map((partner, index) => (
+                  <Box key={index} sx={{ mb: 2 }}>
+                    <Typography variant="h6">{partner.name}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {partner.location}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {partner.description}
+                    </Typography>
+                    <Divider sx={{ my: 2 }} />
+                  </Box>
+                ))
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No partners listed yet.
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
+        </TabPanel>
+
+        {/* Partners Tab */}
+        <TabPanel value="2">
+          <Card>
+            <CardHeader title="Partners" subheader="Organizations we work with" />
+            <CardContent>
+              {isEditing ? (
+                <Box>
+                  {user.partners.map((partner, index) => (
+                    <Box key={index} sx={{ mb: 2 }}>
+                      <TextField
+                        label="Partner Name"
+                        value={partner.name || ''}
+                        onChange={(e) => {
+                          const updatedPartners = [...user.partners];
+                          updatedPartners[index].name = e.target.value;
+                          setUser({ ...user, partners: updatedPartners });
+                        }}
+                        fullWidth
+                        sx={{ mb: 1 }}
+                      />
+                      <TextField
+                        label="Location"
+                        value={partner.location || ''}
+                        onChange={(e) => {
+                          const updatedPartners = [...user.partners];
+                          updatedPartners[index].location = e.target.value;
+                          setUser({ ...user, partners: updatedPartners });
+                        }}
+                        fullWidth
+                        sx={{ mb: 1 }}
+                      />
+                      <TextField
+                        label="Description"
+                        value={partner.description || ''}
+                        onChange={(e) => {
+                          const updatedPartners = [...user.partners];
+                          updatedPartners[index].description = e.target.value;
+                          setUser({ ...user, partners: updatedPartners });
+                        }}
+                        fullWidth
+                        multiline
+                        rows={2}
+                      />
+                      <Divider sx={{ my: 2 }} />
+                    </Box>
+                  ))}
+                  <Button
+                    variant="outlined"
+                    onClick={() =>
+                      setUser({
+                        ...user,
+                        partners: [...user.partners, { name: '', location: '', description: '' }],
+                      })
+                    }
+                  >
+                    Add Partner
+                  </Button>
+                </Box>
+              ) : (
+                <Box>
+                  {user.partners.length > 0 ? (
+                    user.partners.map((partner, index) => (
+                      <Box key={index} sx={{ mb: 2 }}>
+                        <Typography variant="h6">{partner.name}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {partner.location}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {partner.description}
+                        </Typography>
+                        <Divider sx={{ my: 2 }} />
+                      </Box>
+                    ))
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      No partners listed yet.
+                    </Typography>
+                  )}
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </TabPanel>
+
+        {/* Services Tab */}
+        <TabPanel value="3">
+          <Card>
+            <CardHeader title="Services" subheader="Available services and options" />
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TruckIcon />
+                    <Typography variant="body1">Delivery Service</Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Offer delivery to customers
+                  </Typography>
+                </Box>
+                {isEditing ? (
+                  <Switch
+                    checked={user.deliveryAvailable}
+                    onChange={(e) => setUser({ ...user, deliveryAvailable: e.target.checked })}
+                  />
+                ) : (
+                  <Typography color={user.deliveryAvailable ? 'green' : 'red'}>
+                    {user.deliveryAvailable ? 'Available' : 'Unavailable'}
+                  </Typography>
+                )}
+              </Box>
+              <Divider />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <StoreIcon />
+                    <Typography variant="body1">Wholesale</Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Bulk orders for businesses
+                  </Typography>
+                </Box>
+                {isEditing ? (
+                  <Switch
+                    checked={user.wholesaleAvailable}
+                    onChange={(e) => setUser({ ...user, wholesaleAvailable: e.target.checked })}
+                  />
+                ) : (
+                  <Typography color={user.wholesaleAvailable ? 'green' : 'red'}>
+                    {user.wholesaleAvailable ? 'Available' : 'Unavailable'}
+                  </Typography>
+                )}
+              </Box>
+            </CardContent>
+          </Card>
+        </TabPanel>
+
+        {/* Social Media Tab */}
+        <TabPanel value="4">
+          <Card>
+            <CardHeader title="Social Media Links" />
+            <CardContent>
+              {isEditing ? (
+                <Box>
+                  <TextField
+                    label="Instagram"
+                    value={user.socialMedia.instagram || ''}
+                    onChange={(e) => setUser({ ...user, socialMedia: { ...user.socialMedia, instagram: e.target.value } })}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                  />
+                  <TextField
+                    label="Facebook"
+                    value={user.socialMedia.facebook || ''}
+                    onChange={(e) => setUser({ ...user, socialMedia: { ...user.socialMedia, facebook: e.target.value } })}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                  />
+                  <TextField
+                    label="TikTok"
+                    value={user.socialMedia.tiktok || ''}
+                    onChange={(e) => setUser({ ...user, socialMedia: { ...user.socialMedia, tiktok: e.target.value } })}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                  />
+                </Box>
+              ) : (
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Instagram: {user.socialMedia.instagram || 'Not provided'}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Facebook: {user.socialMedia.facebook || 'Not provided'}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    TikTok: {user.socialMedia.tiktok || 'Not provided'}
+                  </Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </TabPanel>
+      </TabContext>
+
+      {/* Edit Controls */}
+      {isOwner && (
+        <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
+          <Button variant={isEditing ? 'outlined' : 'contained'} onClick={() => setIsEditing(!isEditing)}>
+            {isEditing ? 'Cancel' : 'Edit Profile'}
+          </Button>
+          {isEditing && (
+            <Button variant="contained" onClick={handleSave}>
+              Save Changes
+            </Button>
           )}
-        </>
+        </Box>
       )}
-    </div>
-  );  
+    </Box>
+  );
 };
 
 export default UserProfile;

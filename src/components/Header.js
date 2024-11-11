@@ -1,138 +1,271 @@
-// src/components/Header.js
-import React, { useState, useEffect} from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import '../Styles/Header.css';
+import React, { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { 
+  AppBar, 
+  Toolbar, 
+  Typography, 
+  Menu, 
+  MenuItem, 
+  IconButton, 
+  Container, 
+  Box,
+  Button,
+  Avatar,
+  Fade,
+  Divider,
+  ListItemIcon,
+  useTheme,
+  Badge
+} from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import ArticleIcon from '@mui/icons-material/Article';
+import PersonIcon from '@mui/icons-material/Person';
+import GavelIcon from '@mui/icons-material/Gavel';
+import PaymentsIcon from '@mui/icons-material/Payments';
+import LogoutIcon from '@mui/icons-material/Logout';
+import LoginIcon from '@mui/icons-material/Login';
+import HowToRegIcon from '@mui/icons-material/HowToReg';
+import DescriptionIcon from '@mui/icons-material/Description';
+
 const Header = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const theme = useTheme();
   const token = localStorage.getItem('token');
-  const userRole = localStorage.getItem('role'); 
+  const userRole = localStorage.getItem('role');
   const userId = localStorage.getItem('userId');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
-    navigate('/'); // Redirect to home page after logout
+    navigate('/');
+    handleMenuClose();
   };
 
-  useEffect(() => {
-    const closeDropdown = (e) => {
-      if (!e.target.closest('.dropdown')) {
-        setIsDropdownOpen(false);
-      }
-    };
+  const isCurrentPath = (path) => location.pathname === path;
 
-    document.addEventListener('click', closeDropdown);
-    return () => {
-      document.removeEventListener('click', closeDropdown);
-    };
-  }, []);
+  // Common navigation items that should be visible
+  const getVisibleNavItems = () => {
+    if (!token) {
+      return [
+        { label: 'Field Notes', path: '/blogs', icon: <ArticleIcon sx={{ mr: 0.5 }} /> }
+      ];
+    }
+    
+    if (userRole === 'farmer') {
+      return [
+        { label: 'Dashboard', path: '/farmer-dashboard', icon: <DashboardIcon sx={{ mr: 0.5 }} /> },
+        { label: 'Field Notes', path: '/blogs', icon: <ArticleIcon sx={{ mr: 0.5 }} /> },
+        { label: 'Auctions', path: '/farmer-auctions', icon: <GavelIcon sx={{ mr: 0.5 }} /> },
+        { label: 'Contracts', path: '/OpenContractList', icon: <DescriptionIcon sx={{ mr: 0.5 }} /> }
+      ];
+    }
+    
+    if (userRole === 'buyer') {
+      return [
+        { label: 'Dashboard', path: '/buyer-dashboard', icon: <DashboardIcon sx={{ mr: 0.5 }} /> },
+        { label: 'Field Notes', path: '/blogs', icon: <ArticleIcon sx={{ mr: 0.5 }} /> },
+        { label: 'Contracts', path: '/createContract', icon: <DescriptionIcon sx={{ mr: 0.5 }} /> }
+      ];
+    }
+    
+    return [];
+  };
 
-  const handleItemClick = () => {
-    setIsDropdownOpen(false); // Close the dropdown after an item is clicked
+  // Menu items for the dropdown
+  const getMenuItems = () => {
+    if (!token) {
+      return [
+        { label: 'Login', path: '/login', icon: <LoginIcon /> },
+        { label: 'Register', path: '/register', icon: <HowToRegIcon /> }
+      ];
+    }
+    
+    if (userRole === 'farmer') {
+      return [
+        { label: 'Create Field Notes', path: '/create-blog', icon: <ArticleIcon /> },
+        { label: 'My Profile', path: `/user/${userId}`, icon: <PersonIcon /> },
+        { label: 'Payout', path: '/Payout', icon: <PaymentsIcon /> }
+      ];
+    }
+    
+    if (userRole === 'buyer') {
+      return [
+        { label: 'Create Field Notes', path: '/create-blog', icon: <ArticleIcon /> },
+        { label: 'My Profile', path: `/user/${userId}`, icon: <PersonIcon /> },
+        { label: 'Checkout', path: '/CheckoutForm', icon: <PaymentsIcon /> }
+      ];
+    }
+    
+    return [];
   };
 
   return (
-    <header className="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div className="container">
-        {/* Left side - Elipae */}
-        <Link to="/" className="navbar-brand">
-          Elipae
-        </Link>
+    <AppBar 
+      position="fixed" 
+      sx={{
+        backgroundColor: 'background.paper',
+        borderBottom: 1,
+        borderColor: 'divider',
+      }}
+    >
+      <Container maxWidth="lg">
+        <Toolbar 
+          disableGutters 
+          sx={{ 
+            justifyContent: 'space-between',
+            minHeight: 64,
+          }}
+        >
+          {/* Logo Section */}
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Typography
+              variant="h5"
+              component={Link}
+              to="/"
+              sx={{
+                textDecoration: 'none',
+                color: 'primary.main',
+                fontWeight: 700,
+                letterSpacing: 1,
+                mr: 4,
+                transition: 'color 0.2s',
+                '&:hover': {
+                  color: 'primary.dark',
+                }
+              }}
+            >
+              Elipae
+            </Typography>
 
-        {/* Right side - Dropdown */}
-        <div className="dropdown ms-auto">
-          <button
-            className="btn btn-secondary dropdown-toggle"
-            type="button"
-            id="dropdownMenuButton"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            aria-expanded={isDropdownOpen}
-          >
-            Menu
-          </button>
-          <ul
-            className={`dropdown-menu dropdown-menu-end ${isDropdownOpen ? 'show' : ''}`}
-            aria-labelledby="dropdownMenuButton"
-          >
-            {/* Accessible to everyone */}
-            <li onClick={handleItemClick}>
-              <Link to="/blogs" className="dropdown-item hover-item">Field Notes</Link>
-            </li>
-
-            {/* Show these options for logged-in farmers */}
-            {token && userRole === 'farmer' && (
-              <>
-                <li onClick={handleItemClick}>
-                  <Link to="/farmer-dashboard" className="dropdown-item hover-item">Dashboard</Link>
-                </li>
-                <li onClick={handleItemClick}>
-                  <Link to={`/user/${userId}`} className="dropdown-item hover-item">My Profile</Link> {/* Dynamic Profile Link */}
-                </li>
-                <li onClick={handleItemClick}>
-                  <Link to="/create-blog" className="dropdown-item hover-item">Create Field Notes</Link>
-                </li>
-                <li onClick={handleItemClick}>
-                  <Link to= "/farmer-auctions" className="dropdown-item hover-item">My Auctions</Link>
-                </li>
-                <li onclick= {handleItemClick}>
-                  <Link to="/Payout" className= "dropdown-item hover-item">Payout</Link>
-                </li>
-                <li>
-                  <Link to= "/OpenContractList" className=' "dropdown-item hover-item'>Open Contracts</Link>
-                </li>                
-              </>
-            )}
-
-            {/* Show these options for logged-in buyers */}
-            {token && userRole === 'buyer' && (
-              <>
-                <li onClick={handleItemClick}>
-                  <Link to="/buyer-dashboard" className="dropdown-item hover-item">Buyer Dashboard</Link>
-                </li>
-                <li onClick= {handleItemClick}>
-                  <Link to="/CheckoutForm" className="dropedown-item hover-item">CheckoutForm</Link>
-                </li>
-                <li onClick={handleItemClick}>
-                  <Link to="/create-blog" className="dropdown-item hover-item">Create field note</Link>
-                </li>
-                <li onClick={handleItemClick}>
-                  <Link to = {`/user/${userId}`} className="dropdown-item hover-item">My profile</Link>
-                </li>
-                <li onclick= {handleItemClick}>
-                  <Link to = {"/createContract"} className= "dropdown-item hover-item">Create Contract</Link>
-                </li>
-              </>
-            )}
-
-            {/* Show login and register for not logged-in users */}
-            {!token ? (
-              <>
-                <li onClick={handleItemClick}>
-                  <Link to="/login" className="dropdown-item hover-item">Login</Link>
-                </li>
-                <li onClick={handleItemClick}>
-                  <Link to="/register" className="dropdown-item hover-item">Register</Link>
-                </li>
-              </>
-            ) : (
-              <li onClick={handleItemClick}>
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    handleItemClick();
+            {/* Visible Navigation Items */}
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
+              {getVisibleNavItems().map((item) => (
+                <Button
+                  key={item.path}
+                  component={Link}
+                  to={item.path}
+                  color="inherit"
+                  startIcon={item.icon}
+                  sx={{
+                    minWidth: 100,
+                    px: 2,
+                    py: 1,
+                    borderRadius: 1,
+                    textTransform: 'none',
+                    backgroundColor: isCurrentPath(item.path) ? 'action.selected' : 'transparent',
+                    color: isCurrentPath(item.path) ? 'primary.main' : 'text.primary',
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                    },
                   }}
-                  className="dropdown-item btn btn-link hover-item"
                 >
-                  Logout
-                </button>
-              </li>
-            )}
-          </ul>
-        </div>
-      </div>
-    </header>
+                  {item.label}
+                </Button>
+              ))}
+            </Box>
+          </Box>
+
+          {/* Right Side - User Menu */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {/* Mobile Menu Button */}
+            <IconButton
+              color="inherit"
+              sx={{ display: { xs: 'flex', md: 'none' } }}
+              onClick={handleMenuOpen}
+            >
+              <MenuIcon />
+            </IconButton>
+
+            {/* User Avatar & Menu */}
+            <Box>
+              <IconButton onClick={handleMenuOpen}>
+                <Avatar 
+                  sx={{ 
+                    bgcolor: token ? 'primary.main' : 'grey.300',
+                    width: 40,
+                    height: 40,
+                  }}
+                >
+                  {token ? userRole?.[0]?.toUpperCase() : <PersonIcon />}
+                </Avatar>
+              </IconButton>
+              
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                TransitionComponent={Fade}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                PaperProps={{
+                  elevation: 3,
+                  sx: {
+                    mt: 1.5,
+                    minWidth: 200,
+                    borderRadius: 2,
+                    '& .MuiMenuItem-root': {
+                      py: 1.5,
+                      px: 2,
+                    }
+                  }
+                }}
+              >
+                {/* Menu Items */}
+                {getMenuItems().map((item) => (
+                  <MenuItem
+                    key={item.path}
+                    component={Link}
+                    to={item.path}
+                    onClick={handleMenuClose}
+                    selected={isCurrentPath(item.path)}
+                    sx={{
+                      color: isCurrentPath(item.path) ? 'primary.main' : 'text.primary',
+                      '&:hover': { backgroundColor: 'action.hover' }
+                    }}
+                  >
+                    <ListItemIcon sx={{ color: 'inherit' }}>
+                      {item.icon}
+                    </ListItemIcon>
+                    {item.label}
+                  </MenuItem>
+                ))}
+
+                {/* Logout Option for Logged In Users */}
+                {token && (
+                  <>
+                    <Divider sx={{ my: 1 }} />
+                    <MenuItem
+                      onClick={handleLogout}
+                      sx={{ 
+                        color: 'error.main',
+                        '&:hover': { backgroundColor: 'error.lighter' }
+                      }}
+                    >
+                      <ListItemIcon sx={{ color: 'inherit' }}>
+                        <LogoutIcon />
+                      </ListItemIcon>
+                      Logout
+                    </MenuItem>
+                  </>
+                )}
+              </Menu>
+            </Box>
+          </Box>
+        </Toolbar>
+      </Container>
+    </AppBar>
   );
 };
 
-export default Header; 
+export default Header;

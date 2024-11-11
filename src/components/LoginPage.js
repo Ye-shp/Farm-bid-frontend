@@ -3,20 +3,32 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../Services/api';  // Assuming you have the login function in Services/api
 import axios from 'axios';
-import '../Styles/LoginPage.css';
+import {
+  Container,
+  TextField,
+  Button,
+  Typography,
+  Box,
+  Paper,
+  Alert,
+  useTheme,
+  CircularProgress
+} from '@mui/material';
 
 const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
   const navigate = useNavigate();
+  const theme = useTheme();
 
   // Fetch user location (for matchmaking)
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3'); 
+        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3');
         const loc = response.data.loc.split(',');
         setLocation({
           latitude: loc[0],
@@ -34,9 +46,11 @@ const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
   // Handle the login submission
   const handleLogin = async (e) => {
     e.preventDefault();  // Prevent default form submission
+    setLoading(true);
+    setError(null);
     try {
       // Perform the login request with just email and password
-      const response = await login({ email, password }); 
+      const response = await login({ email, password });
 
       if (response.status === 200) {
         const { token, user } = response.data;  // Get token and user from response
@@ -44,12 +58,10 @@ const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
 
         // Store the token, role (from userRole), and location in localStorage
         localStorage.setItem('token', token);
-        localStorage.setItem('role', userRole);  
-        localStorage.setItem('latitude', location.latitude);  
-        localStorage.setItem('longitude', location.longitude);  
+        localStorage.setItem('role', userRole);
+        localStorage.setItem('latitude', location.latitude);
+        localStorage.setItem('longitude', location.longitude);
         localStorage.setItem('userId', user.id);
-
-        console.log('Login successful:', { userRole, token, location });  // Debugging log
 
         // Set the logged-in state in App.js
         setIsLoggedIn(true);
@@ -57,51 +69,76 @@ const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
 
         // Redirect based on userRole
         if (userRole === 'farmer') {
-          console.log('Redirecting to farmer dashboard...');
           navigate('/farmer-dashboard');
         } else if (userRole === 'buyer') {
-          console.log('Redirecting to buyer dashboard...');
           navigate('/buyer-dashboard');
-        } else {
-          console.error('Invalid userRole detected, no redirection');
         }
       }
     } catch (error) {
       setError("Login failed. Please check your email and password.");
-      console.error('Login error:', error.response?.data || error);  // Log the error response or message
+      console.error('Login error:', error.response?.data || error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container mt-5">
-      <h2 className="text-center mb-4">Login</h2>
-      <form onSubmit={handleLogin} className="mb-5">
-        <div className="mb-3">
-          <input
+    <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <Paper elevation={3} sx={{ p: 4, borderRadius: theme.shape.borderRadius * 2 }}>
+        <Typography variant="h4" component="h1" align="center" gutterBottom>
+          Login
+        </Typography>
+        <Box component="form" onSubmit={handleLogin} noValidate sx={{ mt: 2 }}>
+          <TextField
+            fullWidth
+            label="Email"
             type="email"
-            className="form-control"
+            variant="outlined"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
+            margin="normal"
             required
+            inputProps={{ 'aria-label': 'Email' }}
           />
-        </div>
-        <div className="mb-3">
-          <input
+          <TextField
+            fullWidth
+            label="Password"
             type="password"
-            className="form-control"
+            variant="outlined"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
+            margin="normal"
             required
+            inputProps={{ 'aria-label': 'Password' }}
           />
-        </div>
-        <button type="submit" className="btn btn-primary">Login</button>
-        {error && <p className="text-danger mt-3">{error}</p>}
-      </form>
-    </div>
+          {error && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          )}
+          <Box sx={{ mt: 4, position: 'relative' }}>
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              color="primary"
+              disabled={loading}
+              sx={{
+                py: 1.5,
+                fontWeight: 'bold',
+                transition: 'background-color 0.3s ease',
+                '&:hover': {
+                  backgroundColor: theme.palette.primary.dark,
+                },
+              }}
+            >
+              {loading ? <CircularProgress size={24} sx={{ color: theme.palette.grey[200] }} /> : 'Login'}
+            </Button>
+          </Box>
+        </Box>
+      </Paper>
+    </Container>
   );
-  
 };
 
 export default LoginPage;
