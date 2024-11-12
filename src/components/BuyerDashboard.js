@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -32,6 +32,7 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
+import { formatDistanceToNow } from 'date-fns';
 
 // Styled components
 const StyledBadge = styled(Badge)(({ theme }) => ({
@@ -88,6 +89,13 @@ const PageContainer = styled(Container)(({ theme }) => ({
   flexDirection: 'column',
 }));
 
+const TimeDisplay = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  marginBottom: theme.spacing(2),
+  color: theme.palette.warning.main,
+}));
+
 const BuyerDashboard = () => {
   const [auctions, setAuctions] = useState([]);
   const [bidAmount, setBidAmount] = useState({});
@@ -95,11 +103,31 @@ const BuyerDashboard = () => {
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [timeRemaining, setTimeRemaining] = useState({});
   
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const token = localStorage.getItem('token');
   const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com/api';
+
+  const isAuctionExpired = useCallback((endTime) => {
+    return new Date() > new Date(endTime);
+  }, []);
+
+  const updateAuctionTimes = useCallback(() => {
+    setAuctions(currentAuctions => {
+      const updatedAuctions = currentAuctions.filter(auction => !isAuctionExpired(auction.endTime));
+      
+      const newTimeRemaining = {};
+      updatedAuctions.forEach(auction => {
+        const remaining = new Date(auction.endTime) - new Date();
+        newTimeRemaining[auction._id] = remaining > 0 ? remaining : 0;
+      });
+      setTimeRemaining(newTimeRemaining);
+      
+      return updatedAuctions;
+    });
+  }, [isAuctionExpired]);
 
   useEffect(() => {
     const fetchAuctions = async () => {
@@ -107,15 +135,29 @@ const BuyerDashboard = () => {
         const response = await axios.get(`${API_URL}/auctions`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const activeAuctions = response.data.filter((auction) => auction.status === 'active');
+        
+        const activeAuctions = response.data.filter(
+          auction => auction.status === 'active' && !isAuctionExpired(auction.endTime)
+        );
+        
         setAuctions(activeAuctions);
+        
+        const initialTimeRemaining = {};
+        activeAuctions.forEach(auction => {
+          const remaining = new Date(auction.endTime) - new Date();
+          initialTimeRemaining[auction._id] = remaining > 0 ? remaining : 0;
+        });
+        setTimeRemaining(initialTimeRemaining);
       } catch (error) {
         showSnackbar('Error fetching auctions', 'error');
       }
     };
 
     fetchAuctions();
-  }, [token]);
+    
+    const timeInterval = setInterval(updateAuctionTimes, 1000);
+    return () => clearInterval(timeInterval);
+  }, [token, isAuctionExpired, updateAuctionTimes]);
 
   useEffect(() => {
     const fetchLocation = async () => {
@@ -149,6 +191,20 @@ const BuyerDashboard = () => {
     fetchNotifications();
   }, [token]);
 
+  const formatTimeRemaining = (ms) => {
+    if (ms <= 0) return 'Auction ended';
+    
+    const seconds = Math.floor((ms / 1000) % 60);
+    const minutes = Math.floor((ms / (1000 * 60)) % 60);
+    const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+    
+    if (days > 0) return `${days}d ${hours}h remaining`;
+    if (hours > 0) return `${hours}h ${minutes}m remaining`;
+    if (minutes > 0) return `${minutes}m ${seconds}s remaining`;
+    return `${seconds}s remaining`;
+  };
+
   const handleBidChange = (auctionId, value) => {
     setBidAmount({
       ...bidAmount,
@@ -158,15 +214,44 @@ const BuyerDashboard = () => {
 
   const handleBidSubmit = async (auctionId) => {
     try {
+      const auction = auctions.find(a => a._id === auctionId);
+      const bidValue = parseFloat(bidAmount[auctionId]);
+      
+      if (!bidValue || isNaN(bidValue)) {
+        showSnackbar('Please enter a valid bid amount', 'error');
+        return;
+      }
+      
+      if (bidValue <= auction.highestBid) {
+        showSnackbar('Bid must be higher than the current highest bid', 'error');
+        return;
+      }
+
+      if (timeRemaining[auctionId] <= 0) {
+        showSnackbar('This auction has ended', 'error');
+        return;
+      }
+
       await axios.post(
         `${API_URL}/auctions/${auctionId}/bid`,
-        { bidAmount: bidAmount[auctionId] },
+        { bidAmount: bidValue },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      
       showSnackbar('Bid submitted successfully!', 'success');
       setBidAmount(prev => ({ ...prev, [auctionId]: '' }));
+      
+      const response = await axios.get(`${API_URL}/auctions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      const activeAuctions = response.data.filter(
+        auction => auction.status === 'active' && !isAuctionExpired(auction.endTime)
+      );
+      setAuctions(activeAuctions);
+      
     } catch (error) {
-      showSnackbar('Error submitting bid', 'error');
+      showSnackbar(error.response?.data?.message || 'Error submitting bid', 'error');
     }
   };
 
@@ -275,6 +360,13 @@ const BuyerDashboard = () => {
                 >
                   {auction.product?.description || 'No description available'}
                 </Typography>
+
+                <TimeDisplay>
+                  <TimelapseRounded sx={{ mr: 1 }} />
+                  <Typography variant="body2" color="inherit" fontWeight="medium">
+                    {formatTimeRemaining(timeRemaining[auction._id])}
+                  </Typography>
+                </TimeDisplay>
                 
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <GavelRounded sx={{ mr: 1, color: 'primary.main' }} />
@@ -314,21 +406,23 @@ const BuyerDashboard = () => {
                     InputProps={{
                       startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
                     }}
+                    disabled={timeRemaining[auction._id] <= 0}
                   />
                   <Button
                     fullWidth
                     variant="contained"
                     onClick={() => handleBidSubmit(auction._id)}
                     startIcon={<LocalOfferRounded />}
+                    disabled={timeRemaining[auction._id] <= 0}
                     sx={{ 
                       py: 1.5,
                       textTransform: 'none',
                       fontWeight: 600
                     }}
                   >
-                    Place Bid
+                    {timeRemaining[auction._id] <= 0 ? 'Auction Ended' : 'Place Bid'}
                   </Button>
-                </Box>
+                  </Box>
               </CardContent>
             </AuctionCard>
           </Grid>
