@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
-import '../Styles/CheckoutForm.css';
+import {
+  Alert,
+  Button,
+  CircularProgress,
+  Card,
+  CardHeader,
+  CardContent,
+  Typography,
+  Box,
+} from '@mui/material';
 import api from '../Services/api';
+import '../Styles/CheckoutForm.css';
 
 const CheckoutForm = ({ sourceType, sourceId, amount }) => {
   const stripe = useStripe();
@@ -20,18 +26,17 @@ const CheckoutForm = ({ sourceType, sourceId, amount }) => {
     const initializePayment = async () => {
       try {
         // Create transaction based on source type
-        const response = await api.post(
-          `/api/transactions/${sourceType}`,
-          {
-            [sourceType === 'auction' ? 'auctionId' : 'contractId']: sourceId,
-          }
-        );
+        const response = await api.post(`/api/transactions/${sourceType}`, {
+          [sourceType === 'auction' ? 'auctionId' : 'contractId']: sourceId,
+        });
 
         setClientSecret(response.data.clientSecret);
         setTransaction(response.data.transaction);
       } catch (error) {
         console.error('Failed to initialize payment:', error);
-        setErrorMessage(error.response?.data?.message || 'Failed to initialize payment');
+        setErrorMessage(
+          error.response?.data?.message || 'Failed to initialize payment'
+        );
       }
     };
 
@@ -70,9 +75,15 @@ const CheckoutForm = ({ sourceType, sourceId, amount }) => {
         throw error;
       }
 
-      if (paymentIntent.status === 'requires_capture' || paymentIntent.status === 'succeeded') {
+      if (
+        paymentIntent.status === 'requires_capture' ||
+        paymentIntent.status === 'succeeded'
+      ) {
         setPaymentSuccess(true);
-        setTransaction((prev) => ({ ...prev, paymentIntent: { status: paymentIntent.status } }));
+        setTransaction((prev) => ({
+          ...prev,
+          paymentIntent: { status: paymentIntent.status },
+        }));
       }
     } catch (error) {
       console.error('Payment error:', error);
@@ -83,30 +94,41 @@ const CheckoutForm = ({ sourceType, sourceId, amount }) => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Complete Your Payment</CardTitle>
-      </CardHeader>
+    <Card sx={{ maxWidth: 480, margin: '0 auto', width: '100%' }}>
+      <CardHeader title="Complete Your Payment" />
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="rounded-md border p-4">
-            <CardElement className="w-full card-element" />
-          </div>
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+        >
+          <Box
+            sx={{
+              border: '1px solid',
+              borderColor: 'grey.400',
+              borderRadius: 1,
+              p: 2,
+            }}
+          >
+            <CardElement className="card-element" />
+          </Box>
 
           {amount && (
-            <div className="text-lg font-semibold text-center">
+            <Typography variant="h6" align="center">
               Total: ${(amount / 100).toFixed(2)}
-            </div>
+            </Typography>
           )}
 
-          <Button 
-            type="submit" 
-            className="w-full submit-button" 
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            color="primary"
             disabled={isProcessing || !stripe || !clientSecret}
           >
             {isProcessing ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <CircularProgress size={24} sx={{ mr: 1 }} />
                 Processing...
               </>
             ) : (
@@ -114,20 +136,15 @@ const CheckoutForm = ({ sourceType, sourceId, amount }) => {
             )}
           </Button>
 
-          {errorMessage && (
-            <Alert variant="destructive">
-              <AlertDescription>{errorMessage}</AlertDescription>
-            </Alert>
-          )}
+          {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
 
           {paymentSuccess && (
-            <Alert>
-              <AlertDescription>
-                Payment authorized successfully! The payment will be captured upon delivery confirmation.
-              </AlertDescription>
+            <Alert severity="success">
+              Payment authorized successfully! The payment will be captured upon
+              delivery confirmation.
             </Alert>
           )}
-        </form>
+        </Box>
       </CardContent>
     </Card>
   );
