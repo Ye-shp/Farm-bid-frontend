@@ -28,6 +28,17 @@ export const getFeaturedFarms = async () => {
     throw error;
   }
 };
+
+export const createAuctionTransaction = (auctionId) => 
+  axios.post(`${API_URL}/transactions/auction`, { auctionId });
+
+export const createContractTransaction = (contractId) => 
+  axios.post(`${API_URL}/transactions/contract`, { contractId });
+
+export const getSellerTransfers = () => 
+  axios.get(`${API_URL}/seller/transfers`);
+
+
 //stripe 
 
 export const createPaymentIntent = (data) => axios.post(`${API_URL}/payments/create-payment-intent`, data);

@@ -29,15 +29,29 @@ const Payouts = () => {
   const [accountNumber, setAccountNumber] = useState('');
   const [routingNumber, setRoutingNumber] = useState('');
   const [holderName, setHolderName] = useState('');
+  const [transfers, setTransfers] = useState([]);
+  const [pendingTransfers, setPendingTransfers] = useState([]);
   const theme = useTheme();
 
   useEffect(() => {
-    api.getSellerBalance()
-      .then((response) => {
-        setBalance(response.data.balance);
-        setPayoutHistory(response.data.payoutHistory);
-      })
-      .catch((error) => console.error('Error fetching payout data:', error));
+    const fetchPayoutData = async () => {
+      try {
+        const [balanceRes, transfersRes] = await Promise.all([
+          api.get('/api/seller/balance'),
+          api.get('/api/seller/transfers')
+        ]);
+
+        setBalance(balanceRes.data.balance);
+        setPayoutHistory(balanceRes.data.payoutHistory);
+        setTransfers(transfersRes.data.completed);
+        setPendingTransfers(transfersRes.data.pending);
+      } catch (error) {
+        console.error('Error fetching payout data:', error);
+        setMessage('Failed to fetch payout information');
+      }
+    };
+
+    fetchPayoutData();
   }, []);
 
   const handlePayoutRequest = () => {
@@ -96,6 +110,42 @@ const Payouts = () => {
       });
   };
 
+  const renderTransactionHistory = () => (
+    <Box sx={{ mt: 3 }}>
+      <Typography variant="h5" gutterBottom>
+        Transaction History
+      </Typography>
+      <List>
+        {transfers.map((transfer) => (
+          <ListItem key={transfer.id}>
+            <ListItemText
+              primary={`$${(transfer.amount / 100).toFixed(2)} - ${transfer.sourceType}`}
+              secondary={new Date(transfer.created).toLocaleDateString()}
+            />
+          </ListItem>
+        ))}
+      </List>
+
+      {pendingTransfers.length > 0 && (
+        <>
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Pending Transfers
+          </Typography>
+          <List>
+            {pendingTransfers.map((transfer) => (
+              <ListItem key={transfer.id}>
+                <ListItemText
+                  primary={`$${(transfer.amount / 100).toFixed(2)} - ${transfer.sourceType}`}
+                  secondary="Awaiting delivery confirmation"
+                />
+              </ListItem>
+            ))}
+          </List>
+        </>
+      )}
+    </Box>
+  );
+
   return (
     <Container maxWidth="md" sx={{ mt: 5 }}>
       <Paper elevation={3} sx={{ p: 4, borderRadius: theme.shape.borderRadius * 2 }}>
@@ -121,6 +171,8 @@ const Payouts = () => {
             ))}
           </List>
         </Box>
+
+        {renderTransactionHistory()}
 
         {!accountCreated && (
           <Box sx={{ mt: 4 }}>
