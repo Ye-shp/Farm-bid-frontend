@@ -41,7 +41,7 @@ const UserProfile = () => {
     partners: [],
     followers: [],
     following: [],
-    isFarmer: false,
+    isFarmer: true,
   });
   const [userBlogs, setUserBlogs] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -129,17 +129,12 @@ const UserProfile = () => {
   const getTabs = () => {
     const commonTabs = [
       <Tab label="Posts" value="0" key="posts" />,
-      <Tab label="About" value="1" key="about" />
-    ];
-
-    if (user.isFarmer) {
-      return [
-        ...commonTabs,
-        <Tab label="Partners" value="2" key="partners" />, 
-        <Tab label="Services" value="3" key="services" />,
-        <Tab label="Social Media" value="4" key="social" />
+      <Tab label="About" value="1" key="about" />,    
+      <Tab label="Partners" value="2" key="partners" />, 
+      <Tab label="Services" value="3" key="services" />,
+      <Tab label="Social Media" value="4" key="social" />
       ];
-    }
+    
 
     return commonTabs;
   };
@@ -189,7 +184,7 @@ const UserProfile = () => {
   const renderPartnersList = () => (
     <Card>
       <CardHeader 
-        title="Business Partners" 
+        title="Partners" 
         subheader="Companies and farms we work with"
         avatar={<PartnersIcon />}
       />
@@ -308,258 +303,230 @@ const UserProfile = () => {
   const isOwner = loggedInUserId === userId;
 
   return (
-    <Box sx={{ maxWidth: '800px', margin: 'auto', padding: 4 }}>
-      {/* Profile Header */}
-      <Card>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-            <Avatar sx={{ width: 96, height: 96 }}>
-              {user.username?.charAt(0).toUpperCase()}
+    <Box sx={{ padding: 2 }}>
+      {/* User Profile Header */}
+      <Card sx={{ marginBottom: 2 }}>
+        <CardHeader
+          avatar={
+            <Avatar>
+              {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
             </Avatar>
-            <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Box>
-                  <Typography variant="h5" component="div" fontWeight="bold">
-                    {user.username}
-                    {user.isFarmer && (
-                      <FarmerIcon sx={{ ml: 1, color: 'green' }} titleAccess="Verified Farmer" />
-                    )}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                    <LocationOnIcon sx={{ mr: 1 }} />
-                    <Typography variant="body2" color="text.secondary">
-                      {formatLocation(user.location)}
-                    </Typography>
-                  </Box>
-                </Box>
-                {!isOwner && (
-                  <Button
-                    variant={isFollowing ? 'contained' : 'outlined'}
-                    color={isFollowing ? 'error' : 'primary'}
-                    onClick={isFollowing ? handleUnfollow : handleFollow}
-                  >
-                    {isFollowing ? 'Unfollow' : 'Follow'}
-                  </Button>
-                )}
-              </Box>
-              <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <GroupIcon />
-                  <Typography variant="body2">
-                    <strong>{user.followers.length}</strong> followers
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <ShareIcon />
-                  <Typography variant="body2">
-                    <strong>{user.following.length}</strong> following
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-
-      {/* Location Edit Form - Only for Farmers */}
-      {isEditing && isOwner && user.isFarmer && (
-        <Card sx={{ mt: 2 }}>
-          <CardHeader title="Edit Location" />
+          }
+          title={user.username || 'Username'}
+          subheader={formatLocation(user.location)}
+          action={
+            isOwner ? (
+              isEditing ? (
+                <Button variant="contained" color="primary" onClick={handleSave}>
+                  Save
+                </Button>
+              ) : (
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => setIsEditing(true)}
+                >
+                  Edit Profile
+                </Button>
+              )
+            ) : isFollowing ? (
+              <Button variant="contained" color="secondary" onClick={handleUnfollow}>
+                Unfollow
+              </Button>
+            ) : (
+              <Button variant="contained" color="primary" onClick={handleFollow}>
+                Follow
+              </Button>
+            )
+          }
+        />
+        {user.description && (
           <CardContent>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {isEditing && isOwner ? (
               <TextField
-                label="Address"
-                value={user.location.address}
-                onChange={(e) => setUser({
-                  ...user,
-                  location: { ...user.location, address: e.target.value }
-                })}
+                label="Description"
+                multiline
+                rows={4}
+                value={user.description}
+                onChange={(e) =>
+                  setUser({ ...user, description: e.target.value })
+                }
                 fullWidth
               />
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  label="City"
-                  value={user.location.city}
-                  onChange={(e) => setUser({
-                    ...user,
-                    location: { ...user.location, city: e.target.value }
-                  })}
-                  fullWidth
-                />
-                <TextField
-                  label="State"
-                  value={user.location.state}
-                  onChange={(e) => setUser({
-                    ...user,
-                    location: { ...user.location, state: e.target.value }
-                  })}
-                  fullWidth
-                />
-              </Box>
-              <TextField
-                label="Country"
-                value={user.location.country}
-                onChange={(e) => setUser({
-                  ...user,
-                  location: { ...user.location, country: e.target.value }
-                })}
-                fullWidth
-              />
-            </Box>
+            ) : (
+              <Typography variant="body2">{user.description}</Typography>
+            )}
           </CardContent>
-        </Card>
-      )}
-
-      {/* Main Content Tabs */}
+        )}
+      </Card>
+  
+      {/* Tabs */}
       <TabContext value={tabValue}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mt: 4 }}>
-          <Tabs 
-            value={tabValue} 
-            onChange={(e, newValue) => setTabValue(newValue)} 
-            aria-label="user profile tabs"
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs
+            value={tabValue}
+            onChange={(e, newValue) => setTabValue(newValue)}
+            variant="scrollable"
+            scrollButtons="auto"
           >
             {getTabs()}
           </Tabs>
         </Box>
-
+  
         {/* Posts Tab */}
         <TabPanel value="0">
           {userBlogs.length > 0 ? (
             userBlogs.map((blog) => (
-              <Card key={blog._id} sx={{ mb: 2 }}>
+              <Card key={blog._id} sx={{ marginBottom: 2 }}>
+                <CardHeader
+                  title={blog.title}
+                  subheader={new Date(blog.createdAt).toLocaleString()}
+                />
                 <CardContent>
-                  <Typography variant="h6">{blog.title}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {blog.content}
-                  </Typography>
+                  <Typography>{blog.content}</Typography>
                 </CardContent>
               </Card>
             ))
           ) : (
-            <Alert severity="info">No posts available.</Alert>
+            <Typography>No posts available.</Typography>
           )}
         </TabPanel>
-
+  
         {/* About Tab */}
         <TabPanel value="1">
           <Card>
-            <CardHeader title="About" />
             <CardContent>
+              <Typography variant="h6">About</Typography>
               {isEditing && isOwner ? (
                 <TextField
-                  value={user.description || ''}
-                  onChange={(e) => setUser({ ...user, description: e.target.value })}
-                  placeholder="Tell us about yourself..."
-                  fullWidth
+                  label="Description"
                   multiline
                   rows={4}
+                  value={user.description}
+                  onChange={(e) =>
+                    setUser({ ...user, description: e.target.value })
+                  }
+                  fullWidth
+                  sx={{ marginBottom: 2 }}
                 />
               ) : (
-                <Typography variant="body1" color="text.secondary">
-                  {user.description || 'No description provided yet.'}
+                <Typography sx={{ marginBottom: 2 }}>
+                  {user.description || 'No description provided.'}
+                </Typography>
+              )}
+              <Typography variant="h6">Location</Typography>
+              {isEditing && isOwner ? (
+                <>
+                  <TextField
+                    label="Address"
+                    value={user.location.address}
+                    onChange={(e) =>
+                      setUser({
+                        ...user,
+                        location: { ...user.location, address: e.target.value },
+                      })
+                    }
+                    fullWidth
+                    sx={{ marginBottom: 1 }}
+                  />
+                  <TextField
+                    label="City"
+                    value={user.location.city}
+                    onChange={(e) =>
+                      setUser({
+                        ...user,
+                        location: { ...user.location, city: e.target.value },
+                      })
+                    }
+                    fullWidth
+                    sx={{ marginBottom: 1 }}
+                  />
+                  <TextField
+                    label="State"
+                    value={user.location.state}
+                    onChange={(e) =>
+                      setUser({
+                        ...user,
+                        location: { ...user.location, state: e.target.value },
+                      })
+                    }
+                    fullWidth
+                    sx={{ marginBottom: 1 }}
+                  />
+                  <TextField
+                    label="Country"
+                    value={user.location.country}
+                    onChange={(e) =>
+                      setUser({
+                        ...user,
+                        location: { ...user.location, country: e.target.value },
+                      })
+                    }
+                    fullWidth
+                  />
+                </>
+              ) : (
+                <Typography>
+                  {formatLocation(user.location) || 'No location provided.'}
                 </Typography>
               )}
             </CardContent>
           </Card>
         </TabPanel>
-
-        {/* Partners Tab - Only for Farmers */}
-        <TabPanel value="2">
-          {user.isFarmer ? (
-            renderPartnersList()
-          ) : (
-            <Alert severity="info">Partners tab is only available for farmer profiles.</Alert>
-          )}
-        </TabPanel>
-
-        {/* Services Tab - Only for Farmers */}
+  
+        {/* Partners Tab */}
+        <TabPanel value="2">{renderPartnersList()}</TabPanel>
+  
+        {/* Services Tab */}
         <TabPanel value="3">
-          {user.isFarmer ? (
-            <Card>
-              <CardHeader title="Farmer Services" subheader="Available services and options" />
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <TruckIcon />
-                      <Typography variant="body1">Delivery Service</Typography>
-                    </Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Offer delivery to customers
-                    </Typography>
-                  </Box>
-                  {isEditing && isOwner ? (
-                    <Switch
-                      checked={user.deliveryAvailable}
-                      onChange={(e) => setUser({ ...user, deliveryAvailable: e.target.checked })}
-                    />
-                  ) : (
-                    <Typography color={user.deliveryAvailable ? 'success.main' : 'error.main'}>
-                      {user.deliveryAvailable ? 'Available' : 'Unavailable'}
-                    </Typography>
-                  )}
-                </Box>
-                <Divider />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-                  <Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <StoreIcon />
-                      <Typography variant="body1">Wholesale</Typography>
-                    </Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Bulk orders for businesses
-                    </Typography>
-                  </Box>
-                  {isEditing && isOwner ? (
-                    <Switch
-                      checked={user.wholesaleAvailable}
-                      onChange={(e) => setUser({ ...user, wholesaleAvailable: e.target.checked })}
-                    />
-                  ) : (
-                    <Typography color={user.wholesaleAvailable ? 'success.main' : 'error.main'}>
-                      {user.wholesaleAvailable ? 'Available' : 'Unavailable'}
-                    </Typography>
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
-          ) : (
-            <Alert severity="info">Services tab is only available for farmer profiles.</Alert>
-          )}
+          <Card>
+            <CardContent>
+              <Typography variant="h6">Services</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 2 }}>
+                <TruckIcon sx={{ marginRight: 1 }} />
+                <Typography sx={{ marginRight: 2 }}>
+                  Delivery Available
+                </Typography>
+                {isEditing && isOwner ? (
+                  <Switch
+                    checked={user.deliveryAvailable}
+                    onChange={(e) =>
+                      setUser({ ...user, deliveryAvailable: e.target.checked })
+                    }
+                  />
+                ) : (
+                  <Typography>
+                    {user.deliveryAvailable ? 'Yes' : 'No'}
+                  </Typography>
+                )}
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 2 }}>
+                <StoreIcon sx={{ marginRight: 1 }} />
+                <Typography sx={{ marginRight: 2 }}>
+                  Wholesale Available
+                </Typography>
+                {isEditing && isOwner ? (
+                  <Switch
+                    checked={user.wholesaleAvailable}
+                    onChange={(e) =>
+                      setUser({ ...user, wholesaleAvailable: e.target.checked })
+                    }
+                  />
+                ) : (
+                  <Typography>
+                    {user.wholesaleAvailable ? 'Yes' : 'No'}
+                  </Typography>
+                )}
+              </Box>
+            </CardContent>
+          </Card>
         </TabPanel>
-
-        {/* Social Media Tab - Only for Farmers */}
-        <TabPanel value="4">
-          {user.isFarmer ? (
-            renderSocialMediaLinks()
-          ) : (
-            <Alert severity="info">Social media tab is only available for farmer profiles.</Alert>
-          )}
-        </TabPanel>
+  
+        {/* Social Media Tab */}
+        <TabPanel value="4">{renderSocialMediaLinks()}</TabPanel>
       </TabContext>
-
-      {/* Edit Controls */}
-      {isOwner && (
-        <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
-          <Button 
-            variant={isEditing ? 'outlined' : 'contained'} 
-            onClick={() => setIsEditing(!isEditing)}
-          >
-            {isEditing ? 'Cancel' : 'Edit Profile'}
-          </Button>
-          {isEditing && (
-            <Button 
-              variant="contained" 
-              color="primary"
-              onClick={handleSave}
-            >
-              Save Changes
-            </Button>
-          )}
-        </Box>
-      )}
     </Box>
-  );
+  );  
 };
 
 export default UserProfile;
