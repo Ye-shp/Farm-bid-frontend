@@ -43,6 +43,7 @@ const UserProfile = () => {
     following: [],
     isFarmer: true,
   });
+  const [products, setProducts] = useState([]);
   const [userBlogs, setUserBlogs] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -52,14 +53,15 @@ const UserProfile = () => {
   useEffect(() => {
     const userIdFromToken = localStorage.getItem('userId');
     setLoggedInUserId(userIdFromToken);
-
+  
     const fetchUser = async () => {
       try {
+        // Fetch user data
         const response = await fetch(
           `https://farm-bid-3998c30f5108.herokuapp.com/api/users/${userId}`
         );
         const fetchedUser = await response.json();
-
+  
         setUser({
           ...fetchedUser,
           socialMedia: fetchedUser.socialMedia || { instagram: '', facebook: '', tiktok: '' },
@@ -71,18 +73,33 @@ const UserProfile = () => {
           wholesaleAvailable: fetchedUser.wholesaleAvailable || false,
           isFarmer: fetchedUser.isFarmer || false,
         });
-
+  
+        // Fetch blogs
         const blogResponse = await fetch(
           `https://farm-bid-3998c30f5108.herokuapp.com/api/blogs/user/${userId}`
         );
         const blogData = await blogResponse.json();
         setUserBlogs(blogData);
         setIsFollowing(fetchedUser.followers.includes(userIdFromToken));
+  
+        // Fetch products - moved inside try block and properly awaited
+        const token = localStorage.getItem('token');
+
+        const productsResponse = await fetch(
+          `https://farm-bid-3998c30f5108.herokuapp.com/api/products/farmer-products`, 
+          {
+            headers :{Authorization : `Bearer ${token}`}
+          }
+        );
+        const productsData = await productsResponse.json();
+        console.log('Fetched products:', productsData); 
+        setProducts(productsData);
+        
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error('Error fetching data:', error);
       }
     };
-
+  
     fetchUser();
   }, [userId]);
 
@@ -132,7 +149,8 @@ const UserProfile = () => {
       <Tab label="About" value="1" key="about" />,    
       <Tab label="Partners" value="2" key="partners" />, 
       <Tab label="Services" value="3" key="services" />,
-      <Tab label="Social Media" value="4" key="social" />
+      <Tab label="Social Media" value="4" key="social" />,
+      <Tab label="Products" value = "5" key = "products"/>
       ];
     
 
@@ -181,6 +199,34 @@ const UserProfile = () => {
     }
   };
 
+  const renderProductsList = () => (
+    <Card>
+      <CardHeader
+        title="Available Products"
+        subheader="Products offered by this farmer"
+      />
+      <CardContent>
+        {products.length > 0 ? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {products.map((product) => (
+              <Card key={product._id} sx={{ marginBottom: 2 }}>
+                <CardContent>
+                  <Typography variant="h6">
+                    {product.title || product.customProduct}
+                  </Typography>
+                  <Typography variant="body2">{product.description}</Typography>
+                  <Typography variant="body1">Price: ${product.price}</Typography>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        ) : (
+          <Typography color="text.secondary">No products listed yet.</Typography>
+        )}
+      </CardContent>
+    </Card>
+  );  
+  
   const renderPartnersList = () => (
     <Card>
       <CardHeader 
@@ -524,9 +570,12 @@ const UserProfile = () => {
   
         {/* Social Media Tab */}
         <TabPanel value="4">{renderSocialMediaLinks()}</TabPanel>
-      </TabContext>
+  
+        {/* Products Tab */}
+        <TabPanel value="5">{renderProductsList()}</TabPanel>
+      </TabContext>      
     </Box>
-  );  
+  );
 };
 
 export default UserProfile;
