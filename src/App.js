@@ -22,6 +22,7 @@ import Payouts from './components/Payout';
 import CreateContract from './components/CreateContract';
 import OpenContractsList from './components/OpenContractList';
 import FulfillContract from './components/FulfillContract';
+import SearchBar from './components/SearchBar';
  
 
 const stripePromise = loadStripe('pk_live_51Q9hx7ApVL7y3rvg85x9cvnfNETqgxw7qYxRrBJeD7rOg0d0M0WJnNMRF4TouN5RYAgwQ0HfQefNwZ5AEGXPIlF600UXzQ8rKx')
@@ -64,6 +65,7 @@ const App = () => {
           <Route path="/Featuredfarms" element = {<FeaturedFarms/>} />            
           <Route path="/Payout" element={<Payouts/>}/>
           <Route path="/fulfill-contract/:contractId" element={<FulfillContract/>}/>
+          <Route path = "/search" elements ={<SearchBar/>} />
            <Route 
             path="/CheckoutForm" 
             element={
