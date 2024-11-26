@@ -82,7 +82,7 @@ const UserProfile = () => {
         setUserBlogs(blogData);
         setIsFollowing(fetchedUser.followers.includes(userIdFromToken));
   
-        // Fetch products - moved inside try block and properly awaited
+        // Fetch products 
         const token = localStorage.getItem('token');
 
         const productsResponse = await fetch(
