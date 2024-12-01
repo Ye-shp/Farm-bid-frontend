@@ -1,29 +1,32 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '@mui/material/styles';
 import {
-  Container,
+  TextField,
+  Button,
+  Divider,
   Grid,
+  Box,
+  Typography,
+  Paper,
+  Alert,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  CircularProgress,
   Card,
   CardContent,
   CardMedia,
-  Typography,
-  Button,
-  TextField,
-  Box,
-  Paper,
-  IconButton,
-  Divider,
-  Alert,
   Fade,
-  CircularProgress,
-  useTheme,
-  Chip
+  Container,
 } from '@mui/material';
+
 import {
   Add as AddIcon,
-  Upload as UploadIcon,
+  CloudUpload as UploadIcon,
   LocationOn as LocationIcon,
-  Error as ErrorIcon,
-  Image as ImageIcon
+  Image as ImageIcon,
+  category
 } from '@mui/icons-material';
 import axios from 'axios';
 import CreateAuction from './CreateAuction';
@@ -31,15 +34,19 @@ import CreateAuction from './CreateAuction';
 const FarmerDashboard = () => {
   const theme = useTheme();
   const [products, setProducts] = useState([]);
+  const [productCategories, setProductCategories] = useState([]);
   const [location, setLocation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(false);
   const token = localStorage.getItem('token');
-
   const [newProduct, setNewProduct] = useState({
     title: '',
     description: '',
+    category: '',
+    subcategory: '',
+    customCategory: '',
+    customSubcategory: '',
     image: null,
     previewUrl: null
   });
@@ -49,17 +56,33 @@ const FarmerDashboard = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+
+        // Fetch product categories
+        const categoriesResponse = await axios.get(
+          'https://farm-bid-3998c30f5108.herokuapp.com/api/products/categories',
+          {
+            headers:{
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setProductCategories(categoriesResponse.data);
+
+        // Fetch farmer's products
         const productResponse = await axios.get(
           'https://farm-bid-3998c30f5108.herokuapp.com/api/products/farmer-products',
           {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: {
+               Authorization: `Bearer ${token}`,
+               },
           }
         );
         setProducts(productResponse.data);
+
         setError(null);
       } catch (err) {
-        setError('Failed to load products. Please try again later.');
-        console.error('Error fetching farmer data:', err);
+        setError('Failed to load products or categories. Please try again later.');
+        console.error('Error fetching data:', err);
       } finally {
         setLoading(false);
       }
@@ -102,14 +125,26 @@ const FarmerDashboard = () => {
   const handleCreateProduct = async (e) => {
     e.preventDefault();
     setUploadProgress(true);
-
+  
     const formData = new FormData();
-    formData.append('title', newProduct.title);
     formData.append('description', newProduct.description);
+  
+    // Determine the category to send
+    const categoryToSend =
+      newProduct.category === 'custom' ? newProduct.customCategory : newProduct.category;
+    formData.append('category', categoryToSend);
+  
+    // Determine the title or customProduct to send
+    if (newProduct.subcategory === 'custom') {
+      formData.append('customProduct', newProduct.customSubcategory);
+    } else {
+      formData.append('title', newProduct.subcategory);
+    }
+  
     if (newProduct.image) {
       formData.append('image', newProduct.image);
     }
-
+  
     try {
       const response = await axios.post(
         'https://farm-bid-3998c30f5108.herokuapp.com/api/products',
@@ -121,9 +156,18 @@ const FarmerDashboard = () => {
           },
         }
       );
-
+  
       setProducts([...products, response.data]);
-      setNewProduct({ title: '', description: '', image: null, previewUrl: null });
+      setNewProduct({
+        title: '',
+        description: '',
+        category: '',
+        subcategory: '',
+        customCategory: '',
+        customSubcategory: '',
+        image: null,
+        previewUrl: null,
+      });
       setError(null);
     } catch (err) {
       setError('Failed to create product. Please try again.');
@@ -132,6 +176,7 @@ const FarmerDashboard = () => {
       setUploadProgress(false);
     }
   };
+
 
   if (loading) {
     return (
@@ -175,10 +220,10 @@ const FarmerDashboard = () => {
               </Box>
             )}
           </Paper>
-
+  
           {error && (
-            <Alert 
-              severity="error" 
+            <Alert
+              severity="error"
               sx={{ mb: 4 }}
               action={
                 <Button color="inherit" size="small" onClick={() => setError(null)}>
@@ -189,38 +234,128 @@ const FarmerDashboard = () => {
               {error}
             </Alert>
           )}
-
+  
           {/* Create Product Section */}
-          <Paper elevation={0} sx={{ p: 3, mb: 4, border: '1px solid', borderColor: 'grey.200' }}>
+          <Paper
+            elevation={0}
+            sx={{ p: 3, mb: 4, border: '1px solid', borderColor: 'grey.200' }}
+          >
             <Typography variant="h5" gutterBottom>
               Add New Product
             </Typography>
             <Divider sx={{ mb: 3 }} />
-            
+  
             <form onSubmit={handleCreateProduct}>
               <Grid container spacing={3}>
+                {/* Category Selector */}
                 <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Product Title"
-                    value={newProduct.title}
-                    onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
-                    required
-                    variant="outlined"
-                  />
+                  <FormControl fullWidth variant="outlined" required>
+                    <InputLabel>Category</InputLabel>
+                    <Select
+                      label="Category"
+                      value={newProduct.category}
+                      onChange={(e) =>
+                        setNewProduct({
+                          ...newProduct,
+                          category: e.target.value,
+                          subcategory: '',
+                          customCategory: '',
+                          customSubcategory: '',
+                        })
+                      }
+                    >
+                      <MenuItem value="">
+                        <em>Select Category</em>
+                      </MenuItem>
+                      {Object.keys(productCategories).map((category) => (
+                        <MenuItem key={category} value={category}>
+                          {category}
+                        </MenuItem>
+                      ))}
+                      <MenuItem value="custom">Other (Enter Custom Category)</MenuItem>
+                    </Select>
+                  </FormControl>
                 </Grid>
+  
+                {/* Custom Category Input */}
+                {newProduct.category === 'custom' && (
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Custom Category"
+                      value={newProduct.customCategory}
+                      onChange={(e) =>
+                        setNewProduct({ ...newProduct, customCategory: e.target.value })
+                      }
+                      required
+                      variant="outlined"
+                    />
+                  </Grid>
+                )}
+  
+                {/* Subcategory Selector */}
+                {newProduct.category && newProduct.category !== 'custom' && (
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth variant="outlined" required>
+                      <InputLabel>Subcategory</InputLabel>
+                      <Select
+                        label="Subcategory"
+                        value={newProduct.subcategory}
+                        onChange={(e) =>
+                          setNewProduct({
+                            ...newProduct,
+                            subcategory: e.target.value,
+                            customSubcategory: '',
+                          })
+                        }
+                      >
+                        <MenuItem value="">
+                          <em>Select Subcategory</em>
+                        </MenuItem>
+                        {productCategories[newProduct.category]?.map((subcategory) => (
+                          <MenuItem key={subcategory} value={subcategory}>
+                            {subcategory}
+                          </MenuItem>
+                        ))}
+                        <MenuItem value="custom">Other (Enter Custom Subcategory)</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                )}
+  
+                {/* Custom Subcategory Input */}
+                {newProduct.subcategory === 'custom' && (
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Custom Subcategory"
+                      value={newProduct.customSubcategory}
+                      onChange={(e) =>
+                        setNewProduct({ ...newProduct, customSubcategory: e.target.value })
+                      }
+                      required
+                      variant="outlined"
+                    />
+                  </Grid>
+                )}
+  
+                {/* Description Input */}
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
                     label="Description"
                     value={newProduct.description}
-                    onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                    onChange={(e) =>
+                      setNewProduct({ ...newProduct, description: e.target.value })
+                    }
                     required
                     multiline
                     rows={4}
                     variant="outlined"
                   />
                 </Grid>
+  
+                {/* Image Upload */}
                 <Grid item xs={12}>
                   <Box
                     sx={{
@@ -261,13 +396,17 @@ const FarmerDashboard = () => {
                     )}
                   </Box>
                 </Grid>
+  
+                {/* Submit Button */}
                 <Grid item xs={12}>
                   <Button
                     type="submit"
                     variant="contained"
                     size="large"
                     disabled={uploadProgress}
-                    startIcon={uploadProgress ? <CircularProgress size={20} /> : <AddIcon />}
+                    startIcon={
+                      uploadProgress ? <CircularProgress size={20} /> : <AddIcon />
+                    }
                   >
                     {uploadProgress ? 'Creating Product...' : 'Create Product'}
                   </Button>
@@ -275,7 +414,7 @@ const FarmerDashboard = () => {
               </Grid>
             </form>
           </Paper>
-
+  
           {/* Products Grid */}
           <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
             My Products ({products.length})
@@ -283,9 +422,9 @@ const FarmerDashboard = () => {
           <Grid container spacing={3}>
             {products.map((product) => (
               <Grid item xs={12} sm={6} md={4} key={product._id}>
-                <Card 
+                <Card
                   elevation={0}
-                  sx={{ 
+                  sx={{
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
@@ -302,7 +441,7 @@ const FarmerDashboard = () => {
                       component="img"
                       height="200"
                       image={product.imageUrl}
-                      alt={product.title}
+                      alt={product.title || product.customProduct}
                       sx={{ objectFit: 'cover' }}
                     />
                   ) : (
@@ -320,7 +459,7 @@ const FarmerDashboard = () => {
                   )}
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Typography variant="h6" gutterBottom>
-                      {product.title}
+                      {product.title || product.customProduct}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {product.description}
@@ -330,7 +469,7 @@ const FarmerDashboard = () => {
               </Grid>
             ))}
           </Grid>
-
+  
           {/* Auctions Section */}
           <Box sx={{ mt: 6 }}>
             <CreateAuction products={products} />
@@ -338,7 +477,7 @@ const FarmerDashboard = () => {
         </Box>
       </Fade>
     </Container>
-  );
+  );  
 };
 
 export default FarmerDashboard;

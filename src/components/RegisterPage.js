@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { register } from '../Services/api';
 import axios from 'axios';
 import { Box, Button, Container, Grid, Select, MenuItem, TextField, Typography, Alert, InputAdornment } from '@mui/material';
-import { Person, Email, Lock, Store, ShoppingCart } from '@mui/icons-material';
+import { Person, Email, Lock, Store, ShoppingCart, Phone } from '@mui/icons-material';
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [role, setRole] = useState('buyer');
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
   const [error, setError] = useState(null);
@@ -38,12 +39,13 @@ const RegisterPage = () => {
       return;
     }
     try {
-      const response = await register({ username, email, password, role, location });
+      const response = await register({ username, email, password, phone, role, location });
       if (response.status === 201) {
         alert("Registration successful!");
         setUsername('');
         setEmail('');
         setPassword('');
+        setPhone('');
         setRole('buyer');
         setError(null);
         navigate('/login');
@@ -121,6 +123,23 @@ const RegisterPage = () => {
                 }}
               />
             </Grid>
+            <Grid item xs={12}>
+              <TextField
+              fullWidth
+              label="Phone Number"
+              variant="outlined"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Phone />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>           
             <Grid item xs={12}>
               <Select
                 fullWidth
