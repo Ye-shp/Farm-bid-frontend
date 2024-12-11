@@ -1,3 +1,5 @@
+// BuyerDashboard.js
+
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
@@ -22,9 +24,6 @@ import {
   Snackbar,
   useTheme,
   useMediaQuery,
-  Checkbox,
-  FormControlLabel,
-  InputAdornment,
 } from '@mui/material';
 import {
   Notifications as NotificationsIcon,
@@ -32,13 +31,12 @@ import {
   LocalOfferRounded,
   TimelapseRounded,
   ArrowUpward,
-  Search as SearchIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import { formatDistanceToNow } from 'date-fns';
+import SearchBar from './SearchBar';
 
-// Styled components
 const StyledBadge = styled(Badge)(({ theme }) => ({
   '& .MuiBadge-badge': {
     right: -3,
@@ -114,15 +112,6 @@ const BuyerDashboard = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [timeRemaining, setTimeRemaining] = useState({});
-
-  // Search states
-  const [keyword, setKeyword] = useState('');
-  const [category, setCategory] = useState('');
-  const [delivery, setDelivery] = useState(false);
-  const [wholesale, setWholesale] = useState(false);
-  const [radius, setRadius] = useState(50);
-  const [searchResults, setSearchResults] = useState([]);
-  const [searchError, setSearchError] = useState('');
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -209,30 +198,6 @@ const BuyerDashboard = () => {
 
     fetchNotifications();
   }, [token]);
-
-  const handleSearch = async () => {
-    try {
-      setSearchError('');
-      const queryParams = new URLSearchParams({
-        keyword,
-        category,
-        delivery: delivery.toString(),
-        wholesale: wholesale.toString(),
-        latitude: location.latitude,
-        longitude: location.longitude,
-        radius,
-      });
-
-      const response = await axios.get(`${API_URL}/search/farms?${queryParams}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSearchResults(response.data);
-      showSnackbar('Search completed successfully', 'success');
-    } catch (error) {
-      setSearchError('Failed to fetch results. Please try again.');
-      showSnackbar('Error performing search', 'error');
-    }
-  };
 
   const formatTimeRemaining = (ms) => {
     if (ms <= 0) return 'Auction ended';
@@ -328,6 +293,7 @@ const BuyerDashboard = () => {
 
   return (
     <PageContainer maxWidth="xl">
+      {/* Header Section */}
       <HeaderBox>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Typography
@@ -361,106 +327,12 @@ const BuyerDashboard = () => {
         </IconButton>
       </HeaderBox>
 
+      {/* Search Section */}
       <SearchBox>
-        <Typography variant="h6" sx={{ mb: 3 }}>
-          Search Farms
-        </Typography>
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={6} md={4}>
-            <TextField
-              fullWidth
-              label="Keyword"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <TextField
-              fullWidth
-              label="Category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <TextField
-              fullWidth
-              type="number"
-              label="Search Radius (km)"
-              value={radius}
-              onChange={(e) => setRadius(e.target.value)}
-              InputProps={{
-                endAdornment: <InputAdornment position="end">km</InputAdornment>,
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={<Checkbox checked={delivery} onChange={(e) => setDelivery(e.target.checked)} />}
-              label="Delivery Available"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={
-                <Checkbox checked={wholesale} onChange={(e) => setWholesale(e.target.checked)} />
-              }
-              label="Wholesale Available"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <Button
-              variant="contained"
-              onClick={handleSearch}
-              startIcon={<SearchIcon />}
-              sx={{ py: 1.5, px: 4 }}
-            >
-              Search
-            </Button>
-          </Grid>
-        </Grid>
-        {searchError && (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            {searchError}
-          </Alert>
-        )}
-        {searchResults.length > 0 && (
-          <Box sx={{ mt: 4 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Search Results
-            </Typography>
-            <Grid container spacing={2}>
-              {searchResults.map((result) => (
-                <Grid item xs={12} sm={6} md={4} key={result._id}>
-                  <Paper sx={{ p: 2 }}>
-                    <Typography variant="h6">{result.title}</Typography>
-                    <Typography variant="body2">{result.user.name}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Location: {result.user.location.latitude}, {result.user.location.longitude}
-                    </Typography>
-                    <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                      {result.delivery && (
-                        <Chip size="small" label="Delivery Available" color="primary" />
-                      )}
-                      {result.wholesale && (
-                        <Chip size="small" label="Wholesale Available" color="secondary" />
-                      )}
-                    </Box>
-                  </Paper>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        )}
+        <SearchBar />
       </SearchBox>
 
+      {/* Existing Auctions Section */}
       <Grid container spacing={3} sx={{ flexGrow: 1 }}>
         {auctions.map((auction) => (
           <Grid item xs={12} sm={6} lg={4} xl={3} key={auction._id}>
@@ -575,6 +447,7 @@ const BuyerDashboard = () => {
         ))}
       </Grid>
 
+      {/* Notification Drawer */}
       <NotificationDrawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
           Notifications
@@ -599,7 +472,9 @@ const BuyerDashboard = () => {
                     primary={notification.message}
                     secondary={
                       <Typography variant="caption" color="text.secondary">
-                        {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                        {formatDistanceToNow(new Date(notification.createdAt), {
+                          addSuffix: true,
+                        })}
                         {' · '}
                         {notification.read ? 'Read' : 'Unread'}
                       </Typography>
@@ -616,6 +491,7 @@ const BuyerDashboard = () => {
         </List>
       </NotificationDrawer>
 
+      {/* Snackbar for Alerts */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
