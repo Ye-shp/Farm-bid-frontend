@@ -108,6 +108,7 @@ const BuyerDashboard = () => {
   const [auctions, setAuctions] = useState([]);
   const [bidAmount, setBidAmount] = useState({});
   const [notifications, setNotifications] = useState([]);
+  const [searchResults, setSearchResults] = useState([]); // Add this state
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -291,6 +292,10 @@ const BuyerDashboard = () => {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
+  const handleSearchResults = (results) => {
+    setSearchResults(results);
+  };
+
   return (
     <PageContainer maxWidth="xl">
       {/* Header Section */}
@@ -329,8 +334,113 @@ const BuyerDashboard = () => {
 
       {/* Search Section */}
       <SearchBox>
-        <SearchBar />
+        <SearchBar onSearchResults={handleSearchResults} />
       </SearchBox>
+
+      {/* Display search results if available */}
+      {searchResults.length > 0 && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h5" gutterBottom sx={{ 
+            color: theme.palette.primary.main,
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}>
+            Search Results ({searchResults.length} farms found)
+          </Typography>
+          <Grid container spacing={3}>
+            {searchResults.map((farm) => (
+              <Grid item xs={12} sm={6} md={4} key={farm.productId}>
+                <Card sx={{ 
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  transition: 'transform 0.2s ease-in-out',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: theme.shadows[4],
+                  },
+                }}>
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                      {farm.farmName}
+                    </Typography>
+                    <Typography color="textSecondary" gutterBottom>
+                      {farm.farmerName}
+                    </Typography>
+                    <Divider sx={{ my: 1.5 }} />
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body1" color="textPrimary" sx={{ mb: 0.5 }}>
+                        {farm.productTitle}
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Category: {farm.category}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                      {farm.deliveryAvailable && (
+                        <Chip
+                          label="Delivery Available"
+                          color="primary"
+                          size="small"
+                          variant="outlined"
+                        />
+                      )}
+                      {farm.wholesaleAvailable && (
+                        <Chip
+                          label="Wholesale Available"
+                          color="secondary"
+                          size="small"
+                          variant="outlined"
+                        />
+                      )}
+                    </Box>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      fullWidth
+                      sx={{
+                        mt: 'auto',
+                        textTransform: 'none',
+                        fontWeight: 500,
+                        py: 1
+                      }}
+                      onClick={() => {
+                        // Add contact functionality here
+                        showSnackbar('Contact feature coming soon!', 'info');
+                      }}
+                    >
+                      Contact Farmer
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
+
+      {/* Show message when no results */}
+      {searchResults.length === 0 && (
+        <Box sx={{ mb: 4, textAlign: 'center', py: 4 }}>
+          <Typography variant="body1" color="textSecondary">
+            Use the search filters above to find farms
+          </Typography>
+        </Box>
+      )}
+
+      {/* Auctions Section Header */}
+      <Typography variant="h5" gutterBottom sx={{ 
+        color: theme.palette.primary.main,
+        fontWeight: 600,
+        mt: 4,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1
+      }}>
+        Active Auctions
+      </Typography>
 
       {/* Existing Auctions Section */}
       <Grid container spacing={3} sx={{ flexGrow: 1 }}>

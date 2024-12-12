@@ -9,183 +9,260 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Slider,
   TextField,
   Typography,
+  Paper,
+  Grid,
+  CircularProgress,
 } from '@mui/material';
 
-const SearchBar = () => {
-  const [allowedProducts, setAllowedProducts] = useState([]);
-  const [allowedCategories, setAllowedCategories] = useState([]);
-  const [selectedProduct, setSelectedProduct] = useState('');
+const SearchBar = ({ onSearchResults }) => {
+  const [productCategories, setProductCategories] = useState({});
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState('');
   const [delivery, setDelivery] = useState(false);
   const [wholesale, setWholesale] = useState(false);
-  const [latitude, setLatitude] = useState('');
-  const [longitude, setLongitude] = useState('');   
-  const [radius, setRadius] = useState(50);
-  const [results, setResults] = useState([]);
+  const [searchRadius, setSearchRadius] = useState(25);
+  const [searchAnywhere, setSearchAnywhere] = useState(true);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAllowedData = async () => {
+    const fetchCategories = async () => {
       try {
-        const [productsRes, categoriesRes] = await Promise.all([
-          axios.get('/api/products/allowed-products'),
-          axios.get('/api/products/allowed-categories'),
-        ]);
-
-        setAllowedProducts(productsRes.data);
-        setAllowedCategories(categoriesRes.data);
+        const token = localStorage.getItem('token');
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}api/products/categories`,
+          {
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        if (response.data && typeof response.data === 'object') {
+          setProductCategories(response.data);
+        } else {
+          console.error('Invalid data format received:', response.data);
+          setError('Received invalid data format from server');
+        }
       } catch (err) {
-        console.error('Error fetching allowed products or categories:', err);
-        setError('Failed to load products or categories.');
+        console.error('Error fetching categories:', err);
+        setError(err.response?.data?.error || 'Failed to load categories and products. Please try again.');
+      } finally {
+        setInitialLoading(false);
       }
     };
 
-    fetchAllowedData();
+    fetchCategories();
   }, []);
+
+  const handleCategoryChange = (event) => {
+    const category = event.target.value;
+    setSelectedCategory(category);
+    setSelectedProduct(''); // Reset product when category changes
+  };
 
   const handleSearch = async () => {
     try {
       setError('');
+      setLoading(true);
+      
+      const token = localStorage.getItem('token');
       const queryParams = new URLSearchParams({
-        product: selectedProduct,
-        category: selectedCategory,
-        delivery: delivery.toString(),
-        wholesale: wholesale.toString(),
-        latitude,
-        longitude,
-        radius,
+        ...(selectedProduct && { product: selectedProduct }),
+        ...(selectedCategory && { category: selectedCategory }),
+        ...(delivery !== null && { delivery: delivery.toString() }),
+        ...(wholesale !== null && { wholesale: wholesale.toString() }),
+        ...(searchAnywhere ? { searchAnywhere: 'true' } : { searchRadius: searchRadius.toString() }),
       });
 
-      const response = await axios.get(`/api/search/farms?${queryParams}`);
-      setResults(response.data);
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}api/search/farms?${queryParams}`,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      onSearchResults(response.data);
     } catch (err) {
       console.error('Error during search:', err);
-      setError('Failed to fetch results. Please try again.');
+      setError(err.response?.data?.error || 'Failed to fetch results. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleClear = () => {
+    setSelectedCategory('');
+    setSelectedProduct('');
+    setDelivery(false);
+    setWholesale(false);
+    setSearchRadius(25);
+    setSearchAnywhere(true);
+    onSearchResults([]);
+  };
+
+  if (initialLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h4" gutterBottom>
+    <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+      <Typography variant="h6" gutterBottom>
         Search Farms
       </Typography>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 400 }}>
-        <FormControl fullWidth>
-          <InputLabel id="product-select-label">Product</InputLabel>
-          <Select
-            labelId="product-select-label"
-            id="product-select"
-            value={selectedProduct}
-            label="Product"
-            onChange={(e) => setSelectedProduct(e.target.value)}
-          >
-            <MenuItem value="">
-              <em>None</em>
-            </MenuItem>
-            {allowedProducts.map((product) => (
-              <MenuItem key={product} value={product}>
-                {product}
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel id="category-select-label">Category</InputLabel>
+            <Select
+              labelId="category-select-label"
+              id="category-select"
+              value={selectedCategory}
+              label="Category"
+              onChange={handleCategoryChange}
+            >
+              <MenuItem value="">
+                <em>All Categories</em>
               </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+              {Object.keys(productCategories).map((category) => (
+                <MenuItem key={category} value={category}>
+                  {category}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
 
-        <FormControl fullWidth>
-          <InputLabel id="category-select-label">Category</InputLabel>
-          <Select
-            labelId="category-select-label"
-            id="category-select"
-            value={selectedCategory}
-            label="Category"
-            onChange={(e) => setSelectedCategory(e.target.value)}
-          >
-            <MenuItem value="">
-              <em>None</em>
-            </MenuItem>
-            {allowedCategories.map((category) => (
-              <MenuItem key={category} value={category}>
-                {category}
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel id="product-select-label">Product</InputLabel>
+            <Select
+              labelId="product-select-label"
+              id="product-select"
+              value={selectedProduct}
+              label="Product"
+              onChange={(e) => setSelectedProduct(e.target.value)}
+              disabled={!selectedCategory} // Disable if no category is selected
+            >
+              <MenuItem value="">
+                <em>All Products</em>
               </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+              {selectedCategory && productCategories[selectedCategory]?.map((product) => (
+                <MenuItem key={product} value={product}>
+                  {product}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
 
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={delivery}
-              onChange={(e) => setDelivery(e.target.checked)}
+        <Grid item xs={12}>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={delivery}
+                  onChange={(e) => setDelivery(e.target.checked)}
+                />
+              }
+              label="Delivery Available"
             />
-          }
-          label="Delivery Available"
-        />
-
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={wholesale}
-              onChange={(e) => setWholesale(e.target.checked)}
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={wholesale}
+                  onChange={(e) => setWholesale(e.target.checked)}
+                />
+              }
+              label="Wholesale Available"
             />
-          }
-          label="Wholesale Available"
-        />
-
-        {/* Latitude */}
-        <TextField
-          label="Latitude"
-          value={latitude}
-          onChange={(e) => setLatitude(e.target.value)}
-          fullWidth
-        />
-
-        {/* Longitude */}
-        <TextField
-          label="Longitude"
-          value={longitude}
-          onChange={(e) => setLongitude(e.target.value)}
-          fullWidth
-        />
-
-        {/* Radius */}
-        <TextField
-          label="Radius (km)"
-          type="number"
-          value={radius}
-          onChange={(e) => setRadius(e.target.value)}
-          fullWidth
-        />
-
-        {/* Search Button */}
-        <Button variant="contained" color="primary" onClick={handleSearch}>
-          Search
-        </Button>
-      </Box>
-
-      {error && (
-        <Typography variant="body1" color="error" sx={{ mt: 2 }}>
-          {error}
-        </Typography>
-      )}
-
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          Results:
-        </Typography>
-        {results.length === 0 && <Typography>No results found.</Typography>}
-        {results.map((result) => (
-          <Box key={result._id} sx={{ mb: 2, p: 2, border: '1px solid #ccc' }}>
-            <Typography variant="h6">{result.title || result.customProduct}</Typography>
-            <Typography>{result.user.name}</Typography>
-            <Typography>
-              Location: {result.user.location.latitude}, {result.user.location.longitude}
-            </Typography>
           </Box>
-        ))}
-      </Box>
-    </Box>
+        </Grid>
+        <Grid item xs={12}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={searchAnywhere}
+                  onChange={(e) => setSearchAnywhere(e.target.checked)}
+                />
+              }
+              label="Search Anywhere"
+            />
+            {!searchAnywhere && (
+              <Typography variant="body2">
+                (or select a search radius below)
+              </Typography>
+            )}
+          </Box>
+          {!searchAnywhere && (
+            <Box sx={{ px: 2, maxWidth: 300 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                Search Radius
+              </Typography>
+              <Slider
+                value={searchRadius}
+                onChange={(_, newValue) => setSearchRadius(newValue)}
+                min={5}
+                max={100}
+                step={5}
+                marks={[
+                  { value: 5, label: '5mi' },
+                  { value: 25, label: '25mi' },
+                  { value: 50, label: '50mi' },
+                  { value: 100, label: '100mi' },
+                ]}
+                valueLabelDisplay="auto"
+                valueLabelFormat={(value) => `${value} miles`}
+                disabled={searchAnywhere}
+              />
+            </Box>
+          )}
+        </Grid>
+
+        <Grid item xs={12}>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="contained"
+              onClick={handleSearch}
+              disabled={loading}
+            >
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Search'
+              )}
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={handleClear}
+              disabled={loading}
+            >
+              Clear
+            </Button>
+          </Box>
+        </Grid>
+
+        {error && (
+          <Grid item xs={12}>
+            <Typography color="error">{error}</Typography>
+          </Grid>
+        )}
+      </Grid>
+    </Paper>
   );
 };
 

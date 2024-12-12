@@ -115,7 +115,7 @@ const HomePage = () => {
                   },
                 }}
               >
-                Start Browsing
+                Login
               </Button>
             </Box>
           </Paper>
