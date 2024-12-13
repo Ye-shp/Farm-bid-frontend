@@ -57,14 +57,32 @@ const CreateAuction = ({ products }) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
+  
     try {
-      await axios.post(
+      // Validate inputs
+      if (!formData.productId || !formData.startingBid || !formData.endTime) {
+        throw new Error('All fields are required');
+      }
+  
+      // Validate starting bid is a positive number
+      const startingBid = parseFloat(formData.startingBid);
+      if (isNaN(startingBid) || startingBid <= 0) {
+        throw new Error('Starting bid must be a positive number');
+      }
+  
+      // Validate end time
+      const endTime = new Date(formData.endTime);
+      const now = new Date();
+      if (endTime <= now) {
+        throw new Error('End time must be in the future');
+      }
+  
+      const response = await axios.post(
         'https://farm-bid-3998c30f5108.herokuapp.com/api/auctions/create',
         {
           productId: formData.productId,
-          startingBid: parseFloat(formData.startingBid),
-          endTime: formData.endTime,
+          startingPrice: startingBid,
+          endTime: endTime.toISOString(),
         },
         {
           headers: {
@@ -72,7 +90,7 @@ const CreateAuction = ({ products }) => {
           },
         }
       );
-
+  
       setSuccess(true);
       setFormData({
         productId: '',
@@ -80,10 +98,11 @@ const CreateAuction = ({ products }) => {
         endTime: '',
       });
       
-      // Auto-hide success message after 5 seconds
       setTimeout(() => setSuccess(false), 5000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Error creating auction. Please try again.');
+      const errorMessage = err.response?.data?.message || err.message || 'Error creating auction';
+      setError(errorMessage);
+      console.error('Error details:', err);
     } finally {
       setLoading(false);
     }

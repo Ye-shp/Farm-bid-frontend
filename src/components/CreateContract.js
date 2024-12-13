@@ -2,57 +2,121 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+const productCategories = {
+  Fruit: ['Apples', 'Oranges', 'Bananas', 'Berries', 'Grapes', 'Peaches', 'Mangoes'],
+  Vegetable: ['Carrots', 'Tomatoes', 'Potatoes', 'Broccoli', 'Lettuce', 'Cucumbers', 'Peppers'],
+  Meat: ['Beef', 'Pork', 'Chicken', 'Lamb', 'Goat'],
+  Dairy: ['Milk', 'Cheese', 'Eggs', 'Yogurt', 'Butter'],
+  Other: ['Honey', 'Grains', 'Corn', 'Beans', 'Nuts'],
+};
+
 const CreateContract = () => {
-  const [productType, setProductType] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
-  const [endTime, setEndTime] = useState('');
+  const [formData, setFormData] = useState({
+    productType: '',
+    productCategory: '',
+    quantity: '',
+    maxPrice: '',
+    endTime: '',
+    deliveryMethod: 'buyer_pickup',
+    deliveryAddress: {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: ''
+    }
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com'; 
+  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
+
     try {
       const token = localStorage.getItem('token');
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      };
-
-      const requestData = {
-        productType,
-        quantity,
-        maxPrice,
-        endTime,
-      };
-
-      const response = await axios.post(`${API_URL}/api/open-contracts/create`, requestData, config);
-      if (response.status === 201) {
-        navigate('/contracts');
+      if (!token) {
+        navigate('/login');
+        return;
       }
+
+      // Get user's address if delivery is required
+      if (formData.deliveryMethod !== 'buyer_pickup') {
+        const userResponse = await axios.get(`${API_URL}/api/users/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        formData.deliveryAddress = userResponse.data.address;
+      }
+
+      const response = await axios.post(
+        `${API_URL}/api/contracts/create`,
+        formData,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      navigate('/contracts');
     } catch (error) {
       console.error('Error creating contract:', error);
-      alert('Failed to create contract. Please try again.');
+      setError(error.response?.data?.error || 'Failed to create contract');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Get available products based on selected category
+  const getAvailableProducts = () => {
+    return formData.productCategory ? productCategories[formData.productCategory] || [] : [];
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-lg bg-white rounded-lg shadow-md p-6">
         <h2 className="text-2xl font-bold text-center mb-4">Create Open Contract</h2>
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="productType" className="block font-medium">Product Type</label>
-            <input
-              type="text"
-              id="productType"
-              value={productType}
-              onChange={(e) => setProductType(e.target.value)}
+            <label htmlFor="productCategory" className="block font-medium">Product Category</label>
+            <select
+              id="productCategory"
+              value={formData.productCategory}
+              onChange={(e) => setFormData({ ...formData, productCategory: e.target.value, productType: '' })}
               className="w-full border rounded-md p-2"
-              placeholder="Enter product type"
               required
-            />
+            >
+              <option value="">Select a category</option>
+              {Object.keys(productCategories).map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="productType" className="block font-medium">Product Type</label>
+            <select
+              id="productType"
+              value={formData.productType}
+              onChange={(e) => setFormData({ ...formData, productType: e.target.value })}
+              className="w-full border rounded-md p-2"
+              required
+              disabled={!formData.productCategory}
+            >
+              <option value="">Select a product</option>
+              {getAvailableProducts().map((product) => (
+                <option key={product} value={product}>
+                  {product}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="space-y-2">
@@ -60,11 +124,12 @@ const CreateContract = () => {
             <input
               type="number"
               id="quantity"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
+              value={formData.quantity}
+              onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
               className="w-full border rounded-md p-2"
               placeholder="Enter quantity"
               required
+              min="1"
             />
           </div>
 
@@ -73,11 +138,13 @@ const CreateContract = () => {
             <input
               type="number"
               id="maxPrice"
-              value={maxPrice}
-              onChange={(e) => setMaxPrice(e.target.value)}
+              value={formData.maxPrice}
+              onChange={(e) => setFormData({ ...formData, maxPrice: e.target.value })}
               className="w-full border rounded-md p-2"
               placeholder="Enter maximum price"
               required
+              min="0"
+              step="0.01"
             />
           </div>
 
@@ -86,15 +153,80 @@ const CreateContract = () => {
             <input
               type="datetime-local"
               id="endTime"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
+              value={formData.endTime}
+              onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
               className="w-full border rounded-md p-2"
               required
+              min={new Date(Date.now() + 3600000).toISOString().slice(0, 16)}
+              max={new Date(Date.now() + 7 * 24 * 3600000).toISOString().slice(0, 16)}
             />
           </div>
 
-          <button type="submit" className="w-full bg-blue-500 text-white rounded-md p-2 mt-4">
-            Create Contract
+          <div className="space-y-2">
+            <label htmlFor="deliveryMethod" className="block font-medium">Delivery Method</label>
+            <select
+              id="deliveryMethod"
+              value={formData.deliveryMethod}
+              onChange={(e) => setFormData({ ...formData, deliveryMethod: e.target.value })}
+              className="w-full border rounded-md p-2"
+              required
+            >
+              <option value="buyer_pickup">Buyer Pickup</option>
+              <option value="seller_delivery">Seller Delivery</option>
+            </select>
+          </div>
+
+          {formData.deliveryMethod === 'seller_delivery' && (
+            <div>
+              <h3 className="text-lg font-bold mb-2">Delivery Address</h3>
+              <div className="space-y-2">
+                <label htmlFor="street" className="block font-medium">Street</label>
+                <input
+                  type="text"
+                  id="street"
+                  value={formData.deliveryAddress.street}
+                  onChange={(e) => setFormData({ ...formData, deliveryAddress: { ...formData.deliveryAddress, street: e.target.value } })}
+                  className="w-full border rounded-md p-2"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="city" className="block font-medium">City</label>
+                <input
+                  type="text"
+                  id="city"
+                  value={formData.deliveryAddress.city}
+                  onChange={(e) => setFormData({ ...formData, deliveryAddress: { ...formData.deliveryAddress, city: e.target.value } })}
+                  className="w-full border rounded-md p-2"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="state" className="block font-medium">State</label>
+                <input
+                  type="text"
+                  id="state"
+                  value={formData.deliveryAddress.state}
+                  onChange={(e) => setFormData({ ...formData, deliveryAddress: { ...formData.deliveryAddress, state: e.target.value } })}
+                  className="w-full border rounded-md p-2"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="zipCode" className="block font-medium">Zip Code</label>
+                <input
+                  type="text"
+                  id="zipCode"
+                  value={formData.deliveryAddress.zipCode}
+                  onChange={(e) => setFormData({ ...formData, deliveryAddress: { ...formData.deliveryAddress, zipCode: e.target.value } })}
+                  className="w-full border rounded-md p-2"
+                  required
+                />
+              </div>
+            </div>
+          )}
+          <button type="submit" className="w-full bg-blue-500 text-white rounded-md p-2 mt-4 hover:bg-blue-600" disabled={loading}>
+            {loading ? 'Creating...' : 'Create Contract'}
           </button>
         </form>
       </div>

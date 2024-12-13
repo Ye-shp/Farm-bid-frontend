@@ -15,7 +15,8 @@ import {
   Alert,
   IconButton,
   Link,
-  Paper
+  Paper,
+  CardMedia
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { 
@@ -39,12 +40,13 @@ const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com';
 
   const fetchProducts = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get('https://farm-bid-3998c30f5108.herokuapp.com/api/products/farmer-products');
+      const response = await axios.get(`${API_URL}/api/products`);
       setProducts(response.data);
     } catch (error) {
       setError('Failed to fetch products. Please try again later.');
@@ -70,7 +72,7 @@ const ProductList = () => {
             <Grid item xs={12} sm={6} md={4} key={item}>
               <Card>
                 <CardContent>
-                  <Skeleton variant="rectangular" height={118} />
+                  <Skeleton variant="rectangular" height={200} />
                   <Box sx={{ pt: 2 }}>
                     <Skeleton width="60%" />
                     <Skeleton />
@@ -129,7 +131,7 @@ const ProductList = () => {
             }
           }}
         >
-          Products
+          Available Products
         </Typography>
       </Box>
 
@@ -142,44 +144,49 @@ const ProductList = () => {
       ) : (
         <Grid container spacing={3}>
           {products.map(product => (
-            <Grid item xs={12} sm={6} md={4} key={product.id}>
+            <Grid item xs={12} sm={6} md={4} key={product._id}>
               <StyledCard>
+                {product.image && (
+                  <CardMedia
+                    component="img"
+                    height="200"
+                    image={product.image}
+                    alt={product.title}
+                    sx={{ objectFit: 'cover' }}
+                  />
+                )}
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Typography 
                     gutterBottom 
                     variant="h6" 
                     component="h3"
-                    sx={{ 
-                      fontWeight: 'medium',
-                      minHeight: '64px',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}
+                    sx={{ fontWeight: 'bold' }}
                   >
                     {product.title}
                   </Typography>
                   <Typography 
                     variant="body2" 
-                    color="text.secondary"
+                    color="text.secondary" 
+                    paragraph
                     sx={{
-                      minHeight: '60px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                       display: '-webkit-box',
                       WebkitLineClamp: 3,
                       WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
                     }}
                   >
                     {product.description}
                   </Typography>
+                  <Typography variant="subtitle2" color="primary">
+                    Category: {product.category}
+                  </Typography>
                 </CardContent>
                 <CardActions>
-                  <Button 
-                    component={RouterLink} 
-                    to={`/product/${product.id}`}
+                  <Button
+                    component={RouterLink}
+                    to={`/products/${product._id}`}
                     endIcon={<ArrowForwardIcon />}
-                    size="small"
                     sx={{ ml: 'auto' }}
                   >
                     View Details

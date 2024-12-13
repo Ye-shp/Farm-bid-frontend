@@ -70,24 +70,24 @@ const Header = () => {
   const getVisibleNavItems = () => {
     if (!token) {
       return [
-        { label: 'Field Notes', path: '/blogs', icon: <ArticleIcon /> }
+        { label: 'Field Notes', path: '/blog', icon: <ArticleIcon /> }
       ];
     }
 
     if (userRole === 'farmer') {
       return [
         { label: 'Dashboard', path: '/farmer-dashboard', icon: <DashboardIcon /> },
-        { label: 'Field Notes', path: '/blogs', icon: <ArticleIcon /> },
-        { label: 'Auctions', path: '/farmer-auctions', icon: <GavelIcon /> },
-        { label: 'Contracts', path: '/OpenContractList', icon: <DescriptionIcon /> }
+        { label: 'Field Notes', path: '/blog', icon: <ArticleIcon /> },
+        { label: 'Auctions', path: '/auctions', icon: <GavelIcon /> },
+        { label: 'Contracts', path: '/contracts', icon: <DescriptionIcon /> }
       ];
     }
 
     if (userRole === 'buyer') {
       return [
         { label: 'Dashboard', path: '/buyer-dashboard', icon: <DashboardIcon /> },
-        { label: 'Field Notes', path: '/blogs', icon: <ArticleIcon /> },
-        { label: 'Contracts', path: '/createContract', icon: <DescriptionIcon /> }
+        { label: 'Field Notes', path: '/blog', icon: <ArticleIcon /> },
+        { label: 'Contracts', path: '/contracts', icon: <DescriptionIcon /> }
       ];
     }
 
