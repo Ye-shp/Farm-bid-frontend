@@ -51,7 +51,7 @@ const CreateContract = () => {
       }
 
       const response = await axios.post(
-        `${API_URL}/api/contracts/create`,
+        `${API_URL}/api/open-contracts/create`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` }

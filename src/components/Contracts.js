@@ -37,8 +37,11 @@ const Contracts = () => {
         return;
       }
 
+      // For buyers: get all their contracts
+      // For farmers: get only open contracts they can fulfill
+      const endpoint = userRole === 'buyer' ? '/api/open-contracts/my-contracts' : '/api/open-contracts/open';
       const response = await axios.get(
-        `${API_URL}/api/contracts/${userRole === 'buyer' ? 'my-contracts' : 'open'}`,
+        `${API_URL}${endpoint}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setContracts(response.data);
@@ -69,28 +72,29 @@ const Contracts = () => {
           return [];
       }
     } else { // Farmer
+      const userId = localStorage.getItem('userId');
       switch (tabValue) {
         case 0: // Active Contracts
           return contracts.filter(contract => 
             contract.status === 'fulfilled' && 
-            contract.winningFulfillment?.farmer === localStorage.getItem('userId')
+            contract.fulfillments.some(f => f.farmer._id === userId && f.status === 'accepted')
           );
         case 1: // Available Contracts
           return contracts.filter(contract => 
             contract.status === 'open' &&
-            !contract.fulfillments?.some(f => f.farmer === localStorage.getItem('userId'))
+            !contract.fulfillments?.some(f => f.farmer._id === userId)
           );
         case 2: // My Offers
           return contracts.filter(contract =>
             contract.fulfillments?.some(f => 
-              f.farmer === localStorage.getItem('userId') && 
+              f.farmer._id === userId && 
               f.status === 'pending'
             )
           );
         case 3: // Completed
           return contracts.filter(contract =>
             contract.status === 'completed' &&
-            contract.winningFulfillment?.farmer === localStorage.getItem('userId')
+            contract.fulfillments.some(f => f.farmer._id === userId && f.status === 'accepted')
           );
         default:
           return [];
@@ -99,8 +103,11 @@ const Contracts = () => {
   };
 
   const renderContractCard = (contract) => {
-    const isWinningFarmer = contract.winningFulfillment?.farmer === localStorage.getItem('userId');
-    const myFulfillment = contract.fulfillments?.find(f => f.farmer === localStorage.getItem('userId'));
+    const userId = localStorage.getItem('userId');
+    const acceptedFulfillment = contract.fulfillments?.find(f => 
+      f.farmer._id === userId && f.status === 'accepted'
+    );
+    const myFulfillment = contract.fulfillments?.find(f => f.farmer._id === userId);
 
     return (
       <Grid item xs={12} sm={6} md={4} key={contract._id}>
@@ -123,9 +130,9 @@ const Contracts = () => {
                 Your Offer: ${myFulfillment.price}
               </Typography>
             )}
-            {isWinningFarmer && (
+            {acceptedFulfillment && (
               <Typography variant="body2" color="primary" gutterBottom>
-                You won this contract!
+                Your offer was accepted!
               </Typography>
             )}
             <Button
@@ -165,20 +172,16 @@ const Contracts = () => {
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={tabValue} onChange={handleTabChange}>
-          {userRole === 'buyer' ? (
-            <>
-              <Tab label="Open" />
-              <Tab label="In Progress" />
-              <Tab label="Completed" />
-            </>
-          ) : (
-            <>
-              <Tab label="Active Contracts" />
-              <Tab label="Available Contracts" />
-              <Tab label="My Offers" />
-              <Tab label="Completed" />
-            </>
-          )}
+          {userRole === 'buyer' ? [
+            <Tab key="open" label="Open" />,
+            <Tab key="in-progress" label="In Progress" />,
+            <Tab key="completed" label="Completed" />
+          ] : [
+            <Tab key="active" label="Active Contracts" />,
+            <Tab key="available" label="Available Contracts" />,
+            <Tab key="offers" label="My Offers" />,
+            <Tab key="completed" label="Completed" />
+          ]}
         </Tabs>
       </Box>
 
