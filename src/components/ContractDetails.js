@@ -25,7 +25,8 @@ const ContractDetails = () => {
   const [contract, setContract] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [userRole, setUserRole] = useState(localStorage.getItem('role'));
+  const [userRole] = useState(localStorage.getItem('role'));
+  const [userId] = useState(localStorage.getItem('userId'));
   const [fulfillmentPrice, setFulfillmentPrice] = useState('');
   const [fulfillmentNotes, setFulfillmentNotes] = useState('');
   const [showFulfillDialog, setShowFulfillDialog] = useState(false);
@@ -46,18 +47,30 @@ const ContractDetails = () => {
       console.log('Fetching contract details:', {
         contractId,
         userRole,
-        token: token.substring(0, 20) + '...' // Only log part of the token for security
+        userId,
+        token: token.substring(0, 20) + '...'
       });
 
       const response = await axios.get(`${API_URL}/api/open-contracts/${contractId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
+      console.log('Contract details response:', {
+        buyerId: response.data.buyer._id,
+        status: response.data.status,
+        fulfillments: response.data.fulfillments?.map(f => ({
+          farmerId: f.farmer._id,
+          status: f.status
+        }))
+      });
+
       setContract(response.data);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching contract:', error);
+      const errorDetails = error.response?.data?.details;
       if (error.response?.status === 403) {
-        setError('You do not have permission to view this contract. This may be because you are not the buyer or an approved farmer.');
+        setError(`You do not have permission to view this contract. Details: ${JSON.stringify(errorDetails)}`);
       } else {
         setError(error.response?.data?.error || 'Failed to load contract details');
       }
@@ -103,9 +116,9 @@ const ContractDetails = () => {
 
   const canFulfill = userRole === 'farmer' && 
     contract.status === 'open' && 
-    !contract.fulfillments?.some(f => f.farmer === localStorage.getItem('userId'));
+    !contract.fulfillments?.some(f => f.farmer === userId);
 
-  const isBuyer = userRole === 'buyer' && contract.buyer === localStorage.getItem('userId');
+  const isBuyer = userRole === 'buyer' && contract.buyer === userId;
 
   return (
     <Box sx={{ p: 3 }}>
