@@ -43,16 +43,23 @@ const ContractDetails = () => {
         return;
       }
 
-      const response = await axios.get(`${API_URL}/api/contracts/${contractId}`, {
+      console.log('Fetching contract details:', {
+        contractId,
+        userRole,
+        token: token.substring(0, 20) + '...' // Only log part of the token for security
+      });
+
+      const response = await axios.get(`${API_URL}/api/open-contracts/${contractId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setContract(response.data);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching contract:', error);
-      setError(error.response?.data?.error || 'Failed to load contract details');
-      if (error.response?.status === 404) {
-        setError('Contract not found. It may have been deleted or expired.');
+      if (error.response?.status === 403) {
+        setError('You do not have permission to view this contract. This may be because you are not the buyer or an approved farmer.');
+      } else {
+        setError(error.response?.data?.error || 'Failed to load contract details');
       }
       setLoading(false);
     }
@@ -62,7 +69,7 @@ const ContractDetails = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `${API_URL}/api/contracts/${contractId}/fulfill`,
+        `${API_URL}/api/open-contracts/${contractId}/fulfill`,
         {
           price: parseFloat(fulfillmentPrice),
           notes: fulfillmentNotes,
@@ -80,7 +87,7 @@ const ContractDetails = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `${API_URL}/api/contracts/${contractId}/fulfillments/${fulfillmentId}/accept`,
+        `${API_URL}/api/open-contracts/${contractId}/fulfillments/${fulfillmentId}/accept`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

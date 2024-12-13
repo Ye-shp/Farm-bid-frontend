@@ -37,6 +37,7 @@ const CreateAuction = ({ products }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const token = localStorage.getItem('token');
+  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com';
 
   // Calculate minimum date/time (now + 1 hour)
   const minDateTime = new Date(Date.now() + 3600000).toISOString().slice(0, 16);
@@ -57,28 +58,28 @@ const CreateAuction = ({ products }) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-  
+
     try {
       // Validate inputs
       if (!formData.productId || !formData.startingBid || !formData.endTime) {
         throw new Error('All fields are required');
       }
-  
+
       // Validate starting bid is a positive number
       const startingBid = parseFloat(formData.startingBid);
       if (isNaN(startingBid) || startingBid <= 0) {
         throw new Error('Starting bid must be a positive number');
       }
-  
+
       // Validate end time
       const endTime = new Date(formData.endTime);
       const now = new Date();
       if (endTime <= now) {
         throw new Error('End time must be in the future');
       }
-  
+
       const response = await axios.post(
-        'https://farm-bid-3998c30f5108.herokuapp.com/api/auctions/create',
+        `${API_URL}/api/auctions/create`,
         {
           productId: formData.productId,
           startingPrice: startingBid,
@@ -90,14 +91,14 @@ const CreateAuction = ({ products }) => {
           },
         }
       );
-  
+
       setSuccess(true);
       setFormData({
         productId: '',
         startingBid: '',
         endTime: '',
       });
-      
+
       setTimeout(() => setSuccess(false), 5000);
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || 'Error creating auction';
@@ -109,9 +110,9 @@ const CreateAuction = ({ products }) => {
   };
 
   return (
-    <Paper 
-      elevation={0} 
-      sx={{ 
+    <Paper
+      elevation={0}
+      sx={{
         p: 3,
         border: '1px solid',
         borderColor: 'grey.200',
@@ -131,8 +132,8 @@ const CreateAuction = ({ products }) => {
       <Divider sx={{ mb: 4 }} />
 
       <Collapse in={success}>
-        <Alert 
-          severity="success" 
+        <Alert
+          severity="success"
           sx={{ mb: 3 }}
           onClose={() => setSuccess(false)}
         >
@@ -141,8 +142,8 @@ const CreateAuction = ({ products }) => {
       </Collapse>
 
       <Collapse in={!!error}>
-        <Alert 
-          severity="error" 
+        <Alert
+          severity="error"
           sx={{ mb: 3 }}
           onClose={() => setError(null)}
         >
@@ -177,9 +178,9 @@ const CreateAuction = ({ products }) => {
           </FormControl>
 
           {formData.productId && (
-            <Box sx={{ 
-              p: 2, 
-              bgcolor: 'grey.50', 
+            <Box sx={{
+              p: 2,
+              bgcolor: 'grey.50',
               borderRadius: 1,
               border: '1px solid',
               borderColor: 'grey.200'
@@ -245,7 +246,7 @@ const CreateAuction = ({ products }) => {
               {loading ? 'Creating Auction...' : 'Create Auction'}
             </Button>
             {formData.startingBid && (
-              <Chip 
+              <Chip
                 label={`Starting at $${parseFloat(formData.startingBid).toFixed(2)}`}
                 color="primary"
                 variant="outlined"

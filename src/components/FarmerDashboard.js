@@ -20,6 +20,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  InputAdornment
 } from '@mui/material';
 import { Add as AddIcon, CloudUpload as UploadIcon } from '@mui/icons-material';
 
@@ -48,11 +49,8 @@ const FarmerDashboard = () => {
   const [showAuctionDialog, setShowAuctionDialog] = useState(false);
   const [newAuction, setNewAuction] = useState({
     product: '',
-    quantity: '',
     startingPrice: '',
-    minIncrement: '',
-    duration: 24,
-    description: ''
+    endTime: ''
   });
 
   useEffect(() => {
@@ -76,14 +74,14 @@ const FarmerDashboard = () => {
 
       // Fetch farmer's products
       const productsResponse = await axios.get(
-        `${API_URL}/api/products/my-products`,
+        `${API_URL}/api/products/farmer-products`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setProducts(productsResponse.data);
 
       // Fetch farmer's auctions
       const auctionsResponse = await axios.get(
-        `${API_URL}/api/auctions/my-auctions`,
+        `${API_URL}/api/auctions/farmer-auctions`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setAuctions(auctionsResponse.data);
@@ -167,9 +165,14 @@ const FarmerDashboard = () => {
   const handleCreateAuction = async () => {
     try {
       const token = localStorage.getItem('token');
+      
       const response = await axios.post(
-        `${API_URL}/api/auctions`,
-        newAuction,
+        `${API_URL}/api/auctions/create`,
+        {
+          productId: newAuction.product,
+          startingPrice: parseFloat(newAuction.startingPrice),
+          endTime: new Date(newAuction.endTime).toISOString()
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -182,11 +185,8 @@ const FarmerDashboard = () => {
       setShowAuctionDialog(false);
       setNewAuction({
         product: '',
-        quantity: '',
         startingPrice: '',
-        minIncrement: '',
-        duration: 24,
-        description: ''
+        endTime: ''
       });
     } catch (error) {
       setError('Failed to create auction. Please try again.');
@@ -459,51 +459,36 @@ const FarmerDashboard = () => {
           </FormControl>
           <TextField
             margin="dense"
-            label="Quantity"
-            type="number"
-            fullWidth
-            value={newAuction.quantity}
-            onChange={(e) => setNewAuction({ ...newAuction, quantity: e.target.value })}
-          />
-          <TextField
-            margin="dense"
             label="Starting Price"
             type="number"
             fullWidth
             value={newAuction.startingPrice}
             onChange={(e) => setNewAuction({ ...newAuction, startingPrice: e.target.value })}
+            InputProps={{
+              startAdornment: <InputAdornment position="start">$</InputAdornment>,
+            }}
           />
           <TextField
             margin="dense"
-            label="Minimum Bid Increment"
-            type="number"
+            label="End Time"
+            type="datetime-local"
             fullWidth
-            value={newAuction.minIncrement}
-            onChange={(e) => setNewAuction({ ...newAuction, minIncrement: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Duration (hours)"
-            type="number"
-            fullWidth
-            value={newAuction.duration}
-            onChange={(e) => setNewAuction({ ...newAuction, duration: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Description"
-            multiline
-            rows={4}
-            fullWidth
-            value={newAuction.description}
-            onChange={(e) => setNewAuction({ ...newAuction, description: e.target.value })}
+            value={newAuction.endTime}
+            onChange={(e) => setNewAuction({ ...newAuction, endTime: e.target.value })}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            inputProps={{
+              min: new Date(Date.now() + 3600000).toISOString().slice(0, 16),
+              max: new Date(Date.now() + 7 * 24 * 3600000).toISOString().slice(0, 16)
+            }}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowAuctionDialog(false)}>Cancel</Button>
           <Button 
             onClick={handleCreateAuction}
-            disabled={!newAuction.product || !newAuction.quantity || !newAuction.startingPrice}
+            disabled={!newAuction.product || !newAuction.startingPrice || !newAuction.endTime}
           >
             Create Auction
           </Button>

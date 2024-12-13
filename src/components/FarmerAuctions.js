@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Container, Typography, Box, Card, CardContent, Button, Grid, Badge, IconButton, Paper, Tooltip, Chip, CardMedia, Collapse } from '@mui/material';
-import { CheckCircle, Cancel, AttachMoney, TrendingUp, ExpandMore, ExpandLess, MarkEmailRead } from '@mui/icons-material';
+import { Container, Typography, Box, Card, CardContent, Button, Grid, Badge, IconButton, Paper, Tooltip, Chip, CardMedia, Collapse, Dialog, DialogTitle, DialogContent, DialogActions, Table, TableBody, TableCell, TableContainer, TableRow } from '@mui/material';
+import { CheckCircle, Cancel, AttachMoney, TrendingUp, ExpandMore, ExpandLess, MarkEmailRead, AccessTime, Person } from '@mui/icons-material';
 import { makeStyles } from '@mui/styles';
 
 const useStyles = makeStyles({
@@ -46,21 +46,66 @@ const FarmerAuctions = () => {
   const token = localStorage.getItem('token');
   const [notifications, setNotifications] = useState([]);
   const [notificationsOpen, setNotificationsOpen] = useState(true);
+  const [selectedAuction, setSelectedAuction] = useState(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com/api';
+
+  const formatDateTime = (dateString) => {
+    const options = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  const getTimeRemaining = (endTime) => {
+    const end = new Date(endTime);
+    const now = new Date();
+    const diff = end - now;
+
+    if (diff <= 0) return 'Auction ended';
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (days > 0) return `${days}d ${hours}h remaining`;
+    if (hours > 0) return `${hours}h ${minutes}m remaining`;
+    return `${minutes}m remaining`;
+  };
+
+  const handleViewDetails = (auction) => {
+    setSelectedAuction(auction);
+    setDetailsOpen(true);
+  };
 
   useEffect(() => {
     const fetchAuctions = async () => {
       try {
+        console.log('Fetching auctions with token:', token);
         const response = await axios.get(`${API_URL}/auctions/farmer-auctions`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setAuctions(response.data);
+        console.log('Raw auctions response:', response);
+        if (response.data && Array.isArray(response.data)) {
+          console.log('Setting auctions:', response.data);
+          setAuctions(response.data);
+        } else {
+          console.error('Unexpected response format:', response.data);
+        }
       } catch (error) {
-        console.error('Error fetching auctions:', error);
+        console.error('Error fetching auctions:', error.response || error);
       }
     };
 
-    fetchAuctions();
+    if (token) {
+      fetchAuctions();
+    } else {
+      console.error('No token available for fetching auctions');
+    }
   }, [token]);
 
   useEffect(() => {
@@ -164,27 +209,35 @@ const FarmerAuctions = () => {
                   </Typography>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Typography variant="body1">
-                      <strong>Starting Bid:</strong>
+                      <strong>Starting Price:</strong>
                     </Typography>
-                    <Chip label={`$${auction.startingBid || 'N/A'}`} color="success" size="medium" className={classes.badge} />
-                    <Tooltip title="Starting Bid">
-                      <IconButton color="success">
-                        <AttachMoney className={classes.statusIcon} />
-                      </IconButton>
-                    </Tooltip>
+                    <Chip label={`$${auction.startingPrice.toFixed(2)}`} color="success" size="medium" className={classes.badge} />
                   </Box>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Typography variant="body1">
-                      <strong>Highest Bid:</strong>
+                      <strong>Current Price:</strong>
                     </Typography>
-                    <Chip label={`$${auction.highestBid || 'N/A'}`} color="primary" size="medium" className={classes.badge} />
-                    <Tooltip title="Highest Bid">
-                      <IconButton color="primary">
-                        <TrendingUp className={classes.statusIcon} />
-                      </IconButton>
-                    </Tooltip>
+                    <Chip 
+                      label={auction.bids.length > 0 
+                        ? `$${Math.max(...auction.bids.map(bid => bid.amount)).toFixed(2)}` 
+                        : `$${auction.startingPrice.toFixed(2)}`} 
+                      color="primary" 
+                      size="medium" 
+                      className={classes.badge} 
+                    />
                   </Box>
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Typography variant="body1">
+                      <strong>Time Remaining:</strong>
+                    </Typography>
+                    <Chip 
+                      label={getTimeRemaining(auction.endTime)}
+                      color={new Date(auction.endTime) > new Date() ? "warning" : "default"}
+                      size="medium" 
+                      className={classes.badge}
+                    />
+                  </Box>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Typography variant="body1">
                       <strong>Status:</strong>
                     </Typography>
@@ -194,20 +247,119 @@ const FarmerAuctions = () => {
                       size="medium"
                       className={classes.badge}
                     />
-                    <Tooltip title={auction.status === 'active' ? 'Active' : 'Inactive'}>
-                      <IconButton color={auction.status === 'active' ? 'info' : 'secondary'}>
-                        {auction.status === 'active' ? <CheckCircle className={classes.statusIcon} /> : <Cancel className={classes.statusIcon} />}
-                      </IconButton>
-                    </Tooltip>
                   </Box>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    onClick={() => handleViewDetails(auction)}
+                  >
+                    View Details
+                  </Button>
                 </CardContent>
               </Card>
             </Grid>
           ))
         ) : (
-          <Typography align="center">No auctions found.</Typography>
+          <Grid item xs={12}>
+            <Typography variant="h6" align="center">
+              No auctions found. Create your first auction to get started!
+            </Typography>
+          </Grid>
         )}
       </Grid>
+
+      {/* Auction Details Dialog */}
+      <Dialog 
+        open={detailsOpen} 
+        onClose={() => setDetailsOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        {selectedAuction && (
+          <>
+            <DialogTitle>
+              <Typography variant="h5" gutterBottom>
+                Auction Details: {selectedAuction.product.title}
+              </Typography>
+            </DialogTitle>
+            <DialogContent>
+              <TableContainer component={Paper} elevation={0}>
+                <Table>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell><strong>Product</strong></TableCell>
+                      <TableCell>{selectedAuction.product.title}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><strong>Starting Price</strong></TableCell>
+                      <TableCell>${selectedAuction.startingPrice.toFixed(2)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><strong>Current Price</strong></TableCell>
+                      <TableCell>
+                        ${selectedAuction.bids.length > 0 
+                          ? Math.max(...selectedAuction.bids.map(bid => bid.amount)).toFixed(2)
+                          : selectedAuction.startingPrice.toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><strong>Start Time</strong></TableCell>
+                      <TableCell>{formatDateTime(selectedAuction.createdAt)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><strong>End Time</strong></TableCell>
+                      <TableCell>{formatDateTime(selectedAuction.endTime)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><strong>Status</strong></TableCell>
+                      <TableCell>
+                        <Chip
+                          label={selectedAuction.status}
+                          color={selectedAuction.status === 'active' ? 'success' : 'default'}
+                        />
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><strong>Total Bids</strong></TableCell>
+                      <TableCell>{selectedAuction.bids.length}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {selectedAuction.bids.length > 0 && (
+                <>
+                  <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+                    Bid History
+                  </Typography>
+                  <TableContainer component={Paper} elevation={0}>
+                    <Table>
+                      <TableBody>
+                        {[...selectedAuction.bids].reverse().map((bid, index) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <Box display="flex" alignItems="center">
+                                <Person sx={{ mr: 1 }} />
+                                Bidder {index + 1}
+                              </Box>
+                            </TableCell>
+                            <TableCell>${bid.amount.toFixed(2)}</TableCell>
+                            <TableCell>{formatDateTime(bid.timestamp)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setDetailsOpen(false)}>Close</Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
     </Container>
   );
 };
