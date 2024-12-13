@@ -1,6 +1,7 @@
 // BuyerDashboard.js
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -31,6 +32,8 @@ import {
   LocalOfferRounded,
   TimelapseRounded,
   ArrowUpward,
+  AddCircleOutline,
+  ListAlt,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
@@ -105,10 +108,11 @@ const SearchBox = styled(Paper)(({ theme }) => ({
 }));
 
 const BuyerDashboard = () => {
+  const navigate = useNavigate();
   const [auctions, setAuctions] = useState([]);
   const [bidAmount, setBidAmount] = useState({});
   const [notifications, setNotifications] = useState([]);
-  const [searchResults, setSearchResults] = useState([]); // Add this state
+  const [searchResults, setSearchResults] = useState([]); 
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -296,11 +300,19 @@ const BuyerDashboard = () => {
     setSearchResults(results);
   };
 
+  const handleCreateContract = () => {
+    navigate('/contracts/create');
+  };
+
+  const handleViewContracts = () => {
+    navigate('/contracts');
+  };
+
   return (
     <PageContainer maxWidth="xl">
-      {/* Header Section */}
+      {/* Header Section with Contract Management */}
       <HeaderBox>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
           <Typography
             variant={isMobile ? 'h5' : 'h4'}
             component="h1"
@@ -313,8 +325,28 @@ const BuyerDashboard = () => {
               boxShadow: theme.shadows[3],
             }}
           >
-            Available Auctions
+            Buyer Dashboard
           </Typography>
+          <Box sx={{ display: 'flex', gap: 2, mt: isMobile ? 2 : 0 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddCircleOutline />}
+              onClick={handleCreateContract}
+              sx={{ whiteSpace: 'nowrap' }}
+            >
+              Create Contract
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<ListAlt />}
+              onClick={handleViewContracts}
+              sx={{ whiteSpace: 'nowrap' }}
+            >
+              View Contracts
+            </Button>
+          </Box>
         </Box>
         <IconButton
           color="primary"
