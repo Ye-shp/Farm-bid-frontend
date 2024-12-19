@@ -179,49 +179,65 @@ const CreateContract = () => {
           {formData.deliveryMethod === 'seller_delivery' && (
             <div>
               <h3 className="text-lg font-bold mb-2">Delivery Address</h3>
-              <div className="space-y-2">
-                <label htmlFor="street" className="block font-medium">Street</label>
-                <input
-                  type="text"
-                  id="street"
-                  value={formData.deliveryAddress.street}
-                  onChange={(e) => setFormData({ ...formData, deliveryAddress: { ...formData.deliveryAddress, street: e.target.value } })}
-                  className="w-full border rounded-md p-2"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="city" className="block font-medium">City</label>
-                <input
-                  type="text"
-                  id="city"
-                  value={formData.deliveryAddress.city}
-                  onChange={(e) => setFormData({ ...formData, deliveryAddress: { ...formData.deliveryAddress, city: e.target.value } })}
-                  className="w-full border rounded-md p-2"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="state" className="block font-medium">State</label>
-                <input
-                  type="text"
-                  id="state"
-                  value={formData.deliveryAddress.state}
-                  onChange={(e) => setFormData({ ...formData, deliveryAddress: { ...formData.deliveryAddress, state: e.target.value } })}
-                  className="w-full border rounded-md p-2"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="zipCode" className="block font-medium">Zip Code</label>
-                <input
-                  type="text"
-                  id="zipCode"
-                  value={formData.deliveryAddress.zipCode}
-                  onChange={(e) => setFormData({ ...formData, deliveryAddress: { ...formData.deliveryAddress, zipCode: e.target.value } })}
-                  className="w-full border rounded-md p-2"
-                  required
-                />
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label htmlFor="street" className="block font-medium">Street</label>
+                  <input
+                    type="text"
+                    id="street"
+                    value={formData.deliveryAddress.street}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      deliveryAddress: { ...formData.deliveryAddress, street: e.target.value }
+                    })}
+                    className="w-full border rounded-md p-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="city" className="block font-medium">City</label>
+                  <input
+                    type="text"
+                    id="city"
+                    value={formData.deliveryAddress.city}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      deliveryAddress: { ...formData.deliveryAddress, city: e.target.value }
+                    })}
+                    className="w-full border rounded-md p-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="state" className="block font-medium">State</label>
+                  <input
+                    type="text"
+                    id="state"
+                    value={formData.deliveryAddress.state}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      deliveryAddress: { ...formData.deliveryAddress, state: e.target.value }
+                    })}
+                    className="w-full border rounded-md p-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="zipCode" className="block font-medium">Zip Code</label>
+                  <input
+                    type="text"
+                    id="zipCode"
+                    value={formData.deliveryAddress.zipCode}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      deliveryAddress: { ...formData.deliveryAddress, zipCode: e.target.value }
+                    })}
+                    className="w-full border rounded-md p-2"
+                    required
+                    pattern="[0-9]{5}"
+                    title="Five digit zip code"
+                  />
+                </div>
               </div>
             </div>
           )}

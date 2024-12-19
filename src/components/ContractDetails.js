@@ -81,6 +81,11 @@ const ContractDetails = () => {
   const handleFulfillContract = async () => {
     try {
       const token = localStorage.getItem('token');
+      console.log('Submitting fulfillment:', {
+        price: fulfillmentPrice,
+        notes: fulfillmentNotes
+      });
+
       await axios.post(
         `${API_URL}/api/open-contracts/${contractId}/fulfill`,
         {
@@ -90,9 +95,11 @@ const ContractDetails = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setShowFulfillDialog(false);
+      setError(null);
       fetchContractDetails();
     } catch (error) {
-      setError(error.response?.data?.error || 'Failed to fulfill contract');
+      console.error('Fulfillment error:', error.response?.data || error);
+      setError(error.response?.data?.error || 'Failed to fulfill contract. Please try again.');
     }
   };
 
