@@ -11,25 +11,70 @@ const RegisterPage = () => {
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState('buyer');
-  const [location, setLocation] = useState({ latitude: '', longitude: '' });
+  const [address, setAddress] = useState({
+    street: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    coordinates: {
+      lat: '',
+      lng: ''
+    }
+  });
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchLocation = async () => {
+    const fetchLocationDetails = async () => {
       try {
-        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3');
-        const loc = response.data.loc.split(',');
-        setLocation({
-          latitude: loc[0],
-          longitude: loc[1]
-        });
+        // First get IP-based location
+        const ipResponse = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3');
+        const [lat, lng] = ipResponse.data.loc.split(',');
+        
+        // Use Google's Geocoding API to get detailed address
+        const geocodeResponse = await axios.get(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
+        );
+
+        if (geocodeResponse.data.results && geocodeResponse.data.results.length > 0) {
+          const addressComponents = geocodeResponse.data.results[0].address_components;
+          let newAddress = {
+            street: '',
+            city: '',
+            state: '',
+            zipCode: '',
+            coordinates: {
+              lat: parseFloat(lat),
+              lng: parseFloat(lng)
+            }
+          };
+
+          // Parse address components
+          addressComponents.forEach(component => {
+            if (component.types.includes('street_number') || component.types.includes('route')) {
+              newAddress.street += component.long_name + ' ';
+            }
+            if (component.types.includes('locality')) {
+              newAddress.city = component.long_name;
+            }
+            if (component.types.includes('administrative_area_level_1')) {
+              newAddress.state = component.short_name;
+            }
+            if (component.types.includes('postal_code')) {
+              newAddress.zipCode = component.long_name;
+            }
+          });
+
+          newAddress.street = newAddress.street.trim();
+          setAddress(newAddress);
+        }
       } catch (error) {
-        console.error("Error fetching location:", error);
-        setError("Unable to fetch location from IP address.");
+        console.error("Error fetching location details:", error);
+        setError("Unable to fetch location details. Please fill in the address manually.");
       }
     };
-    fetchLocation();
+
+    fetchLocationDetails();
   }, []);
 
   const handleRegister = async (e) => {
@@ -39,7 +84,16 @@ const RegisterPage = () => {
       return;
     }
     try {
-      const response = await register({ username, email, password, phone, role, location });
+      const userData = {
+        username,
+        email,
+        password,
+        phone,
+        role,
+        address
+      };
+
+      const response = await register(userData);
       if (response.status === 201) {
         alert("Registration successful!");
         setUsername('');
@@ -125,21 +179,61 @@ const RegisterPage = () => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-              fullWidth
-              label="Phone Number"
-              variant="outlined"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Phone />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>           
+                fullWidth
+                label="Phone Number"
+                variant="outlined"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Phone />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Street Address"
+                variant="outlined"
+                value={address.street}
+                onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="City"
+                variant="outlined"
+                value={address.city}
+                onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                fullWidth
+                label="State"
+                variant="outlined"
+                value={address.state}
+                onChange={(e) => setAddress({ ...address, state: e.target.value })}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                fullWidth
+                label="ZIP Code"
+                variant="outlined"
+                value={address.zipCode}
+                onChange={(e) => setAddress({ ...address, zipCode: e.target.value })}
+                required
+              />
+            </Grid>
             <Grid item xs={12}>
               <Select
                 fullWidth
