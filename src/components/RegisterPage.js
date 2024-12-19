@@ -83,6 +83,21 @@ const RegisterPage = () => {
       setError("Username is required and cannot be empty.");
       return;
     }
+
+    // Validate coordinates
+    const lat = parseFloat(address.coordinates.lat);
+    const lng = parseFloat(address.coordinates.lng);
+    
+    if (isNaN(lat) || lat < -90 || lat > 90) {
+      setError("Invalid latitude value. Must be between -90 and 90.");
+      return;
+    }
+    
+    if (isNaN(lng) || lng < -180 || lng > 180) {
+      setError("Invalid longitude value. Must be between -180 and 180.");
+      return;
+    }
+
     try {
       const userData = {
         username,
@@ -90,7 +105,16 @@ const RegisterPage = () => {
         password,
         phone,
         role,
-        address
+        address: {
+          street: address.street,
+          city: address.city,
+          state: address.state,
+          zipCode: address.zipCode,
+          coordinates: {
+            lat,
+            lng
+          }
+        }
       };
 
       const response = await register(userData);
