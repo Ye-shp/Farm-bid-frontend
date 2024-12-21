@@ -301,11 +301,15 @@ const BuyerDashboard = () => {
   };
 
   const handleCreateContract = () => {
-    navigate('/contracts/create');
+    navigate('/contracts/create-contract');
   };
 
   const handleViewContracts = () => {
     navigate('/contracts');
+  };
+
+  const handleCreateFieldNotes = () => {
+    navigate('/field-notes/create');
   };
 
   return (
@@ -345,6 +349,15 @@ const BuyerDashboard = () => {
               sx={{ whiteSpace: 'nowrap' }}
             >
               View Contracts
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddCircleOutline />}
+              onClick={handleCreateFieldNotes}
+              sx={{ whiteSpace: 'nowrap' }}
+            >
+              Create Field Notes
             </Button>
           </Box>
         </Box>

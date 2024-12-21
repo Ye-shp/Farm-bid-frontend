@@ -102,7 +102,7 @@ const Header = () => {
     { label: 'My Profile', path: '/profile', icon: <PersonIcon /> },
     { label: 'Payout', path: '/Payout', icon: <PaymentsIcon /> }
   ] : userRole === 'buyer' ? [
-    { label: 'Create Field Notes', path: '/create-blog', icon: <ArticleIcon /> },
+    { label: 'Create Field Notes', path: '/buyer/create-blog', icon: <ArticleIcon /> },
     { label: 'My Profile', path: '/profile', icon: <PersonIcon /> },
     { label: 'Checkout', path: '/CheckoutForm', icon: <PaymentsIcon /> }
   ] : [];
