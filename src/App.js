@@ -64,6 +64,7 @@ const App = () => {
           <Route path="/blog" element={<BlogList />} />
           <Route path="/blog/:id" element={<BlogPost />} />
           <Route path="/featured-farms" element={<FeaturedFarms />} />
+          <Route path="/users/:userId" element={<UserProfile />} />
 
           {/* Protected Routes - Require Login */}
           <Route path="/products/:id" element={
