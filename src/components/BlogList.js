@@ -198,25 +198,39 @@ const BlogList = ({ isLoggedIn }) => {
                 <BlogCard>
                   <CardActionArea component={Link} to={`/blog/${blog._id}`}>
                     <CardHeader>
-                      <Avatar 
-                        src={`https://api.dicebear.com/7.x/initials/svg?seed=${blog.user.username}`}
-                        sx={{ 
-                          width: 48, 
-                          height: 48,
-                          border: `2px solid ${theme.palette.primary.main}`,
+                      <Box 
+                        component={Link} 
+                        to={`/users/${blog.user._id}`} 
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent triggering the blog post link
                         }}
-                      />
-                      <Box sx={{ ml: 2 }}>
-                        <Typography variant="subtitle1" fontWeight="bold">
-                          {blog.user.username}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {new Date(blog.createdAt).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
-                        </Typography>
+                        style={{ 
+                          textDecoration: 'none', 
+                          display: 'flex', 
+                          alignItems: 'center',
+                          color: 'inherit'
+                        }}
+                      >
+                        <Avatar 
+                          src={`https://api.dicebear.com/7.x/initials/svg?seed=${blog.user.username}`}
+                          sx={{ 
+                            width: 48, 
+                            height: 48,
+                            border: `2px solid ${theme.palette.primary.main}`,
+                          }}
+                        />
+                        <Box sx={{ ml: 2 }}>
+                          <Typography variant="subtitle1" fontWeight="bold" color="text.primary">
+                            {blog.user.username}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {new Date(blog.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </Typography>
+                        </Box>
                       </Box>
                     </CardHeader>
                     <BlogContent>

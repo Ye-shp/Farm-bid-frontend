@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -28,6 +27,7 @@ import {
   Agriculture as FarmerIcon,
   Business as PartnersIcon,
 } from '@mui/icons-material';
+import { useParams } from 'react-router-dom';
 
 const UserProfile = () => {
   const { userId } = useParams();
@@ -53,60 +53,83 @@ const UserProfile = () => {
   useEffect(() => {
     const userIdFromToken = localStorage.getItem('userId');
     setLoggedInUserId(userIdFromToken);
-  
-    const fetchUser = async () => {
-      try {
-        // Fetch user data
-        const response = await fetch(
-          `https://farm-bid-3998c30f5108.herokuapp.com/api/users/${userId}`
-        );
-        const fetchedUser = await response.json();
-  
-        setUser({
-          ...fetchedUser,
-          socialMedia: fetchedUser.socialMedia || { instagram: '', facebook: '', tiktok: '' },
-          location: fetchedUser.location || { address: '', city: '', state: '', country: '' },
-          partners: fetchedUser.partners || [],
-          followers: fetchedUser.followers || [],
-          following: fetchedUser.following || [],
-          deliveryAvailable: fetchedUser.deliveryAvailable || false,
-          wholesaleAvailable: fetchedUser.wholesaleAvailable || false,
-          isFarmer: fetchedUser.isFarmer || false,
-        });
-  
-        // Fetch blogs
-        const blogResponse = await fetch(
-          `https://farm-bid-3998c30f5108.herokuapp.com/api/blogs/user/${userId}`
-        );
-        const blogData = await blogResponse.json();
-        setUserBlogs(blogData);
-        setIsFollowing(fetchedUser.followers.includes(userIdFromToken));
-  
-        // Fetch products 
-        const token = localStorage.getItem('token');
+  }, []);
 
-        const productsResponse = await fetch(
-          `https://farm-bid-3998c30f5108.herokuapp.com/api/products/farmer-products`, 
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(
+          userId 
+            ? `${process.env.REACT_APP_API_URL}api/users/${userId}`
+            : `${process.env.REACT_APP_API_URL}api/users/profile`,
           {
-            headers :{Authorization : `Bearer ${token}`}
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
           }
         );
-        const productsData = await productsResponse.json();
-        console.log('Fetched products:', productsData); 
-        setProducts(productsData);
         
+        if (!response.ok) {
+          throw new Error('Failed to fetch profile');
+        }
+        
+        const userData = await response.json();
+        setUser({
+          ...userData,
+          socialMedia: userData.socialMedia || { instagram: '', facebook: '', tiktok: '' },
+          location: userData.location || { address: '', city: '', state: '', country: '' },
+          partners: userData.partners || [],
+          followers: userData.followers || [],
+          following: userData.following || [],
+          deliveryAvailable: userData.deliveryAvailable || false,
+          wholesaleAvailable: userData.wholesaleAvailable || false,
+          isFarmer: userData.isFarmer || false,
+        });
+        
+        // Check if logged in user is following this user
+        if (userId && token) {
+          setIsFollowing(userData.followers.some(follower => follower._id === loggedInUserId));
+        }
+
+        // Fetch blogs
+        const blogResponse = await fetch(
+          `${process.env.REACT_APP_API_URL}api/blogs/user/${userData._id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+        if (!blogResponse.ok) {
+          throw new Error('Failed to fetch user blogs');
+        }
+        const blogData = await blogResponse.json();
+        setUserBlogs(blogData);
+
+        // Fetch products if user is a farmer
+        if (userData.isFarmer) {
+          const productsResponse = await fetch(
+            `${process.env.REACT_APP_API_URL}api/products/farmer-products`, 
+            {
+              headers: {Authorization: `Bearer ${token}`}
+            }
+          );
+          const productsData = await productsResponse.json();
+          setProducts(productsData);
+        }
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching user data:', error);
       }
     };
-  
-    fetchUser();
-  }, [userId]);
+
+    fetchUserData();
+  }, [userId, loggedInUserId]);
 
   const handleFollow = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`https://farm-bid-3998c30f5108.herokuapp.com/api/users/${userId}/follow`, {
+      await fetch(`${process.env.REACT_APP_API_URL}api/users/${user._id}/follow`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -126,7 +149,7 @@ const UserProfile = () => {
   const handleUnfollow = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`https://farm-bid-3998c30f5108.herokuapp.com/api/users/${userId}/unfollow`, {
+      await fetch(`${process.env.REACT_APP_API_URL}api/users/${user._id}/unfollow`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -174,7 +197,7 @@ const UserProfile = () => {
     }
     try {
       await fetch(
-        `https://farm-bid-3998c30f5108.herokuapp.com/api/users/${userId}`,
+        `${process.env.REACT_APP_API_URL}api/users/${user._id}`,
         {
           method: 'PUT',
           headers: {
@@ -240,7 +263,7 @@ const UserProfile = () => {
             {user.partners.map((partner, index) => (
               <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography>{partner.name}</Typography>
-                {isEditing && isOwner && (
+                {isEditing && (
                   <Button 
                     size="small" 
                     color="error" 
@@ -260,7 +283,7 @@ const UserProfile = () => {
         ) : (
           <Typography color="text.secondary">No partners listed yet.</Typography>
         )}
-        {isEditing && isOwner && (
+        {isEditing && (
           <Box sx={{ mt: 2 }}>
             <TextField
               label="Add new partner"
@@ -289,7 +312,7 @@ const UserProfile = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <InstagramIcon color="action" />
-            {isEditing && isOwner ? (
+            {isEditing ? (
               <TextField
                 label="Instagram"
                 value={user.socialMedia.instagram || ''}
@@ -307,7 +330,7 @@ const UserProfile = () => {
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <FacebookIcon color="action" />
-            {isEditing && isOwner ? (
+            {isEditing ? (
               <TextField
                 label="Facebook"
                 value={user.socialMedia.facebook || ''}
@@ -325,7 +348,7 @@ const UserProfile = () => {
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <TiktokIcon color="action" />
-            {isEditing && isOwner ? (
+            {isEditing ? (
               <TextField
                 label="TikTok"
                 value={user.socialMedia.tiktok || ''}
@@ -346,7 +369,7 @@ const UserProfile = () => {
     </Card>
   );
 
-  const isOwner = loggedInUserId === userId;
+  const isOwner = loggedInUserId === user._id;
 
   return (
     <Box sx={{ padding: 2 }}>
