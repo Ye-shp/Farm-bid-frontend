@@ -17,6 +17,7 @@ const CreateBlogPost = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -31,7 +32,10 @@ const CreateBlogPost = () => {
     try {
       const postData = { title, content, createdAt: new Date() };
       await createBlogPost(postData, token);
-      navigate('/blogs');
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/blog');
+      }, 1500); // Show success message for 1.5 seconds before redirecting
     } catch (err) {
       setError('Failed to create field note');
     }
@@ -58,6 +62,12 @@ const CreateBlogPost = () => {
           {error && (
             <Alert severity="error" sx={{ mt: 2 }}>
               {error}
+            </Alert>
+          )}
+
+          {success && (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              Field note created successfully! Redirecting...
             </Alert>
           )}
 

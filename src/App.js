@@ -111,6 +111,11 @@ const App = () => {
               <BuyerDashboard />
             </ProtectedRoute>
           } />
+          <Route path="/buyer/create-blog" element={
+            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['buyer']}>
+              <CreateBlogPost />
+            </ProtectedRoute>
+          } />
           <Route path="/create-contract" element={
             <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['buyer']}>
               <CreateContract />
