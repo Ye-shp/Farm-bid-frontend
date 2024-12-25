@@ -64,17 +64,21 @@ const App = () => {
           <Route path="/blog" element={<BlogList />} />
           <Route path="/blog/:id" element={<BlogPost />} />
           <Route path="/featured-farms" element={<FeaturedFarms />} />
-          <Route path="/users/:userId" element={<UserProfile />} />
+          
+          {/* Profile Routes */}
+          <Route path="/users/:userId" element={
+            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole}>
+              <UserProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <Navigate to={`/users/${localStorage.getItem('userId')}`} replace />
+          } />
 
           {/* Protected Routes - Require Login */}
           <Route path="/products/:id" element={
             <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole}>
               <ProductDetails />
-            </ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole}>
-              <UserProfile />
             </ProtectedRoute>
           } />
 

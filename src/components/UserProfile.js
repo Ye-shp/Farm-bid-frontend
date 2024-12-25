@@ -59,10 +59,10 @@ const UserProfile = () => {
     const fetchUserData = async () => {
       try {
         const token = localStorage.getItem('token');
+        const targetUserId = userId || localStorage.getItem('userId'); // Use URL param or fallback to logged in user
+        
         const response = await fetch(
-          userId 
-            ? `${process.env.REACT_APP_API_URL}api/users/${userId}`
-            : `${process.env.REACT_APP_API_URL}api/users/profile`,
+          `${process.env.REACT_APP_API_URL}api/users/${targetUserId}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -88,7 +88,7 @@ const UserProfile = () => {
         });
         
         // Check if logged in user is following this user
-        if (userId && token) {
+        if (targetUserId && token) {
           setIsFollowing(userData.followers.some(follower => follower._id === loggedInUserId));
         }
 
