@@ -32,15 +32,8 @@ const SearchBar = ({ onSearchResults }) => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const token = localStorage.getItem('token');
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}api/products/categories`,
-          {
-            headers: { 
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
+          `${process.env.REACT_APP_API_URL}api/products/categories`
         );
         
         if (response.data && typeof response.data === 'object') {
@@ -72,13 +65,35 @@ const SearchBar = ({ onSearchResults }) => {
       setLoading(true);
       
       const token = localStorage.getItem('token');
-      const queryParams = new URLSearchParams({
-        ...(selectedProduct && { product: selectedProduct }),
-        ...(selectedCategory && { category: selectedCategory }),
-        ...(delivery !== null && { delivery: delivery.toString() }),
-        ...(wholesale !== null && { wholesale: wholesale.toString() }),
-        ...(searchAnywhere ? { searchAnywhere: 'true' } : { searchRadius: searchRadius.toString() }),
-      });
+      const queryParams = new URLSearchParams();
+      
+      if (selectedProduct) queryParams.append('product', selectedProduct);
+      if (selectedCategory) queryParams.append('category', selectedCategory);
+      
+      // Only include delivery/wholesale filters if the checkboxes are checked
+      if (delivery) queryParams.append('delivery', 'true');
+      if (wholesale) queryParams.append('wholesale', 'true');
+      
+      // Only include location parameters if not searching anywhere
+      if (!searchAnywhere) {
+        // Get user's location
+        try {
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+          });
+          
+          queryParams.append('latitude', position.coords.latitude.toString());
+          queryParams.append('longitude', position.coords.longitude.toString());
+          queryParams.append('radius', searchRadius.toString());
+        } catch (locationError) {
+          console.error('Error getting location:', locationError);
+          setError('Unable to get your location. Please enable location access or use "Search Anywhere".');
+          setLoading(false);
+          return;
+        }
+      } else {
+        queryParams.append('searchAnywhere', 'true');
+      }
 
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}api/search/farms?${queryParams}`,

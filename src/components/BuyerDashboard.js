@@ -312,6 +312,10 @@ const BuyerDashboard = () => {
     navigate('/field-notes/create');
   };
 
+  const handleViewFarmerProfile = (farmerId) => {
+    navigate(`/users/${farmerId}`);
+  };
+
   return (
     <PageContainer maxWidth="xl">
       {/* Header Section with Contract Management */}
@@ -395,8 +399,8 @@ const BuyerDashboard = () => {
             Search Results ({searchResults.length} farms found)
           </Typography>
           <Grid container spacing={3}>
-            {searchResults.map((farm) => (
-              <Grid item xs={12} sm={6} md={4} key={farm.productId}>
+            {searchResults.map((product) => (
+              <Grid item xs={12} sm={6} md={4} key={product._id}>
                 <Card sx={{ 
                   height: '100%',
                   display: 'flex',
@@ -406,25 +410,33 @@ const BuyerDashboard = () => {
                     transform: 'translateY(-4px)',
                     boxShadow: theme.shadows[4],
                   },
-                }}>
+                  cursor: 'pointer'
+                }}
+                onClick={() => handleViewFarmerProfile(product.user._id)}
+                >
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                      {farm.farmName}
+                      {product.user.farmName || 'Farm Name Not Set'}
                     </Typography>
                     <Typography color="textSecondary" gutterBottom>
-                      {farm.farmerName}
+                      {product.user.firstName} {product.user.lastName}
                     </Typography>
                     <Divider sx={{ my: 1.5 }} />
                     <Box sx={{ mb: 2 }}>
                       <Typography variant="body1" color="textPrimary" sx={{ mb: 0.5 }}>
-                        {farm.productTitle}
+                        Product: {product.title || product.customProduct}
                       </Typography>
                       <Typography variant="body2" color="textSecondary">
-                        Category: {farm.category}
+                        Category: {product.category}
                       </Typography>
+                      {product.description && (
+                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                          {product.description}
+                        </Typography>
+                      )}
                     </Box>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                      {farm.deliveryAvailable && (
+                      {product.user.deliveryAvailable && (
                         <Chip
                           label="Delivery Available"
                           color="primary"
@@ -432,7 +444,7 @@ const BuyerDashboard = () => {
                           variant="outlined"
                         />
                       )}
-                      {farm.wholesaleAvailable && (
+                      {product.user.wholesaleAvailable && (
                         <Chip
                           label="Wholesale Available"
                           color="secondary"
@@ -440,24 +452,18 @@ const BuyerDashboard = () => {
                           variant="outlined"
                         />
                       )}
+                      {product.user.location && (
+                        <Chip
+                          label={`${product.user.location.city || 'Location Available'}`}
+                          color="info"
+                          size="small"
+                          variant="outlined"
+                        />
+                      )}
                     </Box>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      fullWidth
-                      sx={{
-                        mt: 'auto',
-                        textTransform: 'none',
-                        fontWeight: 500,
-                        py: 1
-                      }}
-                      onClick={() => {
-                        // Add contact functionality here
-                        showSnackbar('Contact feature coming soon!', 'info');
-                      }}
-                    >
-                      Contact Farmer
-                    </Button>
+                    <Typography variant="body2" color="textSecondary" sx={{ fontStyle: 'italic', mb: 2 }}>
+                      Click to view full profile
+                    </Typography>
                   </CardContent>
                 </Card>
               </Grid>

@@ -62,7 +62,7 @@ const UserProfile = () => {
         const targetUserId = userId || localStorage.getItem('userId'); // Use URL param or fallback to logged in user
         
         const response = await fetch(
-          `${process.env.REACT_APP_API_URL}api/users/${targetUserId}`,
+          `${process.env.REACT_APP_API_URL}/api/users/${targetUserId}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -94,7 +94,7 @@ const UserProfile = () => {
 
         // Fetch blogs
         const blogResponse = await fetch(
-          `${process.env.REACT_APP_API_URL}api/blogs/user/${userData._id}`,
+          `${process.env.REACT_APP_API_URL}/api/blogs/user/${targetUserId}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -110,11 +110,14 @@ const UserProfile = () => {
         // Fetch products if user is a farmer
         if (userData.isFarmer) {
           const productsResponse = await fetch(
-            `${process.env.REACT_APP_API_URL}api/products/farmer-products`, 
+            `${process.env.REACT_APP_API_URL}/api/products/user/${targetUserId}`, 
             {
               headers: {Authorization: `Bearer ${token}`}
             }
           );
+          if (!productsResponse.ok) {
+            throw new Error('Failed to fetch user products');
+          }
           const productsData = await productsResponse.json();
           setProducts(productsData);
         }
@@ -123,13 +126,15 @@ const UserProfile = () => {
       }
     };
 
-    fetchUserData();
+    if (loggedInUserId) {
+      fetchUserData();
+    }
   }, [userId, loggedInUserId]);
 
   const handleFollow = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${process.env.REACT_APP_API_URL}api/users/${user._id}/follow`, {
+      await fetch(`${process.env.REACT_APP_API_URL}/api/users/${user._id}/follow`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -149,7 +154,7 @@ const UserProfile = () => {
   const handleUnfollow = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${process.env.REACT_APP_API_URL}api/users/${user._id}/unfollow`, {
+      await fetch(`${process.env.REACT_APP_API_URL}/api/users/${user._id}/unfollow`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -197,7 +202,7 @@ const UserProfile = () => {
     }
     try {
       await fetch(
-        `${process.env.REACT_APP_API_URL}api/users/${user._id}`,
+        `${process.env.REACT_APP_API_URL}/api/users/${user._id}`,
         {
           method: 'PUT',
           headers: {
