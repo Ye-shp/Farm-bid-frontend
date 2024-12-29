@@ -32,7 +32,7 @@ import { useParams, useLocation } from 'react-router-dom';
 const UserProfile = () => {
   const { userId } = useParams();
   const location = useLocation();
-  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com/api'; // Define API URL
+  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com'; // Remove /api from base URL
   const [user, setUser] = useState({
     username: '',
     socialMedia: { instagram: '', facebook: '', tiktok: '' },
@@ -70,10 +70,10 @@ const UserProfile = () => {
         const isProfilePage = location.pathname === '/profile';
         const endpoint = isProfilePage ? 'users/profile' : `users/${userId}`;
         
-        console.log('Fetching from:', `${API_URL}/${endpoint}`); // Debug log
+        console.log('Fetching from:', `${API_URL}/api/${endpoint}`); // Debug log
         
         const response = await fetch(
-          `${API_URL}/${endpoint}`,
+          `${API_URL}/api/${endpoint}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -87,6 +87,7 @@ const UserProfile = () => {
         }
         
         const userData = await response.json();
+        console.log('User data fetched:', userData);
         setUser({
           ...userData,
           socialMedia: userData.socialMedia || { instagram: '', facebook: '', tiktok: '' },
@@ -96,7 +97,7 @@ const UserProfile = () => {
           following: userData.following || [],
           deliveryAvailable: userData.deliveryAvailable || false,
           wholesaleAvailable: userData.wholesaleAvailable || false,
-          isFarmer: userData.isFarmer || false,
+          isFarmer: userData.role === 'farmer',
         });
         
         // Check if logged in user is following this user
@@ -107,7 +108,7 @@ const UserProfile = () => {
         // Fetch blogs
         const targetUserId = isProfilePage ? loggedInUserId : userId;
         const blogResponse = await fetch(
-          `${API_URL}/blogs/user/${targetUserId}`,
+          `${API_URL}/api/blogs/user/${targetUserId}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -121,18 +122,26 @@ const UserProfile = () => {
         setUserBlogs(blogData);
 
         // Fetch products if user is a farmer
-        if (userData.isFarmer) {
+        if (userData.role === 'farmer') {
+          console.log('Fetching products for farmer:', targetUserId);
           const productsResponse = await fetch(
-            `${API_URL}/products/user/${targetUserId}`,
+            `${API_URL}/api/products/farmer-products`,
             {
-              headers: {Authorization: `Bearer ${token}`}
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
             }
           );
           if (!productsResponse.ok) {
+            console.error('Products response:', await productsResponse.text());
             throw new Error('Failed to fetch user products');
           }
           const productsData = await productsResponse.json();
+          console.log('Products data:', productsData);
           setProducts(productsData);
+        } else {
+          console.log('User is not a farmer, skipping products fetch');
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -148,7 +157,7 @@ const UserProfile = () => {
   const handleFollow = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${API_URL}/users/${user._id}/follow`, {
+      await fetch(`${API_URL}/api/users/${user._id}/follow`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -168,7 +177,7 @@ const UserProfile = () => {
   const handleUnfollow = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${API_URL}/users/${user._id}/unfollow`, {
+      await fetch(`${API_URL}/api/users/${user._id}/unfollow`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -216,7 +225,7 @@ const UserProfile = () => {
     }
     try {
       await fetch(
-        `${API_URL}/users/${user._id}`,
+        `${API_URL}/api/users/${user._id}`,
         {
           method: 'PUT',
           headers: {
@@ -612,7 +621,7 @@ const UserProfile = () => {
   
         {/* Social Media Tab */}
         <TabPanel value="4">{renderSocialMediaLinks()}</TabPanel>
-  
+
         {/* Products Tab */}
         <TabPanel value="5">{renderProductsList()}</TabPanel>
       </TabContext>      
