@@ -66,13 +66,15 @@ const App = () => {
           <Route path="/featured-farms" element={<FeaturedFarms />} />
           
           {/* Profile Routes */}
-          <Route path="/users/:userId" element={
+          <Route path="/profile" element={
             <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole}>
               <UserProfile />
             </ProtectedRoute>
           } />
-          <Route path="/profile" element={
-            <Navigate to={`/users/${localStorage.getItem('userId')}`} replace />
+          <Route path="/users/:userId" element={
+            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole}>
+              <UserProfile />
+            </ProtectedRoute>
           } />
 
           {/* Protected Routes - Require Login */}
