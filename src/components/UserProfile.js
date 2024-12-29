@@ -27,10 +27,12 @@ import {
   Agriculture as FarmerIcon,
   Business as PartnersIcon,
 } from '@mui/icons-material';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 
 const UserProfile = () => {
   const { userId } = useParams();
+  const location = useLocation();
+  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com/api'; // Define API URL
   const [user, setUser] = useState({
     username: '',
     socialMedia: { instagram: '', facebook: '', tiktok: '' },
@@ -49,6 +51,7 @@ const UserProfile = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [tabValue, setTabValue] = useState('0');
+  const [error, setError] = useState(null);
   
   useEffect(() => {
     const userIdFromToken = localStorage.getItem('userId');
@@ -59,10 +62,18 @@ const UserProfile = () => {
     const fetchUserData = async () => {
       try {
         const token = localStorage.getItem('token');
-        const targetUserId = userId || localStorage.getItem('userId'); // Use URL param or fallback to logged in user
+        if (!token) {
+          setError('No authentication token found');
+          return;
+        }
+
+        const isProfilePage = location.pathname === '/profile';
+        const endpoint = isProfilePage ? 'users/profile' : `users/${userId}`;
+        
+        console.log('Fetching from:', `${API_URL}/${endpoint}`); // Debug log
         
         const response = await fetch(
-          `${process.env.REACT_APP_API_URL}/api/users/${targetUserId}`,
+          `${API_URL}/${endpoint}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -71,7 +82,8 @@ const UserProfile = () => {
         );
         
         if (!response.ok) {
-          throw new Error('Failed to fetch profile');
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
         
         const userData = await response.json();
@@ -88,13 +100,14 @@ const UserProfile = () => {
         });
         
         // Check if logged in user is following this user
-        if (targetUserId && token) {
+        if (!isProfilePage && userId) {
           setIsFollowing(userData.followers.some(follower => follower._id === loggedInUserId));
         }
 
         // Fetch blogs
+        const targetUserId = isProfilePage ? loggedInUserId : userId;
         const blogResponse = await fetch(
-          `${process.env.REACT_APP_API_URL}/api/blogs/user/${targetUserId}`,
+          `${API_URL}/blogs/user/${targetUserId}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -110,7 +123,7 @@ const UserProfile = () => {
         // Fetch products if user is a farmer
         if (userData.isFarmer) {
           const productsResponse = await fetch(
-            `${process.env.REACT_APP_API_URL}/api/products/user/${targetUserId}`, 
+            `${API_URL}/products/user/${targetUserId}`,
             {
               headers: {Authorization: `Bearer ${token}`}
             }
@@ -123,18 +136,19 @@ const UserProfile = () => {
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
+        setError(error.message);
       }
     };
 
     if (loggedInUserId) {
       fetchUserData();
     }
-  }, [userId, loggedInUserId]);
+  }, [userId, loggedInUserId, location.pathname, API_URL]);
 
   const handleFollow = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${process.env.REACT_APP_API_URL}/api/users/${user._id}/follow`, {
+      await fetch(`${API_URL}/users/${user._id}/follow`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -154,7 +168,7 @@ const UserProfile = () => {
   const handleUnfollow = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${process.env.REACT_APP_API_URL}/api/users/${user._id}/unfollow`, {
+      await fetch(`${API_URL}/users/${user._id}/unfollow`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -202,7 +216,7 @@ const UserProfile = () => {
     }
     try {
       await fetch(
-        `${process.env.REACT_APP_API_URL}/api/users/${user._id}`,
+        `${API_URL}/users/${user._id}`,
         {
           method: 'PUT',
           headers: {
