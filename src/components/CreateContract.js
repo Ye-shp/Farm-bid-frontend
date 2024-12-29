@@ -127,7 +127,7 @@ const CreateContract = () => {
               value={formData.quantity}
               onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
               className="w-full border rounded-md p-2"
-              placeholder="Enter quantity"
+              placeholder="Enter quantity in pounds"
               required
               min="1"
             />
@@ -141,7 +141,7 @@ const CreateContract = () => {
               value={formData.maxPrice}
               onChange={(e) => setFormData({ ...formData, maxPrice: e.target.value })}
               className="w-full border rounded-md p-2"
-              placeholder="Enter maximum price"
+              placeholder="Enter maximum price per pound"
               required
               min="0"
               step="0.01"
@@ -172,11 +172,12 @@ const CreateContract = () => {
               required
             >
               <option value="buyer_pickup">Buyer Pickup</option>
-              <option value="seller_delivery">Seller Delivery</option>
+              <option value="farmer_delivery">Farmer Delivery</option>
+              <option value="third_party">Third Party Delivery</option>
             </select>
           </div>
 
-          {formData.deliveryMethod === 'seller_delivery' && (
+          {formData.deliveryMethod !== 'buyer_pickup' && (
             <div>
               <h3 className="text-lg font-bold mb-2">Delivery Address</h3>
               <div className="grid grid-cols-1 gap-4">

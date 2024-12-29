@@ -38,7 +38,6 @@ export const createContractTransaction = (contractId) =>
 export const getSellerTransfers = () => 
   axios.get(`${API_URL}/seller/transfers`);
 
-
 //stripe 
 
 export const createPaymentIntent = (data) => axios.post(`${API_URL}/payments/create-payment-intent`, data);
@@ -51,14 +50,20 @@ export const getSellerBalance = () => axios.get(`${API_URL}/payout/seller-balanc
 
 export const addBankAccount = (data) => axios.post(`${API_URL}/payout/add-bank-account`, data);
 
-export default {
+// Export all functions
+const api = {
   register,
   login,
   getFeaturedFarms,
+  getNearbyFarmers,
+  getNearbyBuyers,
+  createAuctionTransaction,
+  createContractTransaction,
+  getSellerTransfers,
   createPaymentIntent,
   requestPayout,
   createConnectedAccount,
-  getSellerBalance,
-  addBankAccount, 
- 
+  getSellerBalance
 };
+
+export default api;

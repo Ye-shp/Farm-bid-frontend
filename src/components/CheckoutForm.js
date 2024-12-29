@@ -13,7 +13,7 @@ import {
 import api from '../Services/api';
 import '../Styles/CheckoutForm.css';
 
-const CheckoutForm = ({ sourceType, sourceId, amount }) => {
+const CheckoutForm = ({ sourceType, sourceId, amount, onSuccess }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -25,9 +25,10 @@ const CheckoutForm = ({ sourceType, sourceId, amount }) => {
   useEffect(() => {
     const initializePayment = async () => {
       try {
-        // Create transaction based on source type
-        const response = await api.post(`/api/transactions/${sourceType}`, {
+        // Create payment intent
+        const response = await api.createPaymentIntent({
           [sourceType === 'auction' ? 'auctionId' : 'contractId']: sourceId,
+          amount: Math.round(amount * 100) // Convert to cents
         });
 
         setClientSecret(response.data.clientSecret);
@@ -40,10 +41,10 @@ const CheckoutForm = ({ sourceType, sourceId, amount }) => {
       }
     };
 
-    if (sourceId && sourceType) {
+    if (sourceId && sourceType && amount) {
       initializePayment();
     }
-  }, [sourceId, sourceType]);
+  }, [sourceId, sourceType, amount]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -58,7 +59,6 @@ const CheckoutForm = ({ sourceType, sourceId, amount }) => {
     const cardElement = elements.getElement(CardElement);
 
     try {
-      // Confirm the payment with manual capture enabled
       const { error, paymentIntent } = await stripe.confirmCardPayment(
         clientSecret,
         {
@@ -75,15 +75,15 @@ const CheckoutForm = ({ sourceType, sourceId, amount }) => {
         throw error;
       }
 
-      if (
-        paymentIntent.status === 'requires_capture' ||
-        paymentIntent.status === 'succeeded'
-      ) {
+      if (paymentIntent.status === 'succeeded') {
         setPaymentSuccess(true);
         setTransaction((prev) => ({
           ...prev,
           paymentIntent: { status: paymentIntent.status },
         }));
+        if (onSuccess) {
+          onSuccess();
+        }
       }
     } catch (error) {
       console.error('Payment error:', error);
@@ -100,49 +100,55 @@ const CheckoutForm = ({ sourceType, sourceId, amount }) => {
         <Box
           component="form"
           onSubmit={handleSubmit}
-          sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+          }}
         >
-          <Box
-            sx={{
-              border: '1px solid',
-              borderColor: 'grey.400',
-              borderRadius: 1,
-              p: 2,
-            }}
-          >
-            <CardElement className="card-element" />
-          </Box>
+          <Typography variant="h6" gutterBottom>
+            Amount: ${amount.toFixed(2)}
+          </Typography>
 
-          {amount && (
-            <Typography variant="h6" align="center">
-              Total: ${(amount / 100).toFixed(2)}
-            </Typography>
+          {errorMessage && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {errorMessage}
+            </Alert>
           )}
 
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            disabled={isProcessing || !stripe || !clientSecret}
-          >
-            {isProcessing ? (
-              <>
-                <CircularProgress size={24} sx={{ mr: 1 }} />
-                Processing...
-              </>
-            ) : (
-              'Pay Now'
-            )}
-          </Button>
-
-          {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
-
-          {paymentSuccess && (
-            <Alert severity="success">
-              Payment authorized successfully! The payment will be captured upon
-              delivery confirmation.
-            </Alert>
+          {paymentSuccess ? (
+            <Alert severity="success">Payment successful!</Alert>
+          ) : (
+            <>
+              <CardElement
+                options={{
+                  style: {
+                    base: {
+                      fontSize: '16px',
+                      color: '#424770',
+                      '::placeholder': {
+                        color: '#aab7c4',
+                      },
+                    },
+                    invalid: {
+                      color: '#9e2146',
+                    },
+                  },
+                }}
+              />
+              <Button
+                variant="contained"
+                disabled={!stripe || isProcessing}
+                type="submit"
+                sx={{ mt: 2 }}
+              >
+                {isProcessing ? (
+                  <CircularProgress size={24} />
+                ) : (
+                  `Pay ${amount.toFixed(2)}`
+                )}
+              </Button>
+            </>
           )}
         </Box>
       </CardContent>
