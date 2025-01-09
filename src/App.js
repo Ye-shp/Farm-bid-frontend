@@ -6,6 +6,8 @@ import Header from './components/Header';
 import HomePage from './components/HomePage';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
 import ProductList from './components/ProductList';
 import ProductDetails from './components/ProductDetails';
 import FarmerDashboard from './components/FarmerDashboard';
@@ -60,6 +62,8 @@ const App = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage setIsLoggedIn={setIsLoggedIn} setUserRole={setUserRole} />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/products" element={<ProductList />} />
           <Route path="/blog" element={<BlogList />} />
           <Route path="/blog/:id" element={<BlogPost />} />
