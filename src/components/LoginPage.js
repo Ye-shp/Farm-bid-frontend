@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../Services/api';
 import axios from 'axios';
 import {
@@ -142,6 +142,15 @@ const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
             >
               {loading ? <CircularProgress size={24} sx={{ color: theme.palette.grey[200] }} /> : 'Login'}
             </Button>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+              <Typography variant="body2">
+                Don't have an account? <Link to="/register" style={{ textDecoration: 'none', color: theme.palette.primary.main }}>Register</Link>
+              </Typography>
+              <Link to="/forgot-password" style={{ textDecoration: 'none', color: theme.palette.primary.main }}>
+                <Typography variant="body2">Forgot Password?</Typography>
+              </Link>
+            </Box>
           </Box>
         </Box>
       </Paper>

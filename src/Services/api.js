@@ -8,6 +8,21 @@ export const register = (data) => axios.post(`${API_URL}/auth/register`, data);
 // User login
 export const login = (data) => axios.post(`${API_URL}/auth/login`, data);
 
+// Forgot Password
+export const forgotPassword = async (email) => {
+  const response = await axios.post(`${API_URL}/auth/forgot-password`, { email });
+  return response;
+};
+
+// Reset Password
+export const resetPassword = async (token, newPassword) => {
+  const response = await axios.post(`${API_URL}/auth/reset-password`, { 
+    token, 
+    newPassword 
+  });
+  return response;
+};
+
 // Get nearby farmers (for buyers)
 export const getNearbyFarmers = (location) => {
   return axios.post(`${API_URL}/farmers/nearby`, { location });
@@ -54,6 +69,8 @@ export const addBankAccount = (data) => axios.post(`${API_URL}/payout/add-bank-a
 const api = {
   register,
   login,
+  forgotPassword,
+  resetPassword,
   getFeaturedFarms,
   getNearbyFarmers,
   getNearbyBuyers,
