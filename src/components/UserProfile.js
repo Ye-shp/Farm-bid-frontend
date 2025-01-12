@@ -291,7 +291,7 @@ const UserProfile = () => {
             {user.partners.map((partner, index) => (
               <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography>{partner.name}</Typography>
-                {isEditing && (
+                {isEditing && isOwner && (
                   <Button 
                     size="small" 
                     color="error" 
@@ -311,7 +311,7 @@ const UserProfile = () => {
         ) : (
           <Typography color="text.secondary">No partners listed yet.</Typography>
         )}
-        {isEditing && (
+        {isEditing && isOwner && (
           <Box sx={{ mt: 2 }}>
             <TextField
               label="Add new partner"
@@ -340,7 +340,7 @@ const UserProfile = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <InstagramIcon color="action" />
-            {isEditing ? (
+            {isEditing && isOwner ? (
               <TextField
                 label="Instagram"
                 value={user.socialMedia.instagram || ''}
@@ -358,7 +358,7 @@ const UserProfile = () => {
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <FacebookIcon color="action" />
-            {isEditing ? (
+            {isEditing && isOwner ? (
               <TextField
                 label="Facebook"
                 value={user.socialMedia.facebook || ''}
@@ -376,7 +376,7 @@ const UserProfile = () => {
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <TiktokIcon color="action" />
-            {isEditing ? (
+            {isEditing && isOwner ? (
               <TextField
                 label="TikTok"
                 value={user.socialMedia.tiktok || ''}
@@ -400,76 +400,257 @@ const UserProfile = () => {
   const isOwner = loggedInUserId === user._id;
 
   return (
-    <Box sx={{ padding: 2 }}>
-      {/* User Profile Header */}
-      <Card sx={{ marginBottom: 2 }}>
-        <CardHeader
-          avatar={
-            <Avatar>
-              {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
-            </Avatar>
-          }
-          title={user.username || 'Username'}
-          subheader={formatLocation(user.location)}
-          action={
-            isOwner ? (
-              isEditing ? (
-                <Button variant="contained" color="primary" onClick={handleSave}>
-                  Save
-                </Button>
+    <Box sx={{ maxWidth: 1200, margin: '0 auto', padding: '24px' }}>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+      )}
+      
+      {/* Profile Header Section */}
+      <Card elevation={3} sx={{ mb: 4 }}>
+        <Box sx={{ 
+          position: 'relative',
+          height: '200px',
+          bgcolor: 'primary.main',
+          borderRadius: '4px 4px 0 0'
+        }}>
+          <Avatar
+            sx={{
+              width: 120,
+              height: 120,
+              position: 'absolute',
+              bottom: '-60px',
+              left: '32px',
+              border: '4px solid white',
+              boxShadow: 1
+            }}
+            src={user.avatar}
+            alt={user.username}
+          >
+            {user.username?.charAt(0).toUpperCase()}
+          </Avatar>
+        </Box>
+        
+        <CardContent sx={{ pt: 8, pb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <Box>
+              <Typography variant="h4" component="h1" gutterBottom>
+                {user.username}
+                {user.isFarmer && (
+                  <FarmerIcon sx={{ ml: 1, color: 'success.main', verticalAlign: 'middle' }} />
+                )}
+              </Typography>
+              {isEditing && isOwner ? (
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  variant="outlined"
+                  value={user.description || ''}
+                  onChange={(e) => setUser({ ...user, description: e.target.value })}
+                  sx={{ mb: 2 }}
+                />
               ) : (
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                  {user.description || 'No description provided'}
+                </Typography>
+              )}
+              
+              {/* Location and Stats */}
+              <Box sx={{ display: 'flex', gap: 3, mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <LocationOnIcon sx={{ mr: 0.5, color: 'text.secondary' }} />
+                  <Typography variant="body2">
+                    {[user.location.city, user.location.state, user.location.country].filter(Boolean).join(', ')}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <GroupIcon sx={{ mr: 0.5, color: 'text.secondary' }} />
+                  <Typography variant="body2">
+                    {user.followers?.length || 0} followers
+                  </Typography>
+                </Box>
+              </Box>
+              
+              {/* Features Badges */}
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                {(user.wholesaleAvailable || (isEditing && isOwner)) && (
+                  <Box sx={{ 
+                    display: 'flex',
+                    alignItems: 'center',
+                    bgcolor: isEditing ? 'background.paper' : 'success.light',
+                    color: isEditing ? 'text.primary' : 'success.contrastText',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 1
+                  }}>
+                    <StoreIcon sx={{ mr: 0.5, fontSize: '1rem' }} />
+                    <Typography variant="body2">Wholesale</Typography>
+                    {isEditing && isOwner && (
+                      <Switch
+                        size="small"
+                        checked={user.wholesaleAvailable}
+                        onChange={(e) => setUser({ ...user, wholesaleAvailable: e.target.checked })}
+                      />
+                    )}
+                  </Box>
+                )}
+                {(user.deliveryAvailable || (isEditing && isOwner)) && (
+                  <Box sx={{ 
+                    display: 'flex',
+                    alignItems: 'center',
+                    bgcolor: isEditing ? 'background.paper' : 'info.light',
+                    color: isEditing ? 'text.primary' : 'info.contrastText',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 1
+                  }}>
+                    <TruckIcon sx={{ mr: 0.5, fontSize: '1rem' }} />
+                    <Typography variant="body2">Delivery</Typography>
+                    {isEditing && isOwner && (
+                      <Switch
+                        size="small"
+                        checked={user.deliveryAvailable}
+                        onChange={(e) => setUser({ ...user, deliveryAvailable: e.target.checked })}
+                      />
+                    )}
+                  </Box>
+                )}
+              </Box>
+            </Box>
+            
+            {/* Action Buttons */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              {userId !== loggedInUserId && (
+                <Button
+                  variant={isFollowing ? "outlined" : "contained"}
+                  onClick={isFollowing ? handleUnfollow : handleFollow}
+                  startIcon={<GroupIcon />}
+                >
+                  {isFollowing ? 'Unfollow' : 'Follow'}
+                </Button>
+              )}
+              {isOwner && (
                 <Button
                   variant="outlined"
-                  color="primary"
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => {
+                    if (isEditing) {
+                      handleSave();
+                    } else {
+                      setIsEditing(true);
+                    }
+                  }}
                 >
-                  Edit Profile
+                  {isEditing ? 'Save Changes' : 'Edit Profile'}
                 </Button>
-              )
-            ) : isFollowing ? (
-              <Button variant="contained" color="secondary" onClick={handleUnfollow}>
-                Unfollow
+              )}
+              <Button
+                variant="outlined"
+                startIcon={<ShareIcon />}
+              >
+                Share
               </Button>
-            ) : (
-              <Button variant="contained" color="primary" onClick={handleFollow}>
-                Follow
-              </Button>
-            )
-          }
-        />
-        {user.description && (
-          <CardContent>
+            </Box>
+          </Box>
+          
+          {/* Social Media Links */}
+          <Box sx={{ 
+            display: 'flex',
+            gap: 2,
+            mt: 3,
+            pt: 3,
+            borderTop: 1,
+            borderColor: 'divider'
+          }}>
             {isEditing && isOwner ? (
-              <TextField
-                label="Description"
-                multiline
-                rows={4}
-                value={user.description}
-                onChange={(e) =>
-                  setUser({ ...user, description: e.target.value })
-                }
-                fullWidth
-              />
+              <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
+                <TextField
+                  size="small"
+                  label="Instagram"
+                  value={user.socialMedia?.instagram || ''}
+                  onChange={(e) => setUser({
+                    ...user,
+                    socialMedia: { ...user.socialMedia, instagram: e.target.value }
+                  })}
+                />
+                <TextField
+                  size="small"
+                  label="Facebook"
+                  value={user.socialMedia?.facebook || ''}
+                  onChange={(e) => setUser({
+                    ...user,
+                    socialMedia: { ...user.socialMedia, facebook: e.target.value }
+                  })}
+                />
+                <TextField
+                  size="small"
+                  label="TikTok"
+                  value={user.socialMedia?.tiktok || ''}
+                  onChange={(e) => setUser({
+                    ...user,
+                    socialMedia: { ...user.socialMedia, tiktok: e.target.value }
+                  })}
+                />
+              </Box>
             ) : (
-              <Typography variant="body2">{user.description}</Typography>
+              <>
+                {user.socialMedia?.instagram && (
+                  <Button
+                    href={user.socialMedia.instagram}
+                    target="_blank"
+                    startIcon={<InstagramIcon />}
+                    size="small"
+                    sx={{ borderRadius: 4 }}
+                  >
+                    Instagram
+                  </Button>
+                )}
+                {user.socialMedia?.facebook && (
+                  <Button
+                    href={user.socialMedia.facebook}
+                    target="_blank"
+                    startIcon={<FacebookIcon />}
+                    size="small"
+                    sx={{ borderRadius: 4 }}
+                  >
+                    Facebook
+                  </Button>
+                )}
+                {user.socialMedia?.tiktok && (
+                  <Button
+                    href={user.socialMedia.tiktok}
+                    target="_blank"
+                    startIcon={<TiktokIcon />}
+                    size="small"
+                    sx={{ borderRadius: 4 }}
+                  >
+                    TikTok
+                  </Button>
+                )}
+              </>
             )}
-          </CardContent>
-        )}
+          </Box>
+        </CardContent>
       </Card>
-  
-      {/* Tabs */}
+
+      {/* Tabs Section */}
       <TabContext value={tabValue}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs
             value={tabValue}
             onChange={(e, newValue) => setTabValue(newValue)}
-            variant="scrollable"
-            scrollButtons="auto"
+            variant="fullWidth"
+            sx={{
+              '& .MuiTab-root': {
+                fontWeight: 600,
+                fontSize: '1rem',
+                textTransform: 'none'
+              }
+            }}
           >
             {getTabs()}
           </Tabs>
         </Box>
-  
+
         {/* Posts Tab */}
         <TabPanel value="0">
           {userBlogs.length > 0 ? (
@@ -584,17 +765,13 @@ const UserProfile = () => {
                 <Typography sx={{ marginRight: 2 }}>
                   Delivery Available
                 </Typography>
-                {isEditing && isOwner ? (
+                {isEditing && isOwner && (
                   <Switch
                     checked={user.deliveryAvailable}
                     onChange={(e) =>
                       setUser({ ...user, deliveryAvailable: e.target.checked })
                     }
                   />
-                ) : (
-                  <Typography>
-                    {user.deliveryAvailable ? 'Yes' : 'No'}
-                  </Typography>
                 )}
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 2 }}>
@@ -602,17 +779,13 @@ const UserProfile = () => {
                 <Typography sx={{ marginRight: 2 }}>
                   Wholesale Available
                 </Typography>
-                {isEditing && isOwner ? (
+                {isEditing && isOwner && (
                   <Switch
                     checked={user.wholesaleAvailable}
                     onChange={(e) =>
                       setUser({ ...user, wholesaleAvailable: e.target.checked })
                     }
                   />
-                ) : (
-                  <Typography>
-                    {user.wholesaleAvailable ? 'Yes' : 'No'}
-                  </Typography>
                 )}
               </Box>
             </CardContent>
