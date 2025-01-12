@@ -300,25 +300,13 @@ const BuyerDashboard = () => {
     setSearchResults(results);
   };
 
-  const handleCreateContract = () => {
-    navigate('/contracts/create-contract');
-  };
-
-  const handleViewContracts = () => {
-    navigate('/contracts');
-  };
-
-  const handleCreateFieldNotes = () => {
-    navigate('/field-notes/create');
-  };
-
   const handleViewFarmerProfile = (farmerId) => {
     navigate(`/users/${farmerId}`);
   };
 
   return (
     <PageContainer maxWidth="xl">
-      {/* Header Section with Contract Management */}
+      {/* Header Section */}
       <HeaderBox>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
           <Typography
@@ -335,35 +323,6 @@ const BuyerDashboard = () => {
           >
             Buyer Dashboard
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2, mt: isMobile ? 2 : 0 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddCircleOutline />}
-              onClick={handleCreateContract}
-              sx={{ whiteSpace: 'nowrap' }}
-            >
-              Create Contract
-            </Button>
-            <Button
-              variant="outlined"
-              color="primary"
-              startIcon={<ListAlt />}
-              onClick={handleViewContracts}
-              sx={{ whiteSpace: 'nowrap' }}
-            >
-              View Contracts
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddCircleOutline />}
-              onClick={handleCreateFieldNotes}
-              sx={{ whiteSpace: 'nowrap' }}
-            >
-              Create Field Notes
-            </Button>
-          </Box>
         </Box>
         <IconButton
           color="primary"
