@@ -50,6 +50,14 @@ const App = () => {
     if (token && role) {
       setIsLoggedIn(true);
       setUserRole(role);
+      // Redirect to appropriate dashboard if on login page
+      if (window.location.pathname === '/login') {
+        if (role === 'farmer') {
+          window.location.href = '/farmer-dashboard';
+        } else if (role === 'buyer') {
+          window.location.href = '/buyer-dashboard';
+        }
+      }
     }
   }, []);
 
