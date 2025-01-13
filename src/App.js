@@ -29,11 +29,23 @@ import SearchBar from './components/SearchBar';
 const stripePromise = loadStripe('pk_live_51Q9hx7ApVL7y3rvg85x9cvnfNETqgxw7qYxRrBJeD7rOg0d0M0WJnNMRF4TouN5RYAgwQ0HfQefNwZ5AEGXPIlF600UXzQ8rKx')
 
 const ProtectedRoute = ({ children, isLoggedIn, userRole, allowedRoles }) => {
-  if (!isLoggedIn) {
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
+  
+  // If we have a token and role in localStorage, consider the user logged in
+  const isAuthenticated = token && role;
+  
+  if (!isAuthenticated) {
     return <Navigate to="/login" />;
   }
   
-  if (allowedRoles && !allowedRoles.includes(userRole)) {
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    // Redirect to appropriate dashboard instead of home
+    if (role === 'farmer') {
+      return <Navigate to="/farmer-dashboard" />;
+    } else if (role === 'buyer') {
+      return <Navigate to="/buyer-dashboard" />;
+    }
     return <Navigate to="/" />;
   }
   
@@ -50,16 +62,23 @@ const App = () => {
     if (token && role) {
       setIsLoggedIn(true);
       setUserRole(role);
-      // Redirect to appropriate dashboard if on login page
-      if (window.location.pathname === '/login') {
-        if (role === 'farmer') {
-          window.location.href = '/farmer-dashboard';
-        } else if (role === 'buyer') {
-          window.location.href = '/buyer-dashboard';
-        }
-      }
     }
   }, []);
+
+  // Add a route guard for the login page
+  const LoginRoute = () => {
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (token && role) {
+      if (role === 'farmer') {
+        return <Navigate to="/farmer-dashboard" />;
+      } else if (role === 'buyer') {
+        return <Navigate to="/buyer-dashboard" />;
+      }
+    }
+    return <LoginPage setIsLoggedIn={setIsLoggedIn} setUserRole={setUserRole} />;
+  };
 
   return (
     <Router>
@@ -68,7 +87,7 @@ const App = () => {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage setIsLoggedIn={setIsLoggedIn} setUserRole={setUserRole} />} />
+          <Route path="/login" element={<LoginRoute />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
