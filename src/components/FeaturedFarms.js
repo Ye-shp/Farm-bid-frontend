@@ -12,7 +12,7 @@ import {
 import { styled } from '@mui/material/styles';
 import { TrendingUp as TrendingUpIcon } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
-import api from '../Services/api';
+import { getBlogPosts } from '../Services/blogs';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -33,17 +33,11 @@ const FeaturedFarms = () => {
     const fetchFeaturedArticles = async () => {
       try {
         setLoading(true);
-        const response = await api.getFeaturedFarms();
+        const response = await getBlogPosts();
         
-        let articlesData = Array.isArray(response) ? response : [];
-        const processedArticles = articlesData.map(article => ({
-          _id: article._id?._id || article._id || 'unknown',
-          username: article._id?.username || 'Unknown Author',
-          description: article._id?.description || 'No description available',
-          totalEngagement: article.totalEngagement || 0,
-        }));
-
-        setArticles(processedArticles.slice(0, 3));
+        // Get the first 3 blogs
+        const featuredBlogs = response.data.slice(0, 3);
+        setArticles(featuredBlogs);
         setError(null);
       } catch (err) {
         console.error('Error fetching featured articles:', err);
@@ -58,89 +52,57 @@ const FeaturedFarms = () => {
 
   if (loading) {
     return (
-      <Box sx={{ py: 4 }}>
-        <Typography variant="h5" sx={{ mb: 3 }}>Featured Articles</Typography>
-        <Grid container spacing={3}>
-          {[1, 2, 3].map((item) => (
-            <Grid item xs={12} sm={6} md={4} key={item}>
-              <Skeleton variant="rectangular" height={200} />
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+      <Grid container spacing={3}>
+        {[1, 2, 3].map((item) => (
+          <Grid item xs={12} sm={6} md={4} key={item}>
+            <StyledCard>
+              <CardContent>
+                <Skeleton variant="text" width="60%" height={24} />
+                <Skeleton variant="text" width="100%" height={20} />
+                <Skeleton variant="text" width="40%" height={20} />
+              </CardContent>
+            </StyledCard>
+          </Grid>
+        ))}
+      </Grid>
     );
   }
 
   if (error) {
-    return <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>;
+    return <Alert severity="error">{error}</Alert>;
   }
 
   return (
-    <Box sx={{ py: 4 }}>
-      <Typography variant="h5" sx={{ mb: 3 }}>
-        Featured Articles
-      </Typography>
-
-      <Grid container spacing={3}>
-        {articles.map((article, index) => {
-          const articleId = typeof article._id === 'object' ? article._id._id : article._id;
-          
-          return (
-            <Grid item xs={12} sm={6} md={4} key={articleId || index}>
-              <StyledCard>
-                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      mb: 1,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    {article.description}
-                  </Typography>
-                  
-                  <Typography 
-                    variant="subtitle2" 
-                    color="text.secondary" 
-                    sx={{ mb: 2 }}
-                  >
-                    By {article.username}
-                  </Typography>
-
-                  <Box 
-                    sx={{ 
-                      mt: 'auto', 
-                      display: 'flex', 
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <TrendingUpIcon fontSize="small" color="primary" />
-                      <Typography variant="body2" color="primary">
-                        {article.totalEngagement.toLocaleString()}
-                      </Typography>
-                    </Box>
-                    
-                    <Button 
-                      component={Link}
-                      to={`/user/${articleId}`}
-                      variant="text"
-                      sx={{ textTransform: 'none' }}
-                    >
-                      Read More
-                    </Button>
-                  </Box>
-                </CardContent>
-              </StyledCard>
-            </Grid>
-          );
-        })}
-      </Grid>
-    </Box>
+    <Grid container spacing={3}>
+      {articles.map((article) => (
+        <Grid item xs={12} sm={6} md={4} key={article._id}>
+          <StyledCard>
+            <CardContent>
+              <Typography variant="h6" component="h2" gutterBottom>
+                {article.title}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                {article.content.substring(0, 150)}...
+              </Typography>
+              <Box display="flex" alignItems="center" justifyContent="space-between" mt={2}>
+                <Typography variant="caption" color="text.secondary">
+                  By {article.user?.username || 'Unknown Author'}
+                </Typography>
+                <Button
+                  component={Link}
+                  to={`/blog/${article._id}`}
+                  size="small"
+                  color="primary"
+                  endIcon={<TrendingUpIcon />}
+                >
+                  Read More
+                </Button>
+              </Box>
+            </CardContent>
+          </StyledCard>
+        </Grid>
+      ))}
+    </Grid>
   );
 };
 
