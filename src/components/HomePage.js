@@ -15,13 +15,16 @@ import {
   ArrowForward, 
   LocalFlorist, 
   EmojiNature, 
-  Handshake // Changed from Eco to Handshake
+  Handshake,
+  Article
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import FeaturedFarms from './FeaturedFarms';
 
 const HomePage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const navigate = useNavigate();
 
   const FeatureCard = ({ icon: Icon, title, description }) => (
     <Paper 
@@ -86,36 +89,42 @@ const HomePage = () => {
               sx={{ 
                 fontWeight: 700,
                 textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
+                mb: 3
               }}
             >
               Welcome to Elipae Marketplace
             </Typography>
             <Typography 
               variant="h5" 
-              align="center" 
-              sx={{ mb: 4 }}
+              align="center"
+              sx={{ 
+                maxWidth: '800px',
+                mx: 'auto',
+                lineHeight: 1.6,
+                letterSpacing: '0.5px',
+                mb: 4
+              }}
             >
-              Bid on fresh produce directly from local farmers.
+              Discover, Connect, and Trade in Our Agricultural Community
             </Typography>
             <Box sx={{ textAlign: 'center' }}>
               <Button
-                variant="contained"
-                color="secondary"
+                variant="text"
                 size="large"
-                endIcon={<ArrowForward />}
+                onClick={() => navigate('/blog')}
+                endIcon={<Article />}
                 sx={{
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: 2,
+                  color: 'white',
+                  borderColor: 'white',
                   textTransform: 'none',
-                  backgroundColor: 'white',
-                  color: 'primary.main',
+                  fontSize: '1.1rem',
+                  fontWeight: 500,
                   '&:hover': {
-                    backgroundColor: 'grey.100',
+                    backgroundColor: 'rgba(255,255,255,0.1)',
                   },
                 }}
               >
-                Login
+                Read Our Latest Articles
               </Button>
             </Box>
           </Paper>
@@ -180,21 +189,76 @@ const HomePage = () => {
             </Grid>
           </Grid>
 
-          {/* Featured Farms Section */}
-          <Box sx={{ mt: 8 }}>
+          {/* Featured Articles Section */}
+          <Box 
+            id="featured-articles"
+            sx={{ 
+              mt: 8,
+              position: 'relative',
+              scrollMarginTop: '2rem',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: -16,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 100,
+                height: 4,
+                background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.light} 90%)`,
+                borderRadius: 2,
+              }
+            }}
+          >
             <Typography 
-              variant="h4" 
+              variant="h3" 
               component="h2" 
               align="center" 
               gutterBottom
               sx={{ 
-                fontWeight: 600,
-                mb: 4,
+                fontWeight: 800,
+                mb: 1,
+                background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.light} 90%)`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                letterSpacing: '-0.5px',
+                position: 'relative',
+                display: 'inline-block',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                px: 2,
               }}
             >
-              Featured Farms
+              Featured Articles
             </Typography>
-            <FeaturedFarms />
+            <Typography 
+              variant="h6" 
+              align="center" 
+              sx={{ 
+                mb: 6,
+                color: 'text.secondary',
+                maxWidth: '600px',
+                mx: 'auto',
+                fontWeight: 400,
+                lineHeight: 1.6
+              }}
+            >
+              Discover the latest insights and stories from our thriving agricultural community
+            </Typography>
+            <Box sx={{ 
+              position: 'relative',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%)',
+                zIndex: -1
+              }
+            }}>
+              <FeaturedFarms />
+            </Box>
           </Box>
         </Container>
       </Fade>

@@ -183,7 +183,7 @@ const BlogList = ({ isLoggedIn }) => {
               lineHeight: 1.6,
             }}
           >
-            Discover stories, thinking, and expertise from writers on any topic.
+            Discover stories, thinking, and expertise from your fellow farmers and experts.
           </Typography>
         </Container>
       </HeroSection>
