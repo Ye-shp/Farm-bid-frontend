@@ -28,6 +28,7 @@ import {
   Business as PartnersIcon,
 } from '@mui/icons-material';
 import { useParams, useLocation } from 'react-router-dom';
+import Reviews from './Reviews';
 
 const UserProfile = () => {
   const { userId } = useParams();
@@ -201,7 +202,8 @@ const UserProfile = () => {
       <Tab label="Partners" value="2" key="partners" />, 
       <Tab label="Services" value="3" key="services" />,
       <Tab label="Social Media" value="4" key="social" />,
-      <Tab label="Products" value = "5" key = "products"/>
+      <Tab label="Products" value = "5" key = "products"/>,
+      <Tab label="Reviews" value="6" key="reviews" />
       ];
     
 
@@ -796,7 +798,14 @@ const UserProfile = () => {
         <TabPanel value="4">{renderSocialMediaLinks()}</TabPanel>
 
         {/* Products Tab */}
-        <TabPanel value="5">{renderProductsList()}</TabPanel>
+        <TabPanel value="5">
+          {renderProductsList()}
+        </TabPanel>
+
+        {/* Reviews Tab */}
+        <TabPanel value="6">
+          <Reviews userId={userId || user._id} />
+        </TabPanel>
       </TabContext>      
     </Box>
   );
