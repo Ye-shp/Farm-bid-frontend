@@ -13,6 +13,7 @@ import {
   Avatar,
   Divider,
   Alert,
+  Snackbar,
 } from '@mui/material';
 import { TabContext, TabPanel } from '@mui/lab';
 import {
@@ -40,7 +41,16 @@ const UserProfile = () => {
     description: '',
     wholesaleAvailable: false,
     deliveryAvailable: false,
-    location: { address: '', city: '', state: '', country: '' },
+    address: { 
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      coordinates: {
+        lat: 0,
+        lng: 0
+      }
+    },
     partners: [],
     followers: [],
     following: [],
@@ -53,6 +63,7 @@ const UserProfile = () => {
   const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [tabValue, setTabValue] = useState('0');
   const [error, setError] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '' });
   
   useEffect(() => {
     const userIdFromToken = localStorage.getItem('userId');
@@ -92,7 +103,7 @@ const UserProfile = () => {
         setUser({
           ...userData,
           socialMedia: userData.socialMedia || { instagram: '', facebook: '', tiktok: '' },
-          location: userData.location || { address: '', city: '', state: '', country: '' },
+          address: userData.address || { street: '', city: '', state: '', zipCode: '', coordinates: { lat: 0, lng: 0 } },
           partners: userData.partners || [],
           followers: userData.followers || [],
           following: userData.following || [],
@@ -212,10 +223,10 @@ const UserProfile = () => {
 
   const formatLocation = (location) => {
     const parts = [];
-    if (location.address) parts.push(location.address);
+    if (location.street) parts.push(location.street);
     if (location.city) parts.push(location.city);
     if (location.state) parts.push(location.state);
-    if (location.country) parts.push(location.country);
+    if (location.zipCode) parts.push(location.zipCode);
     return parts.join(', ') || 'Location not available';
   };
 
@@ -240,7 +251,7 @@ const UserProfile = () => {
             description: user.description,
             socialMedia: user.socialMedia,
             partners: user.partners,
-            location: user.location,
+            address: user.address,
           })
         }
       );
@@ -250,6 +261,32 @@ const UserProfile = () => {
       console.error('Error updating profile:', error);
       alert('Error updating profile');
     }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/user/${user._id}`;
+    const shareData = {
+      title: `${user.username}'s Farm Profile`,
+      text: `Check out ${user.username}'s farm profile on FarmBid!`,
+      url: shareUrl
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        setSnackbar({ open: true, message: 'Shared successfully!' });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        setSnackbar({ open: true, message: 'Profile link copied to clipboard!' });
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      setSnackbar({ open: true, message: 'Failed to share profile' });
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
   };
 
   const renderProductsList = () => (
@@ -462,7 +499,7 @@ const UserProfile = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <LocationOnIcon sx={{ mr: 0.5, color: 'text.secondary' }} />
                   <Typography variant="body2">
-                    {[user.location.city, user.location.state, user.location.country].filter(Boolean).join(', ')}
+                    {[user.address.street, user.address.city, user.address.state, user.address.zipCode].filter(Boolean).join(', ')}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -548,6 +585,7 @@ const UserProfile = () => {
               <Button
                 variant="outlined"
                 startIcon={<ShareIcon />}
+                onClick={handleShare}
               >
                 Share
               </Button>
@@ -698,12 +736,12 @@ const UserProfile = () => {
               {isEditing && isOwner ? (
                 <>
                   <TextField
-                    label="Address"
-                    value={user.location.address}
+                    label="Street"
+                    value={user.address.street}
                     onChange={(e) =>
                       setUser({
                         ...user,
-                        location: { ...user.location, address: e.target.value },
+                        address: { ...user.address, street: e.target.value },
                       })
                     }
                     fullWidth
@@ -711,11 +749,11 @@ const UserProfile = () => {
                   />
                   <TextField
                     label="City"
-                    value={user.location.city}
+                    value={user.address.city}
                     onChange={(e) =>
                       setUser({
                         ...user,
-                        location: { ...user.location, city: e.target.value },
+                        address: { ...user.address, city: e.target.value },
                       })
                     }
                     fullWidth
@@ -723,23 +761,23 @@ const UserProfile = () => {
                   />
                   <TextField
                     label="State"
-                    value={user.location.state}
+                    value={user.address.state}
                     onChange={(e) =>
                       setUser({
                         ...user,
-                        location: { ...user.location, state: e.target.value },
+                        address: { ...user.address, state: e.target.value },
                       })
                     }
                     fullWidth
                     sx={{ marginBottom: 1 }}
                   />
                   <TextField
-                    label="Country"
-                    value={user.location.country}
+                    label="Zip Code"
+                    value={user.address.zipCode}
                     onChange={(e) =>
                       setUser({
                         ...user,
-                        location: { ...user.location, country: e.target.value },
+                        address: { ...user.address, zipCode: e.target.value },
                       })
                     }
                     fullWidth
@@ -747,7 +785,7 @@ const UserProfile = () => {
                 </>
               ) : (
                 <Typography>
-                  {formatLocation(user.location) || 'No location provided.'}
+                  {formatLocation(user.address) || 'No location provided.'}
                 </Typography>
               )}
             </CardContent>
@@ -807,6 +845,12 @@ const UserProfile = () => {
           <Reviews userId={userId || user._id} />
         </TabPanel>
       </TabContext>      
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        message={snackbar.message}
+      />
     </Box>
   );
 };
