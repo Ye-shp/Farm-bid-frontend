@@ -105,7 +105,19 @@ const HomePage = () => {
                 mb: 4
               }}
             >
-              Discover, Connect, and Trade in Our Agricultural Community
+              The First Agricultural Exchange Platform That Turns Every Local Farm Into a Qualified Retail Supplier Within 24 Hours
+            </Typography>
+            <Typography 
+              variant="body1" 
+              align="center"
+              sx={{ 
+                maxWidth: '800px',
+                mx: 'auto',
+                mb: 4,
+                color: 'rgba(255,255,255,0.9)'
+              }}
+            >
+              We're creating the largest network of retail-ready local farms in America, transforming a $350B fragmented market into an efficient digital exchange
             </Typography>
             <Box sx={{ textAlign: 'center' }}>
               <Button
@@ -160,7 +172,7 @@ const HomePage = () => {
                 fontSize: '1.1rem',
               }}
             >
-              At Elipae, we empower farmers by transforming surplus into opportunity. Our platform connects local farmers with buyers, ensuring fair pricing and reducing waste. We're building a sustainable future where communities thrive through transparent, accessible, and efficient agricultural commerce.
+              At Elipae, we empower farmers by transforming surplus into opportunity and simplifying their journey to major retail markets. Our platform streamlines the vendor intake process, eliminating the hassle of multiple forms and applications that farmers typically face. We connect local farmers directly with retail buyers, ensuring fair pricing and reducing waste, while handling all the paperwork complexity. We're building a sustainable future where communities thrive through transparent, accessible, and efficient agricultural commerce that bridges the gap between local farms and large retail stores.
             </Typography>
           </Paper>
 

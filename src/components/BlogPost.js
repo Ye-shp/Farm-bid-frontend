@@ -77,6 +77,7 @@ const BlogPost = () => {
   const [comment, setComment] = useState('');
   const [likes, setLikes] = useState(0);
   const [hasLiked, setHasLiked] = useState(false);
+  const [showShareToast, setShowShareToast] = useState(false);
 
   useEffect(() => {
     const fetchBlog = async () => {
@@ -117,6 +118,26 @@ const BlogPost = () => {
       setHasLiked(updatedBlog.likes.includes(userId));
     } catch (err) {
       console.error('Error liking the post:', err);
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: blogPost.title,
+      text: `Check out this field note: ${blogPost.title}`,
+      url: window.location.href
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        setShowShareToast(true);
+        setTimeout(() => setShowShareToast(false), 3000);
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
     }
   };
 
@@ -174,14 +195,29 @@ const BlogPost = () => {
           </Box>
 
           <Box display="flex" alignItems="center">
-            <IconButton>
+            <IconButton onClick={handleShare}>
               <ShareIcon />
             </IconButton>
             <Typography variant="body2">Share</Typography>
           </Box>
         </MetricsBar>
       </PostHeader>
-
+      {showShareToast && (
+        <Box
+          position="fixed"
+          bottom={20}
+          left="50%"
+          sx={{
+            transform: 'translateX(-50%)',
+            bgcolor: 'background.paper',
+            boxShadow: 3,
+            borderRadius: 1,
+            p: 2,
+          }}
+        >
+          <Typography>Link copied to clipboard!</Typography>
+        </Box>
+      )}
       <Box mb={6}>
         <Typography variant="h5" gutterBottom>
           Responses ({comments.length})
