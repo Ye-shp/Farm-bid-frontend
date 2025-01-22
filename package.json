@@ -25,6 +25,7 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.2.1",
     "react-scripts": "^5.0.1",
+    "socket.io-client": "^4.8.1",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
     "web-vitals": "^2.1.4"
@@ -37,13 +38,12 @@
     "tailwindcss": "^3.4.14",
     "webpack": "^5.28.0"
   },
- "scripts": {
-  "start": "react-scripts start",
-  "build": "react-scripts build",
-  "test": "react-scripts test",
-  "eject": "react-scripts eject"
-},
-
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
   "browserslist": {
     "production": [
       ">0.2%",
