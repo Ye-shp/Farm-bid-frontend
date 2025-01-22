@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Container, Typography, Box, Card, CardContent, Button, Grid, Badge, IconButton, Paper, Tooltip, Chip, CardMedia, Collapse, Dialog, DialogTitle, DialogContent, DialogActions, Table, TableBody, TableCell, TableContainer, TableRow } from '@mui/material';
+import { Container, Typography, Box, Card, CardContent, Button, Grid, Badge, IconButton, Paper, Tooltip, Chip, CardMedia, Collapse, Dialog, DialogTitle, DialogContent, DialogActions, Table, TableBody, TableCell, TableContainer, TableRow, Snackbar, Alert } from '@mui/material';
 import { CheckCircle, Cancel, AttachMoney, TrendingUp, ExpandMore, ExpandLess, MarkEmailRead, AccessTime, Person } from '@mui/icons-material';
 import { makeStyles } from '@mui/styles';
 
@@ -49,6 +49,10 @@ const FarmerAuctions = () => {
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com/api';
+  const [acceptBidLoading, setAcceptBidLoading] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
   const formatDateTime = (dateString) => {
     const options = { 
@@ -80,6 +84,47 @@ const FarmerAuctions = () => {
   const handleViewDetails = (auction) => {
     setSelectedAuction(auction);
     setDetailsOpen(true);
+  };
+
+  const handleAcceptBid = async (auction) => {
+    setAcceptBidLoading(true);
+    try {
+      const highestBid = auction.bids.length > 0
+        ? Math.max(...auction.bids.map(bid => bid.amount))
+        : null;
+
+      if (!highestBid) {
+        throw new Error('No bids to accept');
+      }
+
+      console.log('Accepting bid:', { auctionId: auction._id, highestBid });
+      
+      const response = await axios.post(
+        `${API_URL}/auctions/${auction._id}/accept`,
+        { acceptedPrice: highestBid },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        // Remove the auction from the active auctions list
+        setAuctions(prevAuctions => 
+          prevAuctions.filter(a => a._id !== auction._id)
+        );
+        
+        setSnackbarMessage('Bid accepted successfully! The auction has been moved to completed auctions.');
+        setSnackbarSeverity('success');
+      } else {
+        throw new Error(response.data.message || 'Failed to accept bid');
+      }
+    } catch (error) {
+      console.error('Error accepting bid:', error);
+      setSnackbarMessage(error.response?.data?.message || error.message || 'Failed to accept bid');
+      setSnackbarSeverity('error');
+    } finally {
+      setAcceptBidLoading(false);
+      setSnackbarOpen(true);
+      setDetailsOpen(false); // Close the details dialog
+    }
   };
 
   useEffect(() => {
@@ -243,19 +288,21 @@ const FarmerAuctions = () => {
                     </Typography>
                     <Chip
                       label={auction.status}
-                      color={auction.status === 'active' ? 'info' : 'secondary'}
+                      color={auction.status === 'active' ? 'info' : auction.status === 'ended' ? 'error' : 'default'}
                       size="medium"
                       className={classes.badge}
                     />
                   </Box>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    onClick={() => handleViewDetails(auction)}
-                  >
-                    View Details
-                  </Button>
+                  {auction.status === 'active' && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      fullWidth
+                      onClick={() => handleViewDetails(auction)}
+                    >
+                      View Details
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -316,7 +363,7 @@ const FarmerAuctions = () => {
                       <TableCell>
                         <Chip
                           label={selectedAuction.status}
-                          color={selectedAuction.status === 'active' ? 'success' : 'default'}
+                          color={selectedAuction.status === 'active' ? 'success' : selectedAuction.status === 'ended' ? 'error' : 'default'}
                         />
                       </TableCell>
                     </TableRow>
@@ -355,11 +402,36 @@ const FarmerAuctions = () => {
               )}
             </DialogContent>
             <DialogActions>
+              {selectedAuction.status === 'active' && (
+                <Button 
+                  onClick={() => handleAcceptBid(selectedAuction)}
+                  color="success"
+                  variant="contained"
+                  disabled={acceptBidLoading || !selectedAuction.bids.length}
+                >
+                  {acceptBidLoading ? 'Accepting...' : 'Accept Highest Bid'}
+                </Button>
+              )}
               <Button onClick={() => setDetailsOpen(false)}>Close</Button>
             </DialogActions>
           </>
         )}
       </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+      >
+        <Alert 
+          onClose={() => setSnackbarOpen(false)} 
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

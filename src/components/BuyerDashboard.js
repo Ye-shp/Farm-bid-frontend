@@ -25,6 +25,8 @@ import {
   Snackbar,
   useTheme,
   useMediaQuery,
+  ListItemSecondaryAction,
+  styled,
 } from '@mui/material';
 import {
   Notifications as NotificationsIcon,
@@ -34,11 +36,13 @@ import {
   ArrowUpward,
   AddCircleOutline,
   ListAlt,
+  Payment as PaymentIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
-import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import { formatDistanceToNow } from 'date-fns';
 import SearchBar from './SearchBar';
+import PaymentModal from './PaymentModal';
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
   '& .MuiBadge-badge': {
@@ -107,6 +111,15 @@ const SearchBox = styled(Paper)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius * 2,
 }));
 
+const NotificationItem = styled(ListItem)(({ theme }) => ({
+  marginBottom: theme.spacing(1),
+  borderRadius: theme.shape.borderRadius,
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+  },
+  cursor: 'pointer',
+}));
+
 const BuyerDashboard = () => {
   const navigate = useNavigate();
   const [auctions, setAuctions] = useState([]);
@@ -117,11 +130,23 @@ const BuyerDashboard = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [timeRemaining, setTimeRemaining] = useState({});
+  const [paymentModal, setPaymentModal] = useState({
+    open: false,
+    auctionId: null,
+    amount: 0,
+    title: '',
+    clientSecret: ''
+  });
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const token = localStorage.getItem('token');
-  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com/api';
+  const API_URL = process.env.REACT_APP_API_URL;
+
+  // Configure axios defaults
+  axios.defaults.baseURL = `${API_URL}/api`;
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  axios.defaults.withCredentials = true;
 
   const isAuctionExpired = useCallback((endTime) => {
     return new Date() > new Date(endTime);
@@ -145,9 +170,7 @@ const BuyerDashboard = () => {
   useEffect(() => {
     const fetchAuctions = async () => {
       try {
-        const response = await axios.get(`${API_URL}/auctions`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get('/auctions');
 
         const activeAuctions = response.data.filter(
           (auction) => auction.status === 'active' && !isAuctionExpired(auction.endTime)
@@ -162,6 +185,7 @@ const BuyerDashboard = () => {
         });
         setTimeRemaining(initialTimeRemaining);
       } catch (error) {
+        console.error('Error fetching auctions:', error);
         showSnackbar('Error fetching auctions', 'error');
       }
     };
@@ -192,11 +216,11 @@ const BuyerDashboard = () => {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await axios.get(`${API_URL}/notifications`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get('/notifications');
+        console.log('Fetched notifications:', response.data); // Debug log
         setNotifications(response.data);
       } catch (error) {
+        console.error('Error fetching notifications:', error);
         showSnackbar('Error fetching notifications', 'error');
       }
     };
@@ -246,23 +270,21 @@ const BuyerDashboard = () => {
       }
 
       await axios.post(
-        `${API_URL}/auctions/${auctionId}/bid`,
-        { bidAmount: bidValue },
-        { headers: { Authorization: `Bearer ${token}` } }
+        `/auctions/${auctionId}/bid`,
+        { bidAmount: bidValue }
       );
 
       showSnackbar('Bid submitted successfully!', 'success');
       setBidAmount((prev) => ({ ...prev, [auctionId]: '' }));
 
-      const response = await axios.get(`${API_URL}/auctions`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get('/auctions');
 
       const activeAuctions = response.data.filter(
         (auction) => auction.status === 'active' && !isAuctionExpired(auction.endTime)
       );
       setAuctions(activeAuctions);
     } catch (error) {
+      console.error('Error submitting bid:', error);
       showSnackbar(error.response?.data?.message || 'Error submitting bid', 'error');
     }
   };
@@ -270,11 +292,7 @@ const BuyerDashboard = () => {
   const markAsRead = async (notificationId) => {
     try {
       await axios.put(
-        `${API_URL}/notifications/${notificationId}/read`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        `/notifications/${notificationId}/read`
       );
       setNotifications((prev) =>
         prev.map((notification) =>
@@ -282,6 +300,7 @@ const BuyerDashboard = () => {
         )
       );
     } catch (error) {
+      console.error('Error marking notification as read:', error);
       showSnackbar('Error marking notification as read', 'error');
     }
   };
@@ -302,6 +321,117 @@ const BuyerDashboard = () => {
 
   const handleViewFarmerProfile = (farmerId) => {
     navigate(`/users/${farmerId}`);
+  };
+
+  const handlePaymentClick = async (auctionId, amount) => {
+    try {
+      const response = await axios.post(
+        `/auctions/${auctionId}/payment-intent`,
+        { amount }
+      );
+
+      setPaymentModal({
+        open: true,
+        auctionId,
+        amount,
+        title: auctions.find(a => a._id === auctionId)?.title || 'Auction Payment',
+        clientSecret: response.data.clientSecret
+      });
+    } catch (error) {
+      console.error('Error initiating payment:', error);
+      showSnackbar('Error initiating payment', 'error');
+    }
+  };
+
+  const handlePaymentSuccess = async (auctionId) => {
+    setPaymentModal(prev => ({ ...prev, open: false }));
+    showSnackbar('Payment successful!', 'success');
+    // Refresh notifications after successful payment
+    const response = await axios.get('/notifications');
+    setNotifications(response.data);
+  };
+
+  const handleNotificationClick = async (notification) => {
+    console.log('Clicked notification:', notification); // Debug log
+    
+    // Mark notification as read
+    await markAsRead(notification._id);
+
+    // Check if this is a payment notification
+    if (notification.type === 'auction_won' && notification.metadata) {
+      console.log('Found auction_won notification with metadata:', notification.metadata); // Debug log
+      const { auctionId, paymentIntentClientSecret } = notification.metadata;
+      console.log('Payment data:', { auctionId, paymentIntentClientSecret }); // Debug log
+      
+      if (!auctionId || !paymentIntentClientSecret) {
+        console.error('Missing required payment data:', notification.metadata);
+        showSnackbar('Error: Missing payment information', 'error');
+        return;
+      }
+
+      try {
+        // Get auction details
+        const response = await axios.get(`/auctions/${auctionId}`);
+        console.log('Auction details response:', response.data); // Debug log
+
+        const auction = response.data;
+        if (!auction.winningBid || !auction.product) {
+          console.error('Invalid auction data:', auction);
+          showSnackbar('Error: Invalid auction data', 'error');
+          return;
+        }
+
+        console.log('Opening payment modal with:', { // Debug log
+          auctionId,
+          amount: auction.winningBid.amount,
+          title: auction.product.title,
+          clientSecret: paymentIntentClientSecret
+        });
+
+        // Open payment modal with auction details and client secret
+        setPaymentModal({
+          open: true,
+          auctionId: auctionId,
+          amount: auction.winningBid.amount,
+          title: auction.product.title,
+          clientSecret: paymentIntentClientSecret
+        });
+
+        // Close the notification drawer
+        setDrawerOpen(false);
+      } catch (error) {
+        console.error('Error loading auction details:', error);
+        showSnackbar(
+          error.response?.data?.message || 'Error loading auction details',
+          'error'
+        );
+      }
+    } else {
+      console.log('Notification not eligible for payment:', { // Debug log
+        type: notification.type,
+        hasMetadata: !!notification.metadata
+      });
+    }
+  };
+
+  const handlePaymentClickFromNotification = async (notification) => {
+    try {
+      const response = await axios.post(
+        `/auctions/${notification.metadata.auctionId}/payment-intent`,
+        { amount: notification.metadata.amount }
+      );
+
+      setPaymentModal({
+        open: true,
+        auctionId: notification.metadata.auctionId,
+        amount: notification.metadata.amount,
+        title: notification.metadata.title || 'Auction Payment',
+        clientSecret: response.data.clientSecret
+      });
+    } catch (error) {
+      console.error('Payment error:', error);
+      showSnackbar(error.response?.data?.message || 'Error initiating payment', 'error');
+    }
   };
 
   return (
@@ -568,48 +698,72 @@ const BuyerDashboard = () => {
       </Grid>
 
       {/* Notification Drawer */}
-      <NotificationDrawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Notifications
-        </Typography>
-        <Divider sx={{ mb: 2 }} />
-        <List>
-          {notifications.length > 0 ? (
-            notifications.map((notification) => (
-              <Paper key={notification._id} elevation={notification.read ? 0 : 2} sx={{ mb: 2 }}>
-                <ListItem
-                  onClick={() => markAsRead(notification._id)}
-                  sx={{
-                    bgcolor: notification.read ? 'transparent' : 'action.hover',
-                    borderRadius: 1,
-                    cursor: 'pointer',
-                    '&:hover': {
-                      bgcolor: theme.palette.action.selected,
-                    },
-                  }}
-                >
-                  <ListItemText
-                    primary={notification.message}
-                    secondary={
-                      <Typography variant="caption" color="text.secondary">
-                        {formatDistanceToNow(new Date(notification.createdAt), {
-                          addSuffix: true,
-                        })}
-                        {' · '}
-                        {notification.read ? 'Read' : 'Unread'}
-                      </Typography>
-                    }
-                  />
-                </ListItem>
-              </Paper>
-            ))
-          ) : (
-            <Typography color="text.secondary" align="center">
-              No notifications
+      <Drawer 
+        anchor="right" 
+        open={drawerOpen} 
+        onClose={() => setDrawerOpen(false)}
+        PaperProps={{
+          sx: { width: { xs: '100%', sm: 400 } }
+        }}
+      >
+        <Box sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">
+              Notifications
             </Typography>
-          )}
-        </List>
-      </NotificationDrawer>
+            <IconButton onClick={() => setDrawerOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <List>
+            {notifications.map((notification) => (
+              <ListItem
+                key={notification._id}
+                sx={{
+                  opacity: notification.read ? 0.7 : 1,
+                  bgcolor: notification.read ? 'transparent' : 'action.hover',
+                  borderRadius: 1,
+                  mb: 1,
+                }}
+              >
+                <ListItemText
+                  primary={notification.message}
+                  secondary={formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                />
+                {notification.type === 'auction_won' && notification.metadata?.auctionId && (
+                  <ListItemSecondaryAction>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      startIcon={<PaymentIcon />}
+                      onClick={() => handlePaymentClickFromNotification(notification)}
+                    >
+                      Pay Now
+                    </Button>
+                  </ListItemSecondaryAction>
+                )}
+              </ListItem>
+            ))}
+            {notifications.length === 0 && (
+              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+                No notifications yet
+              </Typography>
+            )}
+          </List>
+        </Box>
+      </Drawer>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        open={paymentModal.open}
+        onClose={() => setPaymentModal(prev => ({ ...prev, open: false }))}
+        auctionId={paymentModal.auctionId}
+        amount={paymentModal.amount}
+        title={paymentModal.title}
+        clientSecret={paymentModal.clientSecret}
+        onSuccess={handlePaymentSuccess}
+      />
 
       {/* Snackbar for Alerts */}
       <Snackbar
