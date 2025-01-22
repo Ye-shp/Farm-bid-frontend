@@ -43,6 +43,7 @@ import axios from 'axios';
 import { formatDistanceToNow } from 'date-fns';
 import SearchBar from './SearchBar';
 import PaymentModal from './PaymentModal';
+import { io } from 'socket.io-client';
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
   '& .MuiBadge-badge': {
@@ -137,6 +138,7 @@ const BuyerDashboard = () => {
     title: '',
     clientSecret: ''
   });
+  const [socket, setSocket] = useState(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -214,10 +216,56 @@ const BuyerDashboard = () => {
   }, []);
 
   useEffect(() => {
+    if (!token) return;
+
+    const socketInstance = io(API_URL, {
+      auth: {
+        token
+      }
+    });
+
+    socketInstance.on('connect', () => {
+      console.log('Socket connected');
+      socketInstance.emit('authenticate', token);
+    });
+
+    socketInstance.on('newNotification', (notification) => {
+      console.log('New notification received:', notification);
+      setNotifications(prev => {
+        // Check if notification already exists
+        const exists = prev.some(n => n._id === notification._id);
+        if (exists) {
+          // Update existing notification
+          return prev.map(n => n._id === notification._id ? notification : n);
+        }
+        // Add new notification at the beginning
+        return [notification, ...prev];
+      });
+
+      // Show notification in snackbar
+      showSnackbar(notification.message, 'info');
+    });
+
+    socketInstance.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+    });
+
+    setSocket(socketInstance);
+
+    return () => {
+      socketInstance.disconnect();
+    };
+  }, [token, API_URL]);
+
+  useEffect(() => {
     const fetchNotifications = async () => {
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
       try {
         const response = await axios.get('/notifications');
-        console.log('Fetched notifications:', response.data); // Debug log
         setNotifications(response.data);
       } catch (error) {
         console.error('Error fetching notifications:', error);
@@ -416,16 +464,21 @@ const BuyerDashboard = () => {
 
   const handlePaymentClickFromNotification = async (notification) => {
     try {
+      // Get auction details first
+      const auctionResponse = await axios.get(`/auctions/${notification.metadata.auctionId}`);
+      const auction = auctionResponse.data;
+
+      // Create payment intent
       const response = await axios.post(
         `/auctions/${notification.metadata.auctionId}/payment-intent`,
-        { amount: notification.metadata.amount }
+        { amount: auction.winningBid.amount }
       );
 
       setPaymentModal({
         open: true,
         auctionId: notification.metadata.auctionId,
-        amount: notification.metadata.amount,
-        title: notification.metadata.title || 'Auction Payment',
+        amount: auction.winningBid.amount,
+        title: auction.product.title,
         clientSecret: response.data.clientSecret
       });
     } catch (error) {
