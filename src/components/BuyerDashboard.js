@@ -43,7 +43,7 @@ import axios from 'axios';
 import { formatDistanceToNow } from 'date-fns';
 import SearchBar from './SearchBar';
 import PaymentModal from './PaymentModal';
-import { io } from 'socket.io-client';
+import { useSocket } from '../context/SocketContext';
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
   '& .MuiBadge-badge': {
@@ -125,7 +125,6 @@ const BuyerDashboard = () => {
   const navigate = useNavigate();
   const [auctions, setAuctions] = useState([]);
   const [bidAmount, setBidAmount] = useState({});
-  const [notifications, setNotifications] = useState([]);
   const [searchResults, setSearchResults] = useState([]); 
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -138,7 +137,9 @@ const BuyerDashboard = () => {
     title: '',
     clientSecret: ''
   });
-  const [socket, setSocket] = useState(null);
+  const socket = useSocket();
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -201,7 +202,9 @@ const BuyerDashboard = () => {
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3');
+        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3', {
+          withCredentials: false
+        });
         const loc = response.data.loc.split(',');
         setLocation({
           latitude: loc[0],
@@ -216,57 +219,37 @@ const BuyerDashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (!token) return;
+    if (!socket) {
+      console.log('Socket not available for notifications');
+      return;
+    }
 
-    const socketInstance = io(API_URL, {
-      auth: {
-        token
-      }
-    });
-
-    socketInstance.on('connect', () => {
-      console.log('Socket connected');
-      socketInstance.emit('authenticate', token);
-    });
-
-    socketInstance.on('newNotification', (notification) => {
-      console.log('New notification received:', notification);
+    console.log('Setting up notification listener');
+    const handleNewNotification = (notification) => {
+      console.log('Received new notification:', notification);
       setNotifications(prev => {
         // Check if notification already exists
         const exists = prev.some(n => n._id === notification._id);
         if (exists) {
-          // Update existing notification
           return prev.map(n => n._id === notification._id ? notification : n);
         }
-        // Add new notification at the beginning
+        // Add new notification and update unread count
+        setUnreadCount(count => count + 1);
+        showSnackbar(notification.message, 'info');
         return [notification, ...prev];
       });
-
-      // Show notification in snackbar
-      showSnackbar(notification.message, 'info');
-    });
-
-    socketInstance.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
-    });
-
-    setSocket(socketInstance);
-
-    return () => {
-      socketInstance.disconnect();
     };
-  }, [token, API_URL]);
 
-  useEffect(() => {
+    socket.on('newNotification', handleNewNotification);
+
+    // Fetch initial notifications
     const fetchNotifications = async () => {
-      if (!token) {
-        console.error('No authentication token found');
-        return;
-      }
-
       try {
+        console.log('Fetching initial notifications');
         const response = await axios.get('/notifications');
+        console.log('Initial notifications:', response.data);
         setNotifications(response.data);
+        setUnreadCount(response.data.filter(n => !n.read).length);
       } catch (error) {
         console.error('Error fetching notifications:', error);
         showSnackbar('Error fetching notifications', 'error');
@@ -274,7 +257,12 @@ const BuyerDashboard = () => {
     };
 
     fetchNotifications();
-  }, [token]);
+
+    return () => {
+      console.log('Cleaning up notification listener');
+      socket.off('newNotification', handleNewNotification);
+    };
+  }, [socket]);
 
   const formatTimeRemaining = (ms) => {
     if (ms <= 0) return 'Auction ended';
@@ -347,6 +335,7 @@ const BuyerDashboard = () => {
           notification._id === notificationId ? { ...notification, read: true } : notification
         )
       );
+      setUnreadCount(count => count - 1);
     } catch (error) {
       console.error('Error marking notification as read:', error);
       showSnackbar('Error marking notification as read', 'error');
@@ -360,8 +349,6 @@ const BuyerDashboard = () => {
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleSearchResults = (results) => {
     setSearchResults(results);
@@ -397,19 +384,16 @@ const BuyerDashboard = () => {
     // Refresh notifications after successful payment
     const response = await axios.get('/notifications');
     setNotifications(response.data);
+    setUnreadCount(response.data.filter(n => !n.read).length);
   };
 
   const handleNotificationClick = async (notification) => {
-    console.log('Clicked notification:', notification); // Debug log
-    
     // Mark notification as read
     await markAsRead(notification._id);
 
-    // Check if this is a payment notification
+    // Handle auction_won notifications with payment
     if (notification.type === 'auction_won' && notification.metadata) {
-      console.log('Found auction_won notification with metadata:', notification.metadata); // Debug log
-      const { auctionId, paymentIntentClientSecret } = notification.metadata;
-      console.log('Payment data:', { auctionId, paymentIntentClientSecret }); // Debug log
+      const { auctionId, amount, title, paymentIntentClientSecret } = notification.metadata;
       
       if (!auctionId || !paymentIntentClientSecret) {
         console.error('Missing required payment data:', notification.metadata);
@@ -417,48 +401,17 @@ const BuyerDashboard = () => {
         return;
       }
 
-      try {
-        // Get auction details
-        const response = await axios.get(`/auctions/${auctionId}`);
-        console.log('Auction details response:', response.data); // Debug log
-
-        const auction = response.data;
-        if (!auction.winningBid || !auction.product) {
-          console.error('Invalid auction data:', auction);
-          showSnackbar('Error: Invalid auction data', 'error');
-          return;
-        }
-
-        console.log('Opening payment modal with:', { // Debug log
-          auctionId,
-          amount: auction.winningBid.amount,
-          title: auction.product.title,
-          clientSecret: paymentIntentClientSecret
-        });
-
-        // Open payment modal with auction details and client secret
-        setPaymentModal({
-          open: true,
-          auctionId: auctionId,
-          amount: auction.winningBid.amount,
-          title: auction.product.title,
-          clientSecret: paymentIntentClientSecret
-        });
-
-        // Close the notification drawer
-        setDrawerOpen(false);
-      } catch (error) {
-        console.error('Error loading auction details:', error);
-        showSnackbar(
-          error.response?.data?.message || 'Error loading auction details',
-          'error'
-        );
-      }
-    } else {
-      console.log('Notification not eligible for payment:', { // Debug log
-        type: notification.type,
-        hasMetadata: !!notification.metadata
+      // Open payment modal directly with the client secret from notification
+      setPaymentModal({
+        open: true,
+        auctionId,
+        amount,
+        title,
+        clientSecret: paymentIntentClientSecret
       });
+
+      // Close the notification drawer
+      setDrawerOpen(false);
     }
   };
 

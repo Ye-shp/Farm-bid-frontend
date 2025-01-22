@@ -28,7 +28,9 @@ const RegisterPage = () => {
     const fetchLocationDetails = async () => {
       try {
         // First get IP-based location
-        const ipResponse = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3');
+        const ipResponse = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3', {
+          withCredentials: false
+        });
         const [lat, lng] = ipResponse.data.loc.split(',');
         
         // Use Google's Geocoding API to get detailed address

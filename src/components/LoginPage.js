@@ -28,7 +28,9 @@ const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3');
+        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3', {
+          withCredentials: false
+        });
         const loc = response.data.loc.split(',');
         setLocation({
           latitude: loc[0],
