@@ -34,13 +34,13 @@ import HowToRegIcon from '@mui/icons-material/HowToReg';
 import DescriptionIcon from '@mui/icons-material/Description';
 import CloseIcon from '@mui/icons-material/Close';
 
+import { useAuth } from '../contexts/AuthContext';
+
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
-  const token = localStorage.getItem('token');
-  const userRole = localStorage.getItem('role');
-  const userId = localStorage.getItem('userId');
+  const { user, logout } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -57,10 +57,8 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('userId');
-    navigate('/');
+    logout();
+    navigate('/login');
     handleMenuClose();
     setDrawerOpen(false);
   };
@@ -68,13 +66,13 @@ const Header = () => {
   const isCurrentPath = (path) => location.pathname === path;
 
   const getVisibleNavItems = () => {
-    if (!token) {
+    if (!user) {
       return [
         { label: 'Field Notes', path: '/blog', icon: <ArticleIcon /> }
       ];
     }
 
-    if (userRole === 'farmer') {
+    if (user.role === 'farmer') {
       return [
         { label: 'Dashboard', path: '/farmer-dashboard', icon: <DashboardIcon /> },
         { label: 'Field Notes', path: '/blog', icon: <ArticleIcon /> },
@@ -83,7 +81,7 @@ const Header = () => {
       ];
     }
 
-    if (userRole === 'buyer') {
+    if (user.role === 'buyer') {
       return [
         { label: 'Dashboard', path: '/buyer-dashboard', icon: <DashboardIcon /> },
         { label: 'Field Notes', path: '/blog', icon: <ArticleIcon /> },
@@ -94,21 +92,21 @@ const Header = () => {
     return [];
   };
 
-  const menuItems = !token ? [
+  const menuItems = !user ? [
     { label: 'Login', path: '/login', icon: <LoginIcon /> },
     { label: 'Register', path: '/register', icon: <HowToRegIcon /> }
-  ] : userRole === 'farmer' ? [
+  ] : user.role === 'farmer' ? [
     { label: 'Create Field Notes', path: '/create-blog', icon: <ArticleIcon /> },
     { label: 'My Profile', path: '/profile', icon: <PersonIcon /> },
     { label: 'Payout', path: '/Payout', icon: <PaymentsIcon /> }
-  ] : userRole === 'buyer' ? [
+  ] : user.role === 'buyer' ? [
     { label: 'Create Field Notes', path: '/buyer/create-blog', icon: <ArticleIcon /> },
     { label: 'My Profile', path: '/profile', icon: <PersonIcon /> },
     { label: 'Checkout', path: '/CheckoutForm', icon: <PaymentsIcon /> }
   ] : [];
 
   const allMenuItems = [...getVisibleNavItems(), ...menuItems];
-  if (token) {
+  if (user) {
     allMenuItems.push({ label: 'Logout', path: null, icon: <LogoutIcon />, onClick: handleLogout });
   }
 
@@ -227,12 +225,12 @@ const Header = () => {
                 <IconButton onClick={handleMenuOpen}>
                   <Avatar 
                     sx={{ 
-                      bgcolor: token ? 'primary.main' : 'grey.300',
+                      bgcolor: user ? 'primary.main' : 'grey.300',
                       width: 40,
                       height: 40,
                     }}
                   >
-                    {token ? userRole?.[0]?.toUpperCase() : <PersonIcon />}
+                    {user ? user.role?.[0]?.toUpperCase() : <PersonIcon />}
                   </Avatar>
                 </IconButton>
                 
@@ -257,7 +255,7 @@ const Header = () => {
                   }}
                 >
                   {desktopMenuItems}
-                  {token && [
+                  {user && [
                     <Divider key="divider" sx={{ my: 1 }} />,
                     <MenuItem
                       key="logout"

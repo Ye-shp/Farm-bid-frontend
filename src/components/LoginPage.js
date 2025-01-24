@@ -15,8 +15,9 @@ import {
   InputAdornment
 } from '@mui/material';
 import { Email, Lock } from '@mui/icons-material';
+import { useAuth } from '../contexts/AuthContext';
 
-const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
+const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -24,6 +25,7 @@ const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
   const [location, setLocation] = useState({ latitude: '', longitude: '' });
   const navigate = useNavigate();
   const theme = useTheme();
+  const { login: authLogin } = useAuth();
 
   useEffect(() => {
     const fetchLocation = async () => {
@@ -55,14 +57,16 @@ const LoginPage = ({ setIsLoggedIn, setUserRole }) => {
         const { token, user } = response.data;
         const userRole = user.role;
 
-        localStorage.setItem('token', token);
-        localStorage.setItem('role', userRole);
+        // Store location data
         localStorage.setItem('latitude', location.latitude);
         localStorage.setItem('longitude', location.longitude);
-        localStorage.setItem('userId', user.id);
 
-        setIsLoggedIn(true);
-        setUserRole(userRole);
+        // Use AuthContext login
+        authLogin({
+          token,
+          userId: user.id,
+          role: userRole
+        });
 
         if (userRole === 'farmer') {
           navigate('/farmer-dashboard');
