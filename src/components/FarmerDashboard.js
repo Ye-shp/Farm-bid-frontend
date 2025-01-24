@@ -20,9 +20,11 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  InputAdornment
+  InputAdornment,
+  Snackbar
 } from '@mui/material';
-import { Add as AddIcon, CloudUpload as UploadIcon } from '@mui/icons-material';
+import { Add as AddIcon, CloudUpload as UploadIcon, Notifications as NotificationsIcon } from '@mui/icons-material';
+import { useSocket } from '../context/SocketContext';
 
 const FarmerDashboard = () => {
   const [products, setProducts] = useState([]);
@@ -53,46 +55,109 @@ const FarmerDashboard = () => {
     endTime: ''
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const socket = useSocket();
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('info');
 
-  const fetchData = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
-      // Fetch product categories
-      const categoriesResponse = await axios.get(
-        `${API_URL}/api/products/categories`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setProductCategories(categoriesResponse.data);
-
-      // Fetch farmer's products
-      const productsResponse = await axios.get(
-        `${API_URL}/api/products/farmer-products`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setProducts(productsResponse.data);
-
-      // Fetch farmer's auctions
-      const auctionsResponse = await axios.get(
-        `${API_URL}/api/auctions/farmer-auctions`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setAuctions(auctionsResponse.data);
-
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setError('Failed to load data');
-      setLoading(false);
-    }
+  const showSnackbar = (message, severity) => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
   };
+
+  useEffect(() => {
+    if (!socket) {
+      console.log('Socket not available for notifications');
+      return;
+    }
+
+    console.log('Setting up notification listener');
+    const handleNewNotification = (notification) => {
+      console.log('Received new notification:', notification);
+      setNotifications(prev => {
+        // Check if notification already exists
+        const exists = prev.some(n => n._id === notification._id);
+        if (exists) {
+          return prev.map(n => n._id === notification._id ? notification : n);
+        }
+        // Add new notification and update unread count
+        setUnreadCount(count => count + 1);
+        showSnackbar(notification.message, 'info');
+        return [notification, ...prev];
+      });
+    };
+
+    socket.on('newNotification', handleNewNotification);
+
+    // Fetch initial notifications
+    const fetchNotifications = async () => {
+      try {
+        console.log('Fetching initial notifications');
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_URL}/notifications`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log('Initial notifications:', response.data);
+        setNotifications(response.data);
+        setUnreadCount(response.data.filter(n => !n.read).length);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        showSnackbar('Error fetching notifications', 'error');
+      }
+    };
+
+    fetchNotifications();
+
+    return () => {
+      console.log('Cleaning up notification listener');
+      socket.off('newNotification', handleNewNotification);
+    };
+  }, [socket, API_URL]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/login');
+          return;
+        }
+
+        // Fetch product categories
+        const categoriesResponse = await axios.get(
+          `${API_URL}/api/products/categories`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setProductCategories(categoriesResponse.data);
+
+        // Fetch farmer's products
+        const productsResponse = await axios.get(
+          `${API_URL}/api/products/farmer-products`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setProducts(productsResponse.data);
+
+        // Fetch farmer's auctions
+        const auctionsResponse = await axios.get(
+          `${API_URL}/api/auctions/farmer-auctions`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setAuctions(auctionsResponse.data);
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError('Failed to load data');
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [socket, navigate]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -191,6 +256,23 @@ const FarmerDashboard = () => {
     } catch (error) {
       setError('Failed to create auction. Please try again.');
       console.error('Error creating auction:', error);
+    }
+  };
+
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/notifications/${notificationId}/read`, null, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification._id === notificationId ? { ...notification, read: true } : notification
+        )
+      );
+      setUnreadCount(count => count - 1);
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
     }
   };
 
@@ -402,6 +484,14 @@ const FarmerDashboard = () => {
           >
             Create Auction
           </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<NotificationsIcon />}
+            onClick={() => setShowNotifications(true)}
+          >
+            Notifications ({unreadCount})
+          </Button>
         </Box>
 
         <Grid container spacing={3}>
@@ -494,6 +584,41 @@ const FarmerDashboard = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Notifications Dialog */}
+      <Dialog open={showNotifications} onClose={() => setShowNotifications(false)}>
+        <DialogTitle>Notifications</DialogTitle>
+        <DialogContent>
+          {notifications.map((notification) => (
+            <Box key={notification._id} sx={{ mb: 2 }}>
+              <Typography variant="body1" gutterBottom>
+                {notification.message}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                {notification.createdAt}
+              </Typography>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => handleMarkAsRead(notification._id)}
+              >
+                Mark as Read
+              </Button>
+            </Box>
+          ))}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowNotifications(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+        message={snackbarMessage}
+        severity={snackbarSeverity}
+      />
     </Box>
   );
 };

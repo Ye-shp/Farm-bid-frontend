@@ -29,11 +29,21 @@ const SearchBar = ({ onSearchResults }) => {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
+  // Helper function to ensure proper URL construction
+  const getApiUrl = (endpoint) => {
+    const baseUrl = process.env.REACT_APP_API_URL;
+    // Remove trailing slash from base URL if it exists
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    // Remove leading slash from endpoint if it exists
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+    return `${cleanBaseUrl}/${cleanEndpoint}`;
+  };
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}api/products/categories`
+          getApiUrl('api/products/categories')
         );
         
         if (response.data && typeof response.data === 'object') {
@@ -95,15 +105,15 @@ const SearchBar = ({ onSearchResults }) => {
         queryParams.append('searchAnywhere', 'true');
       }
 
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}api/search/farms?${queryParams}`,
-        {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+      const url = new URL(getApiUrl('api/search/farms'));
+      queryParams.forEach((value, key) => url.searchParams.set(key, value));
+
+      const response = await axios.get(url.toString(), {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      );
+      });
       
       onSearchResults(response.data);
     } catch (err) {

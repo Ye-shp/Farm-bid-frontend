@@ -25,6 +25,7 @@ import Contracts from './components/Contracts';
 import ContractDetails from './components/ContractDetails';
 import FulfillContract from './components/FulfillContract';
 import SearchBar from './components/SearchBar';
+import { SocketProvider } from './context/SocketContext';
 
 const stripePromise = loadStripe('pk_live_51Q9hx7ApVL7y3rvg85x9cvnfNETqgxw7qYxRrBJeD7rOg0d0M0WJnNMRF4TouN5RYAgwQ0HfQefNwZ5AEGXPIlF600UXzQ8rKx')
 
@@ -82,103 +83,105 @@ const App = () => {
 
   return (
     <Router>
-      <div>
-        <Header isLoggedIn={isLoggedIn} userRole={userRole} />
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginRoute />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/products" element={<ProductList />} />
-          <Route path="/blog" element={<BlogList />} />
-          <Route path="/blog/:id" element={<BlogPost />} />
-          <Route path="/featured-farms" element={<FeaturedFarms />} />
-          
-          {/* Profile Routes */}
-          <Route path="/profile" element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole}>
-              <UserProfile />
-            </ProtectedRoute>
-          } />
-          <Route path="/users/:userId" element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole}>
-              <UserProfile />
-            </ProtectedRoute>
-          } />
+      <SocketProvider>
+        <div>
+          <Header isLoggedIn={isLoggedIn} userRole={userRole} />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginRoute />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/products" element={<ProductList />} />
+            <Route path="/blog" element={<BlogList />} />
+            <Route path="/blog/:id" element={<BlogPost />} />
+            <Route path="/featured-farms" element={<FeaturedFarms />} />
+            
+            {/* Profile Routes */}
+            <Route path="/profile" element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole}>
+                <UserProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/users/:userId" element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole}>
+                <UserProfile />
+              </ProtectedRoute>
+            } />
 
-          {/* Protected Routes - Require Login */}
-          <Route path="/products/:id" element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole}>
-              <ProductDetails />
-            </ProtectedRoute>
-          } />
+            {/* Protected Routes - Require Login */}
+            <Route path="/products/:id" element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole}>
+                <ProductDetails />
+              </ProtectedRoute>
+            } />
 
-          {/* Farmer Routes */}
-          <Route path="/farmer-dashboard" element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['farmer']}>
-              <FarmerDashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/create-blog" element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['farmer']}>
-              <CreateBlogPost />
-            </ProtectedRoute>
-          } />
-          <Route path="/auctions" element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['farmer']}>
-              <FarmerAuctions />
-            </ProtectedRoute>
-          } />
-          <Route path="/payout" element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['farmer']}>
-              <Payout />
-            </ProtectedRoute>
-          } />
-          <Route path="/fulfill-contract/:contractId" element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['farmer']}>
-              <FulfillContract />
-            </ProtectedRoute>
-          } />
+            {/* Farmer Routes */}
+            <Route path="/farmer-dashboard" element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['farmer']}>
+                <FarmerDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/create-blog" element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['farmer']}>
+                <CreateBlogPost />
+              </ProtectedRoute>
+            } />
+            <Route path="/auctions" element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['farmer']}>
+                <FarmerAuctions />
+              </ProtectedRoute>
+            } />
+            <Route path="/payout" element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['farmer']}>
+                <Payout />
+              </ProtectedRoute>
+            } />
+            <Route path="/fulfill-contract/:contractId" element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['farmer']}>
+                <FulfillContract />
+              </ProtectedRoute>
+            } />
 
-          {/* Buyer Routes */}
-          <Route path="/buyer-dashboard" element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['buyer']}>
-              <BuyerDashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/buyer/create-blog" element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['buyer']}>
-              <CreateBlogPost />
-            </ProtectedRoute>
-          } />
-          <Route path="/create-contract" element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['buyer']}>
-              <CreateContract />
-            </ProtectedRoute>
-          } />
-          <Route path="/checkout" element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['buyer']}>
-              <Elements stripe={stripePromise}>
-                <CheckoutForm />
-              </Elements>
-            </ProtectedRoute>
-          } />
+            {/* Buyer Routes */}
+            <Route path="/buyer-dashboard" element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['buyer']}>
+                <BuyerDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/buyer/create-blog" element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['buyer']}>
+                <CreateBlogPost />
+              </ProtectedRoute>
+            } />
+            <Route path="/create-contract" element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['buyer']}>
+                <CreateContract />
+              </ProtectedRoute>
+            } />
+            <Route path="/checkout" element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole} allowedRoles={['buyer']}>
+                <Elements stripe={stripePromise}>
+                  <CheckoutForm />
+                </Elements>
+              </ProtectedRoute>
+            } />
 
-          {/* Shared Protected Routes */}
-          <Route path="/contracts" element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole}>
-              <Contracts />
-            </ProtectedRoute>
-          } />
-          <Route path="/contracts/:contractId" element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole}>
-              <ContractDetails />
-            </ProtectedRoute>
-          } />
-        </Routes>
-      </div>
+            {/* Shared Protected Routes */}
+            <Route path="/contracts" element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole}>
+                <Contracts />
+              </ProtectedRoute>
+            } />
+            <Route path="/contracts/:contractId" element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} userRole={userRole}>
+                <ContractDetails />
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </div>
+      </SocketProvider>
     </Router>
   );
 };

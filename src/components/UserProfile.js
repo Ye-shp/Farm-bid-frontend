@@ -137,7 +137,7 @@ const UserProfile = () => {
         if (userData.role === 'farmer') {
           console.log('Fetching products for farmer:', targetUserId);
           const productsResponse = await fetch(
-            `${API_URL}/api/products/farmer-products`,
+            `${API_URL}/api/products/farmer-products?farmerId=${targetUserId}`,
             {
               headers: {
                 'Authorization': `Bearer ${token}`,
