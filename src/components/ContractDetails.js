@@ -21,7 +21,8 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import CheckoutForm from './CheckoutForm';
+import PaymentForm from './payment/PaymentForm';
+import TransactionStatus from './payment/TransactionStatus';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
 
@@ -285,14 +286,14 @@ const ContractDetails = () => {
         <DialogTitle>Complete Purchase</DialogTitle>
         <DialogContent>
           {selectedFulfillment && (
-            <Elements stripe={stripePromise}>
-              <CheckoutForm
-                sourceType="contract"
-                sourceId={contractId}
-                amount={(selectedFulfillment.price * contract.quantity + (selectedFulfillment.deliveryFee || 0))}
-                onSuccess={() => handleAcceptFulfillment(selectedFulfillment._id)}
-              />
-            </Elements>
+            <PaymentForm
+              amount={(selectedFulfillment.price * contract.quantity + (selectedFulfillment.deliveryFee || 0))}
+              sourceType="contract"
+              sourceId={contractId}
+              sellerId={contract.seller._id}
+              onSuccess={() => handleAcceptFulfillment(selectedFulfillment._id)}
+              onError={(error) => console.error('Payment error:', error)}
+            />
           )}
         </DialogContent>
       </Dialog>

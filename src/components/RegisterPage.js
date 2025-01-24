@@ -4,6 +4,7 @@ import { register } from '../Services/api';
 import axios from 'axios';
 import { Box, Button, Container, Grid, Select, MenuItem, TextField, Typography, Alert, InputAdornment } from '@mui/material';
 import { Person, Email, Lock, Store, ShoppingCart, Phone } from '@mui/icons-material';
+import { useAuth } from '../contexts/AuthContext';
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
@@ -23,6 +24,7 @@ const RegisterPage = () => {
   });
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
 
   useEffect(() => {
     const fetchLocationDetails = async () => {
@@ -101,44 +103,34 @@ const RegisterPage = () => {
     }
 
     try {
-      const userData = {
+      const response = await register({
         username,
         email,
         password,
         phone,
         role,
-        address: {
-          street: address.street,
-          city: address.city,
-          state: address.state,
-          zipCode: address.zipCode,
-          coordinates: {
-            lat,
-            lng
-          }
-        }
-      };
+        address
+      });
 
-      const response = await register(userData);
       if (response.status === 201) {
-        alert("Registration successful!");
-        setUsername('');
-        setEmail('');
-        setPassword('');
-        setPhone('');
-        setRole('buyer');
-        setError(null);
-        navigate('/login');
+        const { token, user } = response.data;
+        
+        // Use AuthContext login
+        authLogin({
+          token,
+          userId: user.id,
+          role: user.role
+        });
+
+        // Navigate based on role
+        if (user.role === 'farmer') {
+          navigate('/farmer-dashboard');
+        } else if (user.role === 'buyer') {
+          navigate('/buyer-dashboard');
+        }
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      if (error.response && error.response.status === 409) {
-        setError("User already registered. Please log in.");
-      } else if (error.response && error.response.status === 400) {
-        setError("Username already taken. Please choose another username.");
-      } else {
-        setError("An error occurred. Please try again.");
-      }
+      setError(error.response?.data?.message || "Registration failed. Please try again.");
     }
   };
 

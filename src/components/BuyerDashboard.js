@@ -27,6 +27,9 @@ import {
   useMediaQuery,
   ListItemSecondaryAction,
   styled,
+  Dialog,
+  DialogTitle,
+  DialogContent,
 } from '@mui/material';
 import {
   Notifications as NotificationsIcon,
@@ -42,8 +45,10 @@ import {
 import axios from 'axios';
 import { formatDistanceToNow } from 'date-fns';
 import SearchBar from './SearchBar';
-import PaymentModal from './PaymentModal';
+import PaymentForm from './payment/PaymentForm';
+import TransactionStatus from './payment/TransactionStatus';
 import { useSocket } from '../context/SocketContext';
+import paymentService from '../Services/paymentService';
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
   '& .MuiBadge-badge': {
@@ -133,6 +138,7 @@ const BuyerDashboard = () => {
   const [paymentModal, setPaymentModal] = useState({
     open: false,
     auctionId: null,
+    bidId: null,
     amount: 0,
     title: '',
     clientSecret: ''
@@ -358,23 +364,27 @@ const BuyerDashboard = () => {
     navigate(`/users/${farmerId}`);
   };
 
-  const handlePaymentClick = async (auctionId, amount) => {
+  const handlePaymentClick = async (auctionId, amount, bidId) => {
     try {
-      const response = await axios.post(
-        `/auctions/${auctionId}/payment-intent`,
-        { amount }
-      );
+      const response = await paymentService.createPaymentIntent({
+        amount,
+        sourceType: 'auction',
+        sourceId: auctionId,
+        sellerId: auctions.find(a => a._id === auctionId)?.sellerId,
+        bidId: bidId // Add bidId to the payment intent creation
+      });
 
       setPaymentModal({
         open: true,
         auctionId,
+        bidId,  // Store bidId in payment modal
         amount,
         title: auctions.find(a => a._id === auctionId)?.title || 'Auction Payment',
-        clientSecret: response.data.clientSecret
+        clientSecret: response.clientSecret
       });
     } catch (error) {
       console.error('Error initiating payment:', error);
-      showSnackbar('Error initiating payment', 'error');
+      showSnackbar(error.response?.data?.message || 'Error initiating payment', 'error');
     }
   };
 
@@ -391,27 +401,38 @@ const BuyerDashboard = () => {
     // Mark notification as read
     await markAsRead(notification._id);
 
-    // Handle auction_won notifications with payment
     if (notification.type === 'auction_won' && notification.metadata) {
-      const { auctionId, amount, title, paymentIntentClientSecret } = notification.metadata;
+      const { auctionId, bidId, amount, title } = notification.metadata;
       
-      if (!auctionId || !paymentIntentClientSecret) {
+      if (!auctionId || !bidId) {
         console.error('Missing required payment data:', notification.metadata);
         showSnackbar('Error: Missing payment information', 'error');
         return;
       }
 
-      // Open payment modal directly with the client secret from notification
-      setPaymentModal({
-        open: true,
-        auctionId,
-        amount,
-        title,
-        clientSecret: paymentIntentClientSecret
-      });
+      try {
+        const response = await paymentService.createPaymentIntent({
+          amount,
+          sourceType: 'auction',
+          sourceId: auctionId,
+          bidId: bidId,
+          sellerId: auctions.find(a => a._id === auctionId)?.sellerId
+        });
 
-      // Close the notification drawer
-      setDrawerOpen(false);
+        setPaymentModal({
+          open: true,
+          auctionId,
+          bidId,
+          amount,
+          title,
+          clientSecret: response.clientSecret
+        });
+
+        setDrawerOpen(false);
+      } catch (error) {
+        console.error('Error creating payment intent:', error);
+        showSnackbar(error.response?.data?.message || 'Error initiating payment', 'error');
+      }
     }
   };
 
@@ -430,6 +451,7 @@ const BuyerDashboard = () => {
       setPaymentModal({
         open: true,
         auctionId: notification.metadata.auctionId,
+        bidId: notification.metadata.bidId,
         amount: auction.winningBid.amount,
         title: auction.product.title,
         clientSecret: response.data.clientSecret
@@ -760,16 +782,25 @@ const BuyerDashboard = () => {
         </Box>
       </Drawer>
 
-      {/* Payment Modal */}
-      <PaymentModal
+      {/* Payment Dialog */}
+      <Dialog
         open={paymentModal.open}
         onClose={() => setPaymentModal(prev => ({ ...prev, open: false }))}
-        auctionId={paymentModal.auctionId}
-        amount={paymentModal.amount}
-        title={paymentModal.title}
-        clientSecret={paymentModal.clientSecret}
-        onSuccess={handlePaymentSuccess}
-      />
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Complete Purchase</DialogTitle>
+        <DialogContent>
+          <PaymentForm
+            amount={paymentModal.amount}
+            sourceType="auction"
+            sourceId={paymentModal.auctionId}
+            bidId={paymentModal.bidId}
+            onSuccess={handlePaymentSuccess}
+            onError={(error) => console.error('Payment error:', error)}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Snackbar for Alerts */}
       <Snackbar
