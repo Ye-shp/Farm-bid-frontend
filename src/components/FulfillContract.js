@@ -17,7 +17,7 @@ const FulfillContract = () => {
     estimatedDeliveryDate: '',
     notes: ''
   });
-  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com';
+  const API_URL = 'https://farm-bid.onrender.com';
 
   useEffect(() => {
     const fetchContractDetails = async () => {

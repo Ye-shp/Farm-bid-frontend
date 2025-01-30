@@ -33,7 +33,7 @@ const FarmerDashboard = () => {
   const [error, setError] = useState(null);
   const [productCategories, setProductCategories] = useState([]);
   const navigate = useNavigate();
-  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com';
+  const API_URL = 'https://farm-bid.onrender.com';
 
   // Product state
   const [newProduct, setNewProduct] = useState({

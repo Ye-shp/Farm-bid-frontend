@@ -40,7 +40,7 @@ const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com';
+  const API_URL = 'https://farm-bid.onrender.com';
 
   const fetchProducts = async () => {
     setLoading(true);
