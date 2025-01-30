@@ -23,7 +23,7 @@ const Contracts = () => {
   const [tabValue, setTabValue] = useState(0);
   const [userRole] = useState(localStorage.getItem('role'));
   const navigate = useNavigate();
-  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com';
+  const API_URL = 'https://farm-bid.onrender.com';
 
   useEffect(() => {
     fetchContracts();
