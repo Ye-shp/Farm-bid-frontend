@@ -9,7 +9,7 @@ const OpenContractList = () => {
   const [userRole, setUserRole] = useState(localStorage.getItem('role'));
   const navigate = useNavigate();
   const location = useLocation();
-  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com';
+  const API_URL = 'https://farm-bid.onrender.com';
 
   useEffect(() => {
     const fetchOpenContracts = async () => {

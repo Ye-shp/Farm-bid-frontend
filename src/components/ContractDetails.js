@@ -36,7 +36,7 @@ const ContractDetails = () => {
   const [userId] = useState(localStorage.getItem('userId'));
   const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
   const [selectedFulfillment, setSelectedFulfillment] = useState(null);
-  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com';
+  const API_URL = 'https://farm-bid.onrender.com';
 
   useEffect(() => {
     fetchContractDetails();

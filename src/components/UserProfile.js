@@ -34,7 +34,7 @@ import Reviews from './Reviews';
 const UserProfile = () => {
   const { userId } = useParams();
   const location = useLocation();
-  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com'; // Remove /api from base URL
+  const API_URL = 'https://farm-bid.onrender.com'; // Remove /api from base URL
   const [user, setUser] = useState({
     username: '',
     socialMedia: { instagram: '', facebook: '', tiktok: '' },

@@ -48,7 +48,7 @@ const FarmerAuctions = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(true);
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com/api';
+  const API_URL = 'https://farm-bid.onrender.com/api';
   const [acceptBidLoading, setAcceptBidLoading] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -89,19 +89,20 @@ const FarmerAuctions = () => {
   const handleAcceptBid = async (auction) => {
     setAcceptBidLoading(true);
     try {
-      const highestBid = auction.bids.length > 0
-        ? Math.max(...auction.bids.map(bid => bid.amount))
-        : null;
-
-      if (!highestBid) {
+      if (!auction.bids || auction.bids.length === 0) {
         throw new Error('No bids to accept');
       }
 
-      console.log('Accepting bid:', { auctionId: auction._id, highestBid });
+      // Find the highest bid
+      const highestBid = auction.bids.reduce((prev, current) => 
+        (prev.amount > current.amount) ? prev : current
+      );
+
+      console.log('Accepting bid:', { auctionId: auction._id, bidId: highestBid._id });
       
       const response = await axios.post(
         `${API_URL}/auctions/${auction._id}/accept`,
-        { acceptedPrice: highestBid },
+        { bidId: highestBid._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
