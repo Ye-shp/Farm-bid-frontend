@@ -28,7 +28,7 @@ const AuctionDetails = () => {
   const [error, setError] = useState(null);
   const [bidAmount, setBidAmount] = useState('');
   const [showBidDialog, setShowBidDialog] = useState(false);
-  const API_URL = 'https://farm-bid-3998c30f5108.herokuapp.com';
+  const API_URL = 'https://farm-bid.onrender.com';
 
   useEffect(() => {
     fetchAuctionDetails();
