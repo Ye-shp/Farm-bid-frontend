@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTheme } from '@mui/material/styles';
 import { getBlogPost, addCommentToBlogPost, likeBlogPost } from '../Services/blogs';
 import {
   Container,
@@ -19,20 +20,56 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ShareIcon from '@mui/icons-material/Share';
+import { keyframes } from '@emotion/react';
+
+const pulse = keyframes`
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.8; }
+`;
 
 const PostContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(8),
   paddingBottom: theme.spacing(8),
+  background: `linear-gradient(175deg, 
+    ${alpha(theme.palette.background.default, 1)} 0%,
+    ${alpha(theme.palette.primary.light, 0.05)} 100%)`,
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '40%',
+    background: `radial-gradient(circle at 50% 0%, ${alpha(theme.palette.primary.light, 0.1)} 0%, transparent 70%)`,
+    zIndex: -1,
+  },
 }));
 
 const PostHeader = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(6),
+  padding: theme.spacing(4),
+  background: alpha(theme.palette.background.paper, 0.8),
+  backdropFilter: 'blur(12px)',
+  borderRadius: theme.shape.borderRadius * 2,
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+  boxShadow: `0 8px 32px ${alpha(theme.palette.primary.dark, 0.05)}`,
+  animation: `${pulse} 6s infinite`,
 }));
 
 const AuthorSection = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   marginBottom: theme.spacing(4),
+  padding: theme.spacing(3),
+  borderRadius: theme.shape.borderRadius * 2,
+  transition: 'all 0.3s ease',
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.1)}`,
+    borderColor: alpha(theme.palette.primary.main, 0.3),
+  },
 }));
 
 const AuthorInfo = styled(Box)(({ theme }) => ({
@@ -44,33 +81,63 @@ const PostContent = styled(Typography)(({ theme }) => ({
   lineHeight: 1.8,
   color: alpha(theme.palette.text.primary, 0.87),
   marginBottom: theme.spacing(4),
+  padding: theme.spacing(4),
+  background: alpha(theme.palette.primary.light, 0.05),
+  borderRadius: theme.shape.borderRadius * 2,
+  borderLeft: `4px solid ${alpha(theme.palette.primary.main, 0.3)}`,
 }));
 
 const MetricsBar = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: theme.spacing(3),
-  padding: theme.spacing(2, 0),
-  borderTop: `1px solid ${theme.palette.divider}`,
-  borderBottom: `1px solid ${theme.palette.divider}`,
-  marginBottom: theme.spacing(4),
+  padding: theme.spacing(3),
+  borderRadius: theme.shape.borderRadius * 2,
+  background: `linear-gradient(145deg, 
+    ${alpha(theme.palette.primary.light, 0.1)} 0%,
+    ${alpha(theme.palette.primary.dark, 0.05)} 100%)`,
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
 }));
 
 const CommentCard = styled(Card)(({ theme }) => ({
   marginBottom: theme.spacing(2),
+  background: alpha(theme.palette.background.paper, 0.8),
+  backdropFilter: 'blur(8px)',
+  transition: 'all 0.3s ease',
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
   '&:hover': {
-    backgroundColor: alpha(theme.palette.primary.main, 0.03),
+    transform: 'translateY(-2px)',
+    boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.1)}`,
+    borderColor: alpha(theme.palette.primary.main, 0.3),
+    '&::after': {
+      opacity: 0.1,
+    }
+  },
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: `radial-gradient(circle at 50% 0%, ${alpha(theme.palette.primary.main, 0.1)}, transparent)`,
+    opacity: 0,
+    transition: 'opacity 0.3s ease',
   },
 }));
 
 const CommentForm = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(4),
-  padding: theme.spacing(3),
-  backgroundColor: alpha(theme.palette.background.paper, 0.8),
-  borderRadius: theme.shape.borderRadius,
+  padding: theme.spacing(4),
+  background: `linear-gradient(145deg, 
+    ${alpha(theme.palette.primary.light, 0.1)} 0%,
+    ${alpha(theme.palette.primary.dark, 0.05)} 100%)`,
+  borderRadius: theme.shape.borderRadius * 2,
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
 }));
 
 const BlogPost = () => {
+  const theme = useTheme();
   const { id } = useParams();
   const [blogPost, setBlogPost] = useState(null);
   const [comments, setComments] = useState([]);
@@ -152,17 +219,27 @@ const BlogPost = () => {
   return (
     <PostContainer maxWidth="md">
       <PostHeader>
-        <Typography variant="h3" gutterBottom>
+        <Typography variant="h3" gutterBottom sx={{
+          fontWeight: 800,
+          background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+        }}>
           {blogPost.title}
         </Typography>
-        
+
         <AuthorSection>
           <Avatar
             src={`https://api.dicebear.com/7.x/initials/svg?seed=${blogPost.user?.username}`}
-            sx={{ width: 56, height: 56 }}
+            sx={{ 
+              width: 56, 
+              height: 56,
+              border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+              boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.1)}`
+            }}
           />
           <AuthorInfo>
-            <Typography variant="subtitle1" fontWeight="bold">
+            <Typography variant="subtitle1" fontWeight="bold" color="primary">
               {blogPost.user?.username || 'Anonymous'}
             </Typography>
             <Typography variant="caption" color="textSecondary">
@@ -180,28 +257,46 @@ const BlogPost = () => {
         </PostContent>
 
         <MetricsBar>
-          <Box display="flex" alignItems="center">
-            <IconButton onClick={handleLike} color={hasLiked ? 'primary' : 'default'}>
+          <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
+            <IconButton 
+              onClick={handleLike} 
+              sx={{
+                color: hasLiked ? theme.palette.primary.main : 'inherit',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.1)'
+                }
+              }}
+            >
               {hasLiked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
             </IconButton>
-            <Typography variant="body2">{likes}</Typography>
+            <Typography variant="body2" color="primary">{likes}</Typography>
           </Box>
           
-          <Box display="flex" alignItems="center">
-            <IconButton>
-              <VisibilityIcon />
-            </IconButton>
-            <Typography variant="body2">{blogPost.views || 0}</Typography>
+          <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
+            <VisibilityIcon color="primary" />
+            <Typography variant="body2" color="primary">
+              {blogPost.views || 0}
+            </Typography>
           </Box>
 
-          <Box display="flex" alignItems="center">
-            <IconButton onClick={handleShare}>
+          <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
+            <IconButton 
+              onClick={handleShare}
+              sx={{
+                '&:hover': {
+                  color: theme.palette.primary.main,
+                  transform: 'rotate(-15deg)'
+                }
+              }}
+            >
               <ShareIcon />
             </IconButton>
-            <Typography variant="body2">Share</Typography>
+            <Typography variant="body2" color="primary">Share</Typography>
           </Box>
         </MetricsBar>
       </PostHeader>
+
       {showShareToast && (
         <Box
           position="fixed"
@@ -218,20 +313,29 @@ const BlogPost = () => {
           <Typography>Link copied to clipboard!</Typography>
         </Box>
       )}
+
       <Box mb={6}>
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h5" gutterBottom sx={{
+          fontWeight: 700,
+          color: alpha(theme.palette.primary.main, 0.8),
+          mb: 4,
+        }}>
           Responses ({comments.length})
         </Typography>
         
         {comments.map((comment) => (
-          <CommentCard key={comment._id} variant="outlined">
+          <CommentCard key={comment._id}>
             <CardContent>
-              <Box display="flex" alignItems="center" mb={1}>
+              <Box display="flex" alignItems="center" mb={1} gap={1}>
                 <Avatar
                   src={`https://api.dicebear.com/7.x/initials/svg?seed=${comment.user?.username}`}
-                  sx={{ width: 32, height: 32, marginRight: 1 }}
+                  sx={{ 
+                    width: 32, 
+                    height: 32,
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`
+                  }}
                 />
-                <Typography variant="subtitle2">
+                <Typography variant="subtitle2" color="primary">
                   {comment.user?.username || 'Anonymous'}
                 </Typography>
                 <Typography variant="caption" color="textSecondary" sx={{ ml: 1 }}>
@@ -246,7 +350,7 @@ const BlogPost = () => {
         ))}
 
         <CommentForm component="form" onSubmit={handleCommentSubmit}>
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="h6" gutterBottom color="primary">
             Add a response
           </Typography>
           <TextField
@@ -255,17 +359,34 @@ const BlogPost = () => {
             rows={4}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="What are your thoughts?"
+            placeholder="Share your insights..."
             variant="outlined"
-            sx={{ mb: 2 }}
+            sx={{ 
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: alpha(theme.palette.primary.main, 0.2),
+                },
+                '&:hover fieldset': {
+                  borderColor: alpha(theme.palette.primary.main, 0.4),
+                },
+              }
+            }}
           />
           <Button
             type="submit"
             variant="contained"
-            color="primary"
+            sx={{
+              background: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+              boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`,
+              '&:hover': {
+                transform: 'translateY(-1px)',
+                boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
+              }
+            }}
             disabled={!comment.trim()}
           >
-            Publish
+            Publish Response
           </Button>
         </CommentForm>
       </Box>
