@@ -21,14 +21,82 @@ import {
   DialogContent,
   DialogActions,
   InputAdornment,
-  Snackbar
+  Snackbar,
+  Chip,
+  Avatar,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Badge,
+  IconButton,
+  useTheme,
+  AppBar,
+  Toolbar,
+  Stepper,
+  Step,
+  StepLabel,
+  Paper
 } from '@mui/material';
-import { Add as AddIcon, CloudUpload as UploadIcon, Notifications as NotificationsIcon } from '@mui/icons-material';
+import {
+  Add as AddIcon,
+  CloudUpload as UploadIcon,
+  Notifications as NotificationsIcon,
+  LocalFlorist as ProductIcon,
+  CheckCircle as CheckIcon,
+  Close as CloseIcon,
+  PhotoCamera
+} from '@mui/icons-material';
 import { useSocket } from '../context/SocketContext';
+import { styled } from '@mui/material/styles';
+
+const DashboardContainer = styled(Box)(({ theme }) => ({
+  backgroundColor: theme.palette.grey[50],
+  minHeight: '100vh',
+}));
+
+const StyledAppBar = styled(AppBar)(({ theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  color: theme.palette.text.primary,
+  boxShadow: theme.shadows[1],
+  borderBottom: `1px solid ${theme.palette.divider}`,
+}));
+
+const ProductCard = styled(Card)(({ theme }) => ({
+  borderRadius: 16,
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: theme.shadows[6],
+  },
+}));
+
+const ImageUploadArea = styled('label')(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: `2px dashed ${theme.palette.primary.main}`,
+  borderRadius: 16,
+  padding: theme.spacing(4),
+  cursor: 'pointer',
+  backgroundColor: theme.palette.action.hover,
+  transition: 'background-color 0.2s',
+  minHeight: 200,
+  '&:hover': {
+    backgroundColor: theme.palette.action.selected,
+  },
+}));
+
+const SectionHeader = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(4),
+  backgroundColor: theme.palette.background.paper,
+  borderBottom: `1px solid ${theme.palette.divider}`,
+}));
 
 const FarmerDashboard = () => {
+  const theme = useTheme();
   const [products, setProducts] = useState([]);
-  const [auctions, setAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [productCategories, setProductCategories] = useState([]);
@@ -47,7 +115,7 @@ const FarmerDashboard = () => {
     previewUrl: null
   });
 
-  // Auction state
+  // Auction dialog state
   const [showAuctionDialog, setShowAuctionDialog] = useState(false);
   const [newAuction, setNewAuction] = useState({
     product: '',
@@ -55,13 +123,15 @@ const FarmerDashboard = () => {
     endTime: ''
   });
 
-  const socket = useSocket();
+  // Notification state
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('info');
+
+  const socket = useSocket();
 
   const showSnackbar = (message, severity) => {
     setSnackbarMessage(message);
@@ -70,21 +140,12 @@ const FarmerDashboard = () => {
   };
 
   useEffect(() => {
-    if (!socket) {
-      console.log('Socket not available for notifications');
-      return;
-    }
+    if (!socket) return;
 
-    console.log('Setting up notification listener');
     const handleNewNotification = (notification) => {
-      console.log('Received new notification:', notification);
       setNotifications(prev => {
-        // Check if notification already exists
         const exists = prev.some(n => n._id === notification._id);
-        if (exists) {
-          return prev.map(n => n._id === notification._id ? notification : n);
-        }
-        // Add new notification and update unread count
+        if (exists) return prev.map(n => n._id === notification._id ? notification : n);
         setUnreadCount(count => count + 1);
         showSnackbar(notification.message, 'info');
         return [notification, ...prev];
@@ -93,15 +154,12 @@ const FarmerDashboard = () => {
 
     socket.on('newNotification', handleNewNotification);
 
-    // Fetch initial notifications
     const fetchNotifications = async () => {
       try {
-        console.log('Fetching initial notifications');
         const token = localStorage.getItem('token');
         const response = await axios.get(`${API_URL}/notifications`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        console.log('Initial notifications:', response.data);
         setNotifications(response.data);
         setUnreadCount(response.data.filter(n => !n.read).length);
       } catch (error) {
@@ -113,7 +171,6 @@ const FarmerDashboard = () => {
     fetchNotifications();
 
     return () => {
-      console.log('Cleaning up notification listener');
       socket.off('newNotification', handleNewNotification);
     };
   }, [socket, API_URL]);
@@ -127,26 +184,17 @@ const FarmerDashboard = () => {
           return;
         }
 
-        // Fetch product categories
         const categoriesResponse = await axios.get(
           `${API_URL}/api/products/categories`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setProductCategories(categoriesResponse.data);
 
-        // Fetch farmer's products
         const productsResponse = await axios.get(
           `${API_URL}/api/products/farmer-products`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setProducts(productsResponse.data);
-
-        // Fetch farmer's auctions
-        const auctionsResponse = await axios.get(
-          `${API_URL}/api/auctions/farmer-auctions`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setAuctions(auctionsResponse.data);
 
         setLoading(false);
       } catch (error) {
@@ -157,7 +205,7 @@ const FarmerDashboard = () => {
     };
 
     fetchData();
-  }, [socket, navigate]);
+  }, [navigate]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -179,13 +227,11 @@ const FarmerDashboard = () => {
       const formData = new FormData();
       formData.append('description', newProduct.description);
 
-      // Handle category
       const categoryToSend = newProduct.category === 'custom' 
         ? newProduct.customCategory 
         : newProduct.category;
       formData.append('category', categoryToSend);
 
-      // Handle title/subcategory
       if (newProduct.subcategory === 'custom') {
         formData.append('customProduct', newProduct.customSubcategory);
       } else {
@@ -218,9 +264,9 @@ const FarmerDashboard = () => {
         image: null,
         previewUrl: null,
       });
-      setError(null);
+      showSnackbar('Product created successfully!', 'success');
     } catch (err) {
-      setError('Failed to create product. Please try again.');
+      showSnackbar('Failed to create product. Please try again.', 'error');
       console.error('Error creating product:', err);
     } finally {
       setLoading(false);
@@ -230,7 +276,6 @@ const FarmerDashboard = () => {
   const handleCreateAuction = async () => {
     try {
       const token = localStorage.getItem('token');
-      
       const response = await axios.post(
         `${API_URL}/api/auctions/create`,
         {
@@ -246,15 +291,11 @@ const FarmerDashboard = () => {
         }
       );
 
-      setAuctions([...auctions, response.data]);
       setShowAuctionDialog(false);
-      setNewAuction({
-        product: '',
-        startingPrice: '',
-        endTime: ''
-      });
+      setNewAuction({ product: '', startingPrice: '', endTime: '' });
+      showSnackbar('Auction created successfully!', 'success');
     } catch (error) {
-      setError('Failed to create auction. Please try again.');
+      showSnackbar('Failed to create auction. Please try again.', 'error');
       console.error('Error creating auction:', error);
     }
   };
@@ -276,22 +317,70 @@ const FarmerDashboard = () => {
     }
   };
 
-  if (loading) return <CircularProgress />;
-  if (error) return <Alert severity="error">{error}</Alert>;
+  if (loading) return (
+    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+      <CircularProgress size={60} />
+    </Box>
+  );
+
+  if (error) return (
+    <Box sx={{ p: 4 }}>
+      <Alert severity="error" sx={{ borderRadius: 2 }}>
+        {error}
+      </Alert>
+    </Box>
+  );
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Products Section */}
-      <Typography variant="h4" gutterBottom>
-        My Products
-      </Typography>
-      <Box sx={{ mb: 4 }}>
-        <Card sx={{ p: 3 }}>
+    <DashboardContainer>
+      <StyledAppBar position="static" color="inherit">
+        <Toolbar>
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            Notifications
+          </Typography>
+          <IconButton onClick={() => setShowNotifications(true)}>
+            <Badge badgeContent={unreadCount} color="error">
+              <NotificationsIcon />
+            </Badge>
+          </IconButton>
+        </Toolbar>
+      </StyledAppBar>
+
+      <SectionHeader>
+        <Box maxWidth="1200px" margin="auto">
+          <Typography variant="h4" gutterBottom>
+            <ProductIcon sx={{ verticalAlign: 'middle', mr: 2 }} />
+            Agricultural Management Hub
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setShowAuctionDialog(true)}
+            sx={{ borderRadius: 2 }}
+          >
+            New Auction
+          </Button>
+        </Box>
+      </SectionHeader>
+
+      <Box maxWidth="1200px" margin="auto" p={4}>
+        <Typography variant="h5" gutterBottom sx={{ mb: 4 }}>
+          Product Inventory
+        </Typography>
+
+        {/* Product Creation Form */}
+        <Paper elevation={0} sx={{ p: 4, mb: 6, borderRadius: 4 }}>
+          <Stepper activeStep={0} alternativeLabel sx={{ mb: 6 }}>
+            <Step><StepLabel>Product Details</StepLabel></Step>
+            <Step><StepLabel>Quality Assurance</StepLabel></Step>
+            <Step><StepLabel>Confirmation</StepLabel></Step>
+          </Stepper>
+
           <form onSubmit={handleCreateProduct}>
-            <Grid container spacing={3}>
+            <Grid container spacing={4}>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth required>
-                  <InputLabel>Category</InputLabel>
+                  <InputLabel>Product Category</InputLabel>
                   <Select
                     value={newProduct.category}
                     onChange={(e) => setNewProduct({
@@ -308,7 +397,7 @@ const FarmerDashboard = () => {
                         {category}
                       </MenuItem>
                     ))}
-                    <MenuItem value="custom">Other (Custom Category)</MenuItem>
+                    <MenuItem value="custom">Custom Category</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -346,7 +435,7 @@ const FarmerDashboard = () => {
                           {subcategory}
                         </MenuItem>
                       ))}
-                      <MenuItem value="custom">Other (Custom Subcategory)</MenuItem>
+                      <MenuItem value="custom">Custom Subcategory</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -370,7 +459,7 @@ const FarmerDashboard = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Description"
+                  label="Product Description"
                   value={newProduct.description}
                   onChange={(e) => setNewProduct({
                     ...newProduct,
@@ -383,20 +472,7 @@ const FarmerDashboard = () => {
               </Grid>
 
               <Grid item xs={12}>
-                <Box
-                  sx={{
-                    border: '2px dashed',
-                    borderColor: 'grey.300',
-                    borderRadius: 2,
-                    p: 3,
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                    },
-                  }}
-                  component="label"
-                >
+                <ImageUploadArea>
                   <input
                     type="file"
                     hidden
@@ -404,23 +480,38 @@ const FarmerDashboard = () => {
                     accept="image/*"
                   />
                   {newProduct.previewUrl ? (
-                    <Box>
+                    <Box textAlign="center">
                       <img
                         src={newProduct.previewUrl}
                         alt="Preview"
-                        style={{ maxWidth: '200px', maxHeight: '200px' }}
+                        style={{
+                          maxWidth: '100%',
+                          height: 200,
+                          objectFit: 'cover',
+                          borderRadius: 8
+                        }}
                       />
-                      <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                        Click to change image
-                      </Typography>
+                      <Button
+                        variant="text"
+                        color="primary"
+                        startIcon={<PhotoCamera />}
+                        sx={{ mt: 2 }}
+                      >
+                        Change Image
+                      </Button>
                     </Box>
                   ) : (
-                    <Box>
-                      <UploadIcon sx={{ fontSize: 40, color: 'grey.500', mb: 1 }} />
-                      <Typography>Drop an image or click to upload</Typography>
+                    <Box textAlign="center">
+                      <PhotoCamera sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                      <Typography variant="body1" color="textSecondary">
+                        Upload high-quality product photos
+                      </Typography>
+                      <Typography variant="caption" color="textSecondary">
+                        Recommended size: 1200x800px
+                      </Typography>
                     </Box>
                   )}
-                </Box>
+                </ImageUploadArea>
               </Grid>
 
               <Grid item xs={12}>
@@ -428,198 +519,213 @@ const FarmerDashboard = () => {
                   type="submit"
                   variant="contained"
                   size="large"
-                  disabled={loading}
-                  startIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
+                  fullWidth
+                  sx={{ height: 56, borderRadius: 2 }}
+                  startIcon={loading ? <CircularProgress size={24} /> : <CheckIcon />}
                 >
-                  {loading ? 'Creating Product...' : 'Create Product'}
+                  {loading ? 'Processing...' : 'Publish Product'}
                 </Button>
               </Grid>
             </Grid>
           </form>
-        </Card>
+        </Paper>
 
-        <Grid container spacing={3} sx={{ mt: 3 }}>
+        {/* Product Grid */}
+        <Grid container spacing={4}>
           {products.map((product) => (
             <Grid item xs={12} sm={6} md={4} key={product._id}>
-              <Card>
+              <ProductCard>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    {product.title || product.customProduct}
-                  </Typography>
-                  <Typography color="textSecondary" gutterBottom>
-                    {product.category}
-                  </Typography>
-                  <Typography variant="body2">
-                    {product.description}
-                  </Typography>
                   {product.imageUrl && (
-                    <Box sx={{ mt: 2 }}>
+                    <Box sx={{ position: 'relative', mb: 2 }}>
                       <img
                         src={product.imageUrl}
                         alt={product.title}
-                        style={{ maxWidth: '100%', height: 'auto' }}
+                        style={{
+                          width: '100%',
+                          height: 200,
+                          objectFit: 'cover',
+                          borderRadius: 8
+                        }}
+                      />
+                      <Chip
+                        label={product.category}
+                        size="small"
+                        sx={{
+                          position: 'absolute',
+                          top: 16,
+                          left: 16,
+                          backgroundColor: 'background.paper'
+                        }}
                       />
                     </Box>
                   )}
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-
-      <Divider sx={{ my: 4 }} />
-
-      {/* Auctions Section */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4">
-            My Auctions
-          </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={() => setShowAuctionDialog(true)}
-          >
-            Create Auction
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<NotificationsIcon />}
-            onClick={() => setShowNotifications(true)}
-          >
-            Notifications ({unreadCount})
-          </Button>
-        </Box>
-
-        <Grid container spacing={3}>
-          {auctions.map((auction) => (
-            <Grid item xs={12} sm={6} md={4} key={auction._id}>
-              <Card>
-                <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    {auction.product.title || auction.product.customProduct}
+                    {product.title || product.customProduct}
                   </Typography>
-                  <Typography color="textSecondary" gutterBottom>
-                    Quantity: {auction.quantity} units
+                  <Typography variant="body2" color="textSecondary" paragraph>
+                    {product.description}
                   </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    Starting Price: ${auction.startingPrice}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    Current Bid: ${auction.currentPrice || auction.startingPrice}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    Status: {auction.status}
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    fullWidth
-                    sx={{ mt: 2 }}
-                    onClick={() => navigate(`/auctions/${auction._id}`)}
-                  >
-                    View Details
-                  </Button>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      fullWidth
+                      onClick={() => navigate(`/products/${product._id}`)}
+                    >
+                      Details
+                    </Button>
+                  </Box>
                 </CardContent>
-              </Card>
+              </ProductCard>
             </Grid>
           ))}
         </Grid>
       </Box>
 
-      {/* Create Auction Dialog */}
-      <Dialog open={showAuctionDialog} onClose={() => setShowAuctionDialog(false)}>
-        <DialogTitle>Create New Auction</DialogTitle>
+      {/* Auction Creation Dialog */}
+      <Dialog
+        open={showAuctionDialog}
+        onClose={() => setShowAuctionDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}>
+          Create New Auction
+        </DialogTitle>
         <DialogContent>
           <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel>Product</InputLabel>
+            <InputLabel>Select Product</InputLabel>
             <Select
               value={newAuction.product}
               onChange={(e) => setNewAuction({ ...newAuction, product: e.target.value })}
             >
               {products.map((product) => (
                 <MenuItem key={product._id} value={product._id}>
-                  {product.title || product.customProduct}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    {product.imageUrl && (
+                      <img
+                        src={product.imageUrl}
+                        alt={product.title}
+                        style={{ width: 40, height: 40, borderRadius: 4 }}
+                      />
+                    )}
+                    {product.title || product.customProduct}
+                  </Box>
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
+
           <TextField
-            margin="dense"
+            fullWidth
             label="Starting Price"
             type="number"
-            fullWidth
             value={newAuction.startingPrice}
             onChange={(e) => setNewAuction({ ...newAuction, startingPrice: e.target.value })}
             InputProps={{
               startAdornment: <InputAdornment position="start">$</InputAdornment>,
             }}
+            sx={{ mt: 3 }}
           />
+
           <TextField
-            margin="dense"
-            label="End Time"
-            type="datetime-local"
             fullWidth
+            label="Auction End Time"
+            type="datetime-local"
             value={newAuction.endTime}
             onChange={(e) => setNewAuction({ ...newAuction, endTime: e.target.value })}
-            InputLabelProps={{
-              shrink: true,
-            }}
+            InputLabelProps={{ shrink: true }}
             inputProps={{
               min: new Date(Date.now() + 3600000).toISOString().slice(0, 16),
-              max: new Date(Date.now() + 7 * 24 * 3600000).toISOString().slice(0, 16)
             }}
+            sx={{ mt: 3 }}
           />
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ p: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
           <Button onClick={() => setShowAuctionDialog(false)}>Cancel</Button>
-          <Button 
+          <Button
+            variant="contained"
             onClick={handleCreateAuction}
             disabled={!newAuction.product || !newAuction.startingPrice || !newAuction.endTime}
           >
-            Create Auction
+            Launch Auction
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Notifications Dialog */}
-      <Dialog open={showNotifications} onClose={() => setShowNotifications(false)}>
-        <DialogTitle>Notifications</DialogTitle>
+      <Dialog 
+        open={showNotifications} 
+        onClose={() => setShowNotifications(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <NotificationsIcon sx={{ mr: 1 }} />
+            Notifications
+            <Chip 
+              label={unreadCount} 
+              color="error" 
+              size="small" 
+              sx={{ ml: 2 }} 
+            />
+          </Box>
+        </DialogTitle>
         <DialogContent>
-          {notifications.map((notification) => (
-            <Box key={notification._id} sx={{ mb: 2 }}>
-              <Typography variant="body1" gutterBottom>
-                {notification.message}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                {notification.createdAt}
-              </Typography>
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => handleMarkAsRead(notification._id)}
+          <List>
+            {notifications.map((notification) => (
+              <ListItem
+                key={notification._id}
+                sx={{
+                  backgroundColor: notification.read ? 'transparent' : theme.palette.action.selected,
+                  borderRadius: 2,
+                  mb: 1
+                }}
               >
-                Mark as Read
-              </Button>
-            </Box>
-          ))}
+                <ListItemAvatar>
+                  <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+                    <NotificationsIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={notification.message}
+                  secondary={new Date(notification.createdAt).toLocaleString()}
+                  primaryTypographyProps={{ fontWeight: 600 }}
+                />
+                <IconButton onClick={() => handleMarkAsRead(notification._id)}>
+                  <CheckIcon color="action" />
+                </IconButton>
+              </ListItem>
+            ))}
+          </List>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowNotifications(false)}>Close</Button>
         </DialogActions>
       </Dialog>
 
+      {/* Snackbar */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={() => setSnackbarOpen(false)}
-        message={snackbarMessage}
-        severity={snackbarSeverity}
-      />
-    </Box>
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={() => setSnackbarOpen(false)} 
+          severity={snackbarSeverity}
+          sx={{ width: '100%', borderRadius: 2, boxShadow: theme.shadows[3] }}
+          iconMapping={{
+            success: <CheckIcon fontSize="inherit" />,
+            error: <CloseIcon fontSize="inherit" />
+          }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </DashboardContainer>
   );
 };
 
