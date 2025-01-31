@@ -242,6 +242,13 @@ const FarmerDashboard = () => {
         formData.append('image', newProduct.image);
       }
 
+      if (!newProduct.totalQuantity || isNaN(newProduct.totalQuantity)){
+        showSnackbar('Please enter total amount available in pounds', 'error');
+        setLoading(false);
+        return ;
+      }
+      formData.append('totalQuantity', newProduct.totalQuantity);
+
       const response = await axios.post(
         `${API_URL}/api/products`,
         formData,
@@ -261,6 +268,7 @@ const FarmerDashboard = () => {
         subcategory: '',
         customCategory: '',
         customSubcategory: '',
+        totalQuantity:'', 
         image: null,
         previewUrl: null,
       });
@@ -281,7 +289,8 @@ const FarmerDashboard = () => {
         {
           productId: newAuction.product,
           startingPrice: parseFloat(newAuction.startingPrice),
-          endTime: new Date(newAuction.endTime).toISOString()
+          endTime: new Date(newAuction.endTime).toISOString(), 
+          auctionQuantity: parseFloat(newAuction.auctionQuantity)
         },
         {
           headers: {
@@ -292,7 +301,7 @@ const FarmerDashboard = () => {
       );
 
       setShowAuctionDialog(false);
-      setNewAuction({ product: '', startingPrice: '', endTime: '' });
+      setNewAuction({ product: '', startingPrice: '', endTime: '',  auctionQuantity: ''});
       showSnackbar('Auction created successfully!', 'success');
     } catch (error) {
       showSnackbar('Failed to create auction. Please try again.', 'error');
@@ -401,6 +410,20 @@ const FarmerDashboard = () => {
                   </Select>
                 </FormControl>
               </Grid>
+              <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Total Quantity (lbs)"
+                type="number"
+                value={newProduct.totalQuantity}
+                onChange={(e) => setNewProduct({
+                  ...newProduct,
+                  totalQuantity: e.target.value,
+                })}
+                required
+              />
+            </Grid>
+
 
               {newProduct.category === 'custom' && (
                 <Grid item xs={12} md={6}>
@@ -624,7 +647,18 @@ const FarmerDashboard = () => {
             value={newAuction.startingPrice}
             onChange={(e) => setNewAuction({ ...newAuction, startingPrice: e.target.value })}
             InputProps={{
-              startAdornment: <InputAdornment position="start">$</InputAdornment>,
+              startAdornment: <InputAdornment position="start">$/Lbs</InputAdornment>,
+            }}
+            sx={{ mt: 3 }}
+          />
+          <TextField
+            fullWidth
+            label="Auction Quantity"
+            type="number"
+            value={newAuction.auctionQuantity}
+            onChange={(e) => setNewAuction({ ...newAuction, auctionQuantity: e.target.value })}
+            InputProps={{
+              endAdornment: <InputAdornment position="end">Lbs</InputAdornment>,
             }}
             sx={{ mt: 3 }}
           />
