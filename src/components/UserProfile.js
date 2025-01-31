@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Card,
   CardContent,
   CardHeader,
+  Chip,
   Button,
   Tabs,
   Tab,
+  Grid,
   TextField,
   Switch,
   Typography,
+  LinearProgress,
   Avatar,
   Divider,
   Alert,
@@ -34,6 +38,7 @@ import Reviews from './Reviews';
 const UserProfile = () => {
   const { userId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const API_URL = 'https://farm-bid.onrender.com'; // Remove /api from base URL
   const [user, setUser] = useState({
     username: '',
@@ -297,26 +302,123 @@ const UserProfile = () => {
       />
       <CardContent>
         {products.length > 0 ? (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Grid container spacing={3}>
             {products.map((product) => (
-              <Card key={product._id} sx={{ marginBottom: 2 }}>
-                <CardContent>
-                  <Typography variant="h6">
-                    {product.title || product.customProduct}
-                  </Typography>
-                  <Typography variant="body2">{product.description}</Typography>
-                  <Typography variant="body1">Price: ${product.price}</Typography>
-                </CardContent>
-              </Card>
+              <Grid item xs={12} sm={6} md={4} key={product._id}>
+                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    {product.imageUrl && (
+                      <Box sx={{ position: 'relative', mb: 2 }}>
+                        <img
+                          src={product.imageUrl}
+                          alt={product.title || product.customProduct}
+                          style={{
+                            width: '100%',
+                            height: 200,
+                            objectFit: 'cover',
+                            borderRadius: 8
+                          }}
+                        />
+                        <Chip
+                          label={product.category}
+                          size="small"
+                          sx={{
+                            position: 'absolute',
+                            top: 16,
+                            left: 16,
+                            backgroundColor: 'primary.main',
+                            color: 'white'
+                          }}
+                        />
+                        <Chip
+                          label={`${product.totalQuantity} lbs`}
+                          size="small"
+                          color="secondary"
+                          sx={{
+                            position: 'absolute',
+                            top: 16,
+                            right: 16,
+                            backgroundColor: 'secondary.main',
+                            color: 'white'
+                          }}
+                        />
+                      </Box>
+                    )}
+  
+                    <Typography variant="h6" gutterBottom>
+                      {product.title || product.customProduct}
+                      {product.isOwner && (
+                        <Chip
+                          label="Your Product"
+                          size="small"
+                          color="primary"
+                          sx={{ ml: 1, verticalAlign: 'middle' }}
+                        />
+                      )}
+                    </Typography>
+  
+                    <Box sx={{ mb: 2 }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={Math.min((product.totalQuantity / 100) * 100, 100)}
+                        sx={{
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: (theme) => theme.palette.grey[300],
+                          '& .MuiLinearProgress-bar': {
+                            borderRadius: 4,
+                            backgroundColor: (theme) =>
+                              product.totalQuantity > 20
+                                ? theme.palette.success.main
+                                : theme.palette.error.main
+                          }
+                        }}
+                      />
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                        <Typography variant="caption">
+                          {product.totalQuantity > 0 ? 'In Stock' : 'Out of Stock'}
+                        </Typography>
+                        <Typography variant="caption">
+                          Updated: {new Date(product.createdAt).toLocaleDateString()}
+                        </Typography>
+                      </Box>
+                    </Box>
+  
+                    <Typography variant="body2" color="textSecondary" paragraph>
+                      {product.description}
+                    </Typography>
+  
+                    <Box sx={{ display: 'flex', gap: 2, mt: 'auto' }}>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        fullWidth
+                        onClick={() => navigate(`/products/${product._id}`)}
+                      >
+                        Inventory Details
+                      </Button>
+                      {product.isOwner && (
+                        <Button
+                          variant="contained"
+                          color="info"
+                          fullWidth
+                          onClick={() => navigate(`/products/${product._id}/analytics`)}
+                        >
+                          Analytics
+                        </Button>
+                      )}
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
             ))}
-          </Box>
+          </Grid>
         ) : (
           <Typography color="text.secondary">No products listed yet.</Typography>
         )}
       </CardContent>
     </Card>
-  );  
-  
+  );
   const renderPartnersList = () => (
     <Card>
       <CardHeader 
