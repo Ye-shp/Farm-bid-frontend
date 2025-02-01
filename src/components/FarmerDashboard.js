@@ -28,6 +28,7 @@ import {
   ListItem,
   ListItemText,
   ListItemAvatar,
+  LinearProgress,
   Badge,
   IconButton,
   useTheme,
@@ -100,6 +101,8 @@ const FarmerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [productCategories, setProductCategories] = useState([]);
+  const [productDetails, setProductDetails] = useState(null);
+  const [analytics, setAnalytics] = useState(null);
   const navigate = useNavigate();
   const API_URL = 'https://farm-bid.onrender.com';
 
@@ -183,7 +186,6 @@ const FarmerDashboard = () => {
           navigate('/login');
           return;
         }
-
         const categoriesResponse = await axios.get(
           `${API_URL}/api/products/categories`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -194,6 +196,26 @@ const FarmerDashboard = () => {
           `${API_URL}/api/products/farmer-products`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        const fetchProductDetails = async () => {
+          try {
+            const { data } = await axios.get(`/api/products/${productId}`);
+            setProductDetails(data);
+          } catch (err) {
+            console.error('Error fetching product details:', err);
+          }
+        };
+        const fetchAnalytics = async () => {
+          try {
+            const token = localStorage.getItem('token');
+            const { data } = await axios.get(`/api/products/${productId}/analytics`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            setAnalytics(data);
+          } catch (err) {
+            console.error('Error fetching analytics:', err);
+          }
+        };
+
         setProducts(productsResponse.data);
 
         setLoading(false);
@@ -227,8 +249,8 @@ const FarmerDashboard = () => {
       const formData = new FormData();
       formData.append('description', newProduct.description);
 
-      const categoryToSend = newProduct.category === 'custom' 
-        ? newProduct.customCategory 
+      const categoryToSend = newProduct.category === 'custom'
+        ? newProduct.customCategory
         : newProduct.category;
       formData.append('category', categoryToSend);
 
@@ -241,6 +263,13 @@ const FarmerDashboard = () => {
       if (newProduct.image) {
         formData.append('image', newProduct.image);
       }
+
+      if (!newProduct.totalQuantity || isNaN(newProduct.totalQuantity)) {
+        showSnackbar('Please enter total amount available in pounds', 'error');
+        setLoading(false);
+        return;
+      }
+      formData.append('totalQuantity', newProduct.totalQuantity);
 
       const response = await axios.post(
         `${API_URL}/api/products`,
@@ -261,6 +290,7 @@ const FarmerDashboard = () => {
         subcategory: '',
         customCategory: '',
         customSubcategory: '',
+        totalQuantity: '',
         image: null,
         previewUrl: null,
       });
@@ -281,7 +311,8 @@ const FarmerDashboard = () => {
         {
           productId: newAuction.product,
           startingPrice: parseFloat(newAuction.startingPrice),
-          endTime: new Date(newAuction.endTime).toISOString()
+          endTime: new Date(newAuction.endTime).toISOString(),
+          auctionQuantity: parseFloat(newAuction.auctionQuantity)
         },
         {
           headers: {
@@ -292,7 +323,7 @@ const FarmerDashboard = () => {
       );
 
       setShowAuctionDialog(false);
-      setNewAuction({ product: '', startingPrice: '', endTime: '' });
+      setNewAuction({ product: '', startingPrice: '', endTime: '', auctionQuantity: '' });
       showSnackbar('Auction created successfully!', 'success');
     } catch (error) {
       showSnackbar('Failed to create auction. Please try again.', 'error');
@@ -365,7 +396,7 @@ const FarmerDashboard = () => {
 
       <Box maxWidth="1200px" margin="auto" p={4}>
         <Typography variant="h5" gutterBottom sx={{ mb: 4 }}>
-          Product Inventory
+          List new Product
         </Typography>
 
         {/* Product Creation Form */}
@@ -401,6 +432,20 @@ const FarmerDashboard = () => {
                   </Select>
                 </FormControl>
               </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Total Quantity (lbs)"
+                  type="number"
+                  value={newProduct.totalQuantity}
+                  onChange={(e) => setNewProduct({
+                    ...newProduct,
+                    totalQuantity: e.target.value,
+                  })}
+                  required
+                />
+              </Grid>
+
 
               {newProduct.category === 'custom' && (
                 <Grid item xs={12} md={6}>
@@ -529,9 +574,10 @@ const FarmerDashboard = () => {
             </Grid>
           </form>
         </Paper>
-
-        {/* Product Grid */}
         <Grid container spacing={4}>
+
+          {/* Product Grid */}
+
           {products.map((product) => (
             <Grid item xs={12} sm={6} md={4} key={product._id}>
               <ProductCard>
@@ -555,17 +601,66 @@ const FarmerDashboard = () => {
                           position: 'absolute',
                           top: 16,
                           left: 16,
-                          backgroundColor: 'background.paper'
+                          backgroundColor: 'primary.main'
+                        }}
+                      />
+                      <Chip
+                        label={`${product.totalQuantity} lbs`}
+                        size="small"
+                        color="secondary"
+                        sx={{
+                          position: 'absolute',
+                          top: 16,
+                          right: 16,
+                          backgroundColor: 'secondary.main'
                         }}
                       />
                     </Box>
                   )}
+
                   <Typography variant="h6" gutterBottom>
                     {product.title || product.customProduct}
+                    {product.isOwner && (
+                      <Chip
+                        label="Your Product"
+                        size="small"
+                        color="primary"
+                        sx={{ ml: 1, verticalAlign: 'middle' }}
+                      />
+                    )}
                   </Typography>
+
+                  <Box sx={{ mb: 2 }}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={Math.min((product.totalQuantity / 100) * 100, 100)}
+                      sx={{
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: (theme) => theme.palette.grey[300],
+                        '& .MuiLinearProgress-bar': {
+                          borderRadius: 4,
+                          backgroundColor: (theme) =>
+                            product.totalQuantity > 20
+                              ? theme.palette.success.main
+                              : theme.palette.error.main
+                        }
+                      }}
+                    />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                      <Typography variant="caption">
+                        {product.totalQuantity > 0 ? 'In Stock' : 'Out of Stock'}
+                      </Typography>
+                      <Typography variant="caption">
+                        Updated: {new Date(product.createdAt).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+
                   <Typography variant="body2" color="textSecondary" paragraph>
                     {product.description}
                   </Typography>
+
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     <Button
                       variant="outlined"
@@ -573,12 +668,32 @@ const FarmerDashboard = () => {
                       fullWidth
                       onClick={() => navigate(`/products/${product._id}`)}
                     >
-                      Details
+                      Inventory Details
                     </Button>
+                    {product.isOwner && (
+                      <Button
+                        variant="contained"
+                        color="info"
+                        fullWidth
+                        onClick={() => {
+                          // Ensure navigation to analytics AND store product data
+                          navigate(`/products/${product._id}/analytics`, {
+                            state: { // Pass product data for immediate display
+                              productImage: product.imageUrl,
+                              productName: product.title || product.customProduct
+                            }
+                          });
+                        }}
+                        sx={{ whiteSpace: 'nowrap' }}
+                      >
+                        Analytics
+                      </Button>
+                    )}
                   </Box>
                 </CardContent>
               </ProductCard>
             </Grid>
+
           ))}
         </Grid>
       </Box>
@@ -624,7 +739,18 @@ const FarmerDashboard = () => {
             value={newAuction.startingPrice}
             onChange={(e) => setNewAuction({ ...newAuction, startingPrice: e.target.value })}
             InputProps={{
-              startAdornment: <InputAdornment position="start">$</InputAdornment>,
+              startAdornment: <InputAdornment position="start">$/Lbs</InputAdornment>,
+            }}
+            sx={{ mt: 3 }}
+          />
+          <TextField
+            fullWidth
+            label="Auction Quantity"
+            type="number"
+            value={newAuction.auctionQuantity}
+            onChange={(e) => setNewAuction({ ...newAuction, auctionQuantity: e.target.value })}
+            InputProps={{
+              endAdornment: <InputAdornment position="end">Lbs</InputAdornment>,
             }}
             sx={{ mt: 3 }}
           />
@@ -655,8 +781,8 @@ const FarmerDashboard = () => {
       </Dialog>
 
       {/* Notifications Dialog */}
-      <Dialog 
-        open={showNotifications} 
+      <Dialog
+        open={showNotifications}
         onClose={() => setShowNotifications(false)}
         fullWidth
         maxWidth="sm"
@@ -665,11 +791,11 @@ const FarmerDashboard = () => {
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <NotificationsIcon sx={{ mr: 1 }} />
             Notifications
-            <Chip 
-              label={unreadCount} 
-              color="error" 
-              size="small" 
-              sx={{ ml: 2 }} 
+            <Chip
+              label={unreadCount}
+              color="error"
+              size="small"
+              sx={{ ml: 2 }}
             />
           </Box>
         </DialogTitle>
@@ -713,8 +839,8 @@ const FarmerDashboard = () => {
         onClose={() => setSnackbarOpen(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert 
-          onClose={() => setSnackbarOpen(false)} 
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
           severity={snackbarSeverity}
           sx={{ width: '100%', borderRadius: 2, boxShadow: theme.shadows[3] }}
           iconMapping={{
