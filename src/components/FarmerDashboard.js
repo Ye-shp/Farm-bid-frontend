@@ -37,7 +37,10 @@ import {
   Stepper,
   Step,
   StepLabel,
-  Paper
+  Paper,
+  Checkbox,
+  FormControlLabel,
+  Autocomplete
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -97,36 +100,88 @@ const SectionHeader = styled(Box)(({ theme }) => ({
 
 const FarmerDashboard = () => {
   const theme = useTheme();
+  const [activeStep, setActiveStep] = useState(0);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [productCategories, setProductCategories] = useState([]);
-  const [productDetails, setProductDetails] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const navigate = useNavigate();
   const API_URL = 'https://farm-bid.onrender.com';
 
-  // Product state
   const [newProduct, setNewProduct] = useState({
-    title: '',
-    description: '',
+    // Basic Info
     category: '',
-    subcategory: '',
-    customCategory: '',
-    customSubcategory: '',
+    title: '',
+    customProduct: '',
+    totalQuantity: '',
+    description: '',
     image: null,
-    previewUrl: null
+    previewUrl: null,
+
+    // Quality Assurance
+    certifications: {
+      organic: {
+        isCertified: false,
+        certifyingBody: '',
+        certificationNumber: '',
+        validFrom: '',
+        validUntil: ''
+      },
+      foodSafety: [],
+      otherCertifications: []
+    },
+    productSpecs: {
+      varieties: [],
+      gradeStandard: '',
+      size: {
+        min: '',
+        max: '',
+        unit: 'cm',
+        packSize: {
+          quantity: '',
+          unit: 'kg'
+        }
+      },
+      seasonalAvailability: [],
+      shelfLife: {
+        duration: '',
+        unit: 'days'
+      },
+      storageRequirements: {
+        temperature: {
+          min: '',
+          max: '',
+          unit: '°C'
+        },
+        humidity: {
+          min: '',
+          max: ''
+        }
+      }
+    },
+    productionPractices: {
+      growingMethod: 'Conventional',
+      pestManagement: '',
+      postHarvestHandling: '',
+      waterTesting: [],
+      fieldLocation: {
+        type: 'Point',
+        coordinates: [0, 0] // [longitude, latitude]
+      },
+      growingConditions: ''
+    },
+    liabilityAccepted: false
   });
 
-  // Auction dialog state
   const [showAuctionDialog, setShowAuctionDialog] = useState(false);
   const [newAuction, setNewAuction] = useState({
     product: '',
     startingPrice: '',
-    endTime: ''
+    endTime: '',
+    auctionQuantity: ''
   });
 
-  // Notification state
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -178,6 +233,7 @@ const FarmerDashboard = () => {
     };
   }, [socket, API_URL]);
 
+  // edit this to show picture and more data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -186,7 +242,8 @@ const FarmerDashboard = () => {
           navigate('/login');
           return;
         }
-        const categoriesResponse = await axios.get(
+
+    const categoriesResponse = await axios.get(
           `${API_URL}/api/products/categories`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -215,9 +272,8 @@ const FarmerDashboard = () => {
             console.error('Error fetching analytics:', err);
           }
         };
-
+ 
         setProducts(productsResponse.data);
-
         setLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -227,7 +283,39 @@ const FarmerDashboard = () => {
     };
 
     fetchData();
-  }, [navigate]);
+  }, [navigate, API_URL]);
+
+  const validateStep = (step) => {
+    switch (step) {
+      case 0:
+        if (!newProduct.category || !newProduct.description ||
+          !newProduct.image || !newProduct.totalQuantity) {
+          showSnackbar('Please fill all required fields', 'error');
+          return false;
+        }
+        return true;
+      case 1:
+        return true;
+      case 2:
+        if (!newProduct.liabilityAccepted) {
+          showSnackbar('You must accept the liability agreement', 'error');
+          return false;
+        }
+        return true;
+      default:
+        return true;
+    }
+  };
+
+  const handleNextStep = () => {
+    if (validateStep(activeStep)) {
+      setActiveStep((prev) => prev + 1);
+    }
+  };
+
+  const handlePrevStep = () => {
+    setActiveStep((prev) => prev - 1);
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -242,62 +330,62 @@ const FarmerDashboard = () => {
 
   const handleCreateProduct = async (e) => {
     e.preventDefault();
+    if (!validateStep(2)) return;
+  
     setLoading(true);
-
     try {
       const token = localStorage.getItem('token');
       const formData = new FormData();
+  
+      // Basic product info
+      formData.append('category', newProduct.category);
+      formData.append('totalQuantity', newProduct.totalQuantity);
       formData.append('description', newProduct.description);
-
-      const categoryToSend = newProduct.category === 'custom'
-        ? newProduct.customCategory
-        : newProduct.category;
-      formData.append('category', categoryToSend);
-
-      if (newProduct.subcategory === 'custom') {
-        formData.append('customProduct', newProduct.customSubcategory);
+  
+      // Handle title/custom product
+      if (newProduct.category !== 'custom') {
+        formData.append('title', newProduct.title);
       } else {
-        formData.append('title', newProduct.subcategory);
+        formData.append('customProduct', newProduct.customProduct);
       }
-
+  
+      // Handle image
       if (newProduct.image) {
         formData.append('image', newProduct.image);
       }
-
-      if (!newProduct.totalQuantity || isNaN(newProduct.totalQuantity)) {
-        showSnackbar('Please enter total amount available in pounds', 'error');
-        setLoading(false);
-        return;
-      }
-      formData.append('totalQuantity', newProduct.totalQuantity);
-
-      const response = await axios.post(
-        `${API_URL}/api/products`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
+  
+      // Stringify complex objects
+      formData.append('certifications', JSON.stringify(newProduct.certifications));
+      formData.append('productSpecs', JSON.stringify(newProduct.productSpecs));
+      formData.append('productionPractices', JSON.stringify({
+        ...newProduct.productionPractices,
+        fieldLocation: {
+          type: 'Point',
+          coordinates: newProduct.productionPractices.fieldLocation.coordinates
         }
-      );
-
-      setProducts([...products, response.data]);
-      setNewProduct({
-        title: '',
-        description: '',
-        category: '',
-        subcategory: '',
-        customCategory: '',
-        customSubcategory: '',
-        totalQuantity: '',
-        image: null,
-        previewUrl: null,
+      }));
+  
+      const response = await axios.post(`${API_URL}/api/products`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
       });
+  
+      // Reset state and handle success
+      setNewProduct({ /* ...initial state */ });
+      setActiveStep(0);
       showSnackbar('Product created successfully!', 'success');
-    } catch (err) {
-      showSnackbar('Failed to create product. Please try again.', 'error');
-      console.error('Error creating product:', err);
+  
+    } catch (error) {
+      // Handle validation errors from backend
+      if (error.response?.data?.errors) {
+        error.response.data.errors.forEach(err => 
+          showSnackbar(err.msg, 'error')
+        );
+      } else {
+        showSnackbar('Failed to create product', 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -367,7 +455,7 @@ const FarmerDashboard = () => {
       <StyledAppBar position="static" color="inherit">
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Notifications
+            Farmer Dashboard
           </Typography>
           <IconButton onClick={() => setShowNotifications(true)}>
             <Badge badgeContent={unreadCount} color="error">
@@ -399,185 +487,429 @@ const FarmerDashboard = () => {
           List new Product
         </Typography>
 
-        {/* Product Creation Form */}
         <Paper elevation={0} sx={{ p: 4, mb: 6, borderRadius: 4 }}>
-          <Stepper activeStep={0} alternativeLabel sx={{ mb: 6 }}>
+          <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 6 }}>
             <Step><StepLabel>Product Details</StepLabel></Step>
             <Step><StepLabel>Quality Assurance</StepLabel></Step>
             <Step><StepLabel>Confirmation</StepLabel></Step>
           </Stepper>
 
           <form onSubmit={handleCreateProduct}>
-            <Grid container spacing={4}>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Product Category</InputLabel>
-                  <Select
-                    value={newProduct.category}
-                    onChange={(e) => setNewProduct({
-                      ...newProduct,
-                      category: e.target.value,
-                      subcategory: '',
-                      customCategory: '',
-                      customSubcategory: ''
-                    })}
-                  >
-                    <MenuItem value="">Select Category</MenuItem>
-                    {Object.keys(productCategories).map((category) => (
-                      <MenuItem key={category} value={category}>
-                        {category}
-                      </MenuItem>
-                    ))}
-                    <MenuItem value="custom">Custom Category</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Total Quantity (lbs)"
-                  type="number"
-                  value={newProduct.totalQuantity}
-                  onChange={(e) => setNewProduct({
-                    ...newProduct,
-                    totalQuantity: e.target.value,
-                  })}
-                  required
-                />
-              </Grid>
-
-
-              {newProduct.category === 'custom' && (
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Custom Category"
-                    value={newProduct.customCategory}
-                    onChange={(e) => setNewProduct({
-                      ...newProduct,
-                      customCategory: e.target.value
-                    })}
-                    required
-                  />
-                </Grid>
-              )}
-
-              {newProduct.category && newProduct.category !== 'custom' && (
+            {activeStep === 0 && (
+              <Grid container spacing={4}>
                 <Grid item xs={12} md={6}>
                   <FormControl fullWidth required>
-                    <InputLabel>Subcategory</InputLabel>
+                    <InputLabel>Product Category</InputLabel>
                     <Select
-                      value={newProduct.subcategory}
+                      value={newProduct.category}
                       onChange={(e) => setNewProduct({
                         ...newProduct,
-                        subcategory: e.target.value,
+                        category: e.target.value,
+                        subcategory: '',
+                        customCategory: '',
                         customSubcategory: ''
                       })}
                     >
-                      <MenuItem value="">Select Subcategory</MenuItem>
-                      {productCategories[newProduct.category]?.map((subcategory) => (
-                        <MenuItem key={subcategory} value={subcategory}>
-                          {subcategory}
+                      <MenuItem value="">Select Category</MenuItem>
+                      {Object.keys(productCategories).map((category) => (
+                        <MenuItem key={category} value={category}>
+                          {category}
                         </MenuItem>
                       ))}
-                      <MenuItem value="custom">Custom Subcategory</MenuItem>
+                      <MenuItem value="custom">Custom Category</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
-              )}
-
-              {newProduct.subcategory === 'custom' && (
                 <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
-                    label="Custom Subcategory"
-                    value={newProduct.customSubcategory}
+                    label="Total Quantity (lbs)"
+                    type="number"
+                    value={newProduct.totalQuantity}
                     onChange={(e) => setNewProduct({
                       ...newProduct,
-                      customSubcategory: e.target.value
+                      totalQuantity: e.target.value,
                     })}
                     required
                   />
                 </Grid>
-              )}
 
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Product Description"
-                  value={newProduct.description}
-                  onChange={(e) => setNewProduct({
-                    ...newProduct,
-                    description: e.target.value
-                  })}
-                  required
-                  multiline
-                  rows={4}
-                />
-              </Grid>
+                {newProduct.category === 'custom' && (
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Custom Category"
+                      value={newProduct.customCategory}
+                      onChange={(e) => setNewProduct({
+                        ...newProduct,
+                        customCategory: e.target.value
+                      })}
+                      required
+                    />
+                  </Grid>
+                )}
 
-              <Grid item xs={12}>
-                <ImageUploadArea>
-                  <input
-                    type="file"
-                    hidden
-                    onChange={handleImageChange}
-                    accept="image/*"
-                  />
-                  {newProduct.previewUrl ? (
-                    <Box textAlign="center">
-                      <img
-                        src={newProduct.previewUrl}
-                        alt="Preview"
-                        style={{
-                          maxWidth: '100%',
-                          height: 200,
-                          objectFit: 'cover',
-                          borderRadius: 8
-                        }}
-                      />
-                      <Button
-                        variant="text"
-                        color="primary"
-                        startIcon={<PhotoCamera />}
-                        sx={{ mt: 2 }}
+                {newProduct.category && newProduct.category !== 'custom' && (
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth required>
+                      <InputLabel>Subcategory</InputLabel>
+                      <Select
+                        value={newProduct.subcategory}
+                        onChange={(e) => setNewProduct({
+                          ...newProduct,
+                          subcategory: e.target.value,
+                          customSubcategory: ''
+                        })}
                       >
-                        Change Image
-                      </Button>
-                    </Box>
-                  ) : (
-                    <Box textAlign="center">
-                      <PhotoCamera sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-                      <Typography variant="body1" color="textSecondary">
-                        Upload high-quality product photos
-                      </Typography>
-                      <Typography variant="caption" color="textSecondary">
-                        Recommended size: 1200x800px
-                      </Typography>
-                    </Box>
-                  )}
-                </ImageUploadArea>
-              </Grid>
+                        <MenuItem value="">Select Subcategory</MenuItem>
+                        {productCategories[newProduct.category]?.map((subcategory) => (
+                          <MenuItem key={subcategory} value={subcategory}>
+                            {subcategory}
+                          </MenuItem>
+                        ))}
+                        <MenuItem value="custom">Custom Subcategory</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                )}
 
-              <Grid item xs={12}>
+                {newProduct.subcategory === 'custom' && (
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Custom Subcategory"
+                      value={newProduct.customSubcategory}
+                      onChange={(e) => setNewProduct({
+                        ...newProduct,
+                        customSubcategory: e.target.value
+                      })}
+                      required
+                    />
+                  </Grid>
+                )}
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Product Description"
+                    value={newProduct.description}
+                    onChange={(e) => setNewProduct({
+                      ...newProduct,
+                      description: e.target.value
+                    })}
+                    required
+                    multiline
+                    rows={4}
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <ImageUploadArea>
+                    <input
+                      type="file"
+                      hidden
+                      onChange={handleImageChange}
+                      accept="image/*"
+                    />
+                    {newProduct.previewUrl ? (
+                      <Box textAlign="center">
+                        <img
+                          src={newProduct.previewUrl}
+                          alt="Preview"
+                          style={{
+                            maxWidth: '100%',
+                            height: 200,
+                            objectFit: 'cover',
+                            borderRadius: 8
+                          }}
+                        />
+                        <Button
+                          variant="text"
+                          color="primary"
+                          startIcon={<PhotoCamera />}
+                          sx={{ mt: 2 }}
+                        >
+                          Change Image
+                        </Button>
+                      </Box>
+                    ) : (
+                      <Box textAlign="center">
+                        <PhotoCamera sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                        <Typography variant="body1" color="textSecondary">
+                          Upload high-quality product photos
+                        </Typography>
+                        <Typography variant="caption" color="textSecondary">
+                          Recommended size: 1200x800px
+                        </Typography>
+                      </Box>
+                    )}
+                  </ImageUploadArea>
+                </Grid>
+              </Grid>
+            )}
+
+            {activeStep === 1 && (
+              <Grid container spacing={4}>
+                {/* Organic Certification */}
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={newProduct.certifications.organic.isCertified}
+                        onChange={(e) => setNewProduct({
+                          ...newProduct,
+                          certifications: {
+                            ...newProduct.certifications,
+                            organic: {
+                              ...newProduct.certifications.organic,
+                              isCertified: e.target.checked
+                            }
+                          }
+                        })}
+                      />
+                    }
+                    label="Organic Certified"
+                  />
+                </Grid>
+
+                {newProduct.certifications.organic.isCertified && (
+                  <Grid item xs={12} container spacing={2}>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        label="Certifying Body"
+                        value={newProduct.certifications.organic.certifyingBody}
+                        onChange={(e) => setNewProduct({
+                          ...newProduct,
+                          certifications: {
+                            ...newProduct.certifications,
+                            organic: {
+                              ...newProduct.certifications.organic,
+                              certifyingBody: e.target.value
+                            }
+                          }
+                        })}
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        label="Certification Number"
+                        value={newProduct.certifications.organic.certificationNumber}
+                        onChange={(e) => setNewProduct({
+                          ...newProduct,
+                          certifications: {
+                            ...newProduct.certifications,
+                            organic: {
+                              ...newProduct.certifications.organic,
+                              certificationNumber: e.target.value
+                            }
+                          }
+                        })}
+                      />
+                    </Grid>
+                  </Grid>
+                )}
+
+                {/* Food Safety Certifications */}
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Food Safety Certifications
+                  </Typography>
+                  {newProduct.certifications.foodSafety.map((cert, index) => (
+                    <Grid container spacing={2} key={index} sx={{ mb: 2 }}>
+                      <Grid item xs={4}>
+                        <FormControl fullWidth>
+                          <InputLabel>Certification Type</InputLabel>
+                          <Select
+                            value={cert.certificationType}
+                            onChange={(e) => {
+                              const updated = [...newProduct.certifications.foodSafety];
+                              updated[index].certificationType = e.target.value;
+                              setNewProduct({
+                                ...newProduct,
+                                certifications: {
+                                  ...newProduct.certifications,
+                                  foodSafety: updated
+                                }
+                              });
+                            }}
+                          >
+                            <MenuItem value="GAP">GAP</MenuItem>
+                            <MenuItem value="HACCP">HACCP</MenuItem>
+                            <MenuItem value="FSMA">FSMA</MenuItem>
+                            <MenuItem value="Other">Other</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      {cert.certificationType === 'Other' && (
+                        <Grid item xs={4}>
+                          <TextField
+                            fullWidth
+                            label="Other Certification"
+                            value={cert.otherCertification}
+                            onChange={(e) => {
+                              const updated = [...newProduct.certifications.foodSafety];
+                              updated[index].otherCertification = e.target.value;
+                              setNewProduct({
+                                ...newProduct,
+                                certifications: {
+                                  ...newProduct.certifications,
+                                  foodSafety: updated
+                                }
+                              });
+                            }}
+                          />
+                        </Grid>
+                      )}
+                      <Grid item xs={2}>
+                        <TextField
+                          fullWidth
+                          label="Audit Score"
+                          type="number"
+                          value={cert.auditScore}
+                          onChange={(e) => {
+                            const updated = [...newProduct.certifications.foodSafety];
+                            updated[index].auditScore = e.target.value;
+                            setNewProduct({
+                              ...newProduct,
+                              certifications: {
+                                ...newProduct.certifications,
+                                foodSafety: updated
+                              }
+                            });
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={2}>
+                        <IconButton
+                          onClick={() => setNewProduct({
+                            ...newProduct,
+                            certifications: {
+                              ...newProduct.certifications,
+                              foodSafety: newProduct.certifications.foodSafety.filter((_, i) => i !== index)
+                            }
+                          })}
+                        >
+                          <CloseIcon />
+                        </IconButton>
+                      </Grid>
+                    </Grid>
+                  ))}
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={() => setNewProduct({
+                      ...newProduct,
+                      certifications: {
+                        ...newProduct.certifications,
+                        foodSafety: [...newProduct.certifications.foodSafety, {
+                          certificationType: 'GAP',
+                          otherCertification: '',
+                          auditScore: '',
+                          auditDate: '',
+                          certifyingBody: ''
+                        }]
+                      }
+                    })}
+                  >
+                    Add Food Safety Certification
+                  </Button>
+                </Grid>
+              </Grid>
+            )}
+
+            {activeStep === 2 && (
+              <Grid container spacing={4}>
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom>
+                    Final Confirmation
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Paper elevation={0} sx={{
+                    p: 3,
+                    border: '1px solid',
+                    borderColor: 'error.main',
+                    borderRadius: 2,
+                    backgroundColor: 'error.light'
+                  }}>
+                    <Typography variant="body2" component="div" sx={{
+                      fontFamily: 'monospace',
+                      maxHeight: 200,
+                      overflowY: 'auto',
+                      mb: 2
+                    }}>
+                      <strong>Agricultural Product Liability Acknowledgement</strong>
+                      <br /><br />
+                      By checking this box, I hereby affirm that:
+                      <ul>
+                        <li>All product information provided is accurate to the best of my knowledge</li>
+                        <li>I possess valid documentation for all claimed certifications</li>
+                        <li>Production practices disclosed meet current agricultural safety standards</li>
+                        <li>I bear full responsibility for any misrepresentation of product quality</li>
+                        <li>The platform holds no liability for product claims or buyer disputes</li>
+                      </ul>
+                      Violations may result in account suspension and legal action.
+                    </Typography>
+
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={newProduct.liabilityAccepted}
+                          onChange={(e) => setNewProduct({
+                            ...newProduct,
+                            liabilityAccepted: e.target.checked
+                          })}
+                          color="error"
+                        />
+                      }
+                      label={
+                        <Typography variant="body2" color="error">
+                          I accept full liability for the accuracy of this product listing
+                        </Typography>
+                      }
+                      sx={{ mt: 2 }}
+                    />
+                  </Paper>
+                </Grid>
+              </Grid>
+            )}
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+              <Button
+                disabled={activeStep === 0}
+                onClick={handlePrevStep}
+              >
+                Back
+              </Button>
+
+              {activeStep < 2 ? (
+                <Button
+                  variant="contained"
+                  onClick={handleNextStep}
+                >
+                  Next
+                </Button>
+              ) : (
                 <Button
                   type="submit"
                   variant="contained"
-                  size="large"
-                  fullWidth
-                  sx={{ height: 56, borderRadius: 2 }}
-                  startIcon={loading ? <CircularProgress size={24} /> : <CheckIcon />}
+                  disabled={loading}
                 >
-                  {loading ? 'Processing...' : 'Publish Product'}
+                  {loading ? 'Submitting...' : 'Publish Product'}
                 </Button>
-              </Grid>
-            </Grid>
+              )}
+            </Box>
           </form>
         </Paper>
+
+        <Typography variant="h5" gutterBottom sx={{ mt: 6, mb: 4 }}>
+          Your Products
+        </Typography>
+
         <Grid container spacing={4}>
-
-          {/* Product Grid */}
-
           {products.map((product) => (
             <Grid item xs={12} sm={6} md={4} key={product._id}>
               <ProductCard>
@@ -675,15 +1007,7 @@ const FarmerDashboard = () => {
                         variant="contained"
                         color="info"
                         fullWidth
-                        onClick={() => {
-                          // Ensure navigation to analytics AND store product data
-                          navigate(`/products/${product._id}/analytics`, {
-                            state: { // Pass product data for immediate display
-                              productImage: product.imageUrl,
-                              productName: product.title || product.customProduct
-                            }
-                          });
-                        }}
+                        onClick={() => navigate(`/products/${product._id}/analytics`)}
                         sx={{ whiteSpace: 'nowrap' }}
                       >
                         Analytics
@@ -693,7 +1017,6 @@ const FarmerDashboard = () => {
                 </CardContent>
               </ProductCard>
             </Grid>
-
           ))}
         </Grid>
       </Box>
