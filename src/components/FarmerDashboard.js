@@ -179,7 +179,8 @@ const FarmerDashboard = () => {
     product: '',
     startingPrice: '',
     endTime: '',
-    auctionQuantity: ''
+    auctionQuantity: '',
+    delivery: false
   });
 
   const [notifications, setNotifications] = useState([]);
@@ -215,7 +216,7 @@ const FarmerDashboard = () => {
     const fetchNotifications = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/notifications`, {
+        const response = await axios.get(`${API_URL}/api/notifications`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setNotifications(response.data);
@@ -243,7 +244,7 @@ const FarmerDashboard = () => {
           return;
         }
 
-    const categoriesResponse = await axios.get(
+        const categoriesResponse = await axios.get(
           `${API_URL}/api/products/categories`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -272,7 +273,7 @@ const FarmerDashboard = () => {
             console.error('Error fetching analytics:', err);
           }
         };
- 
+
         setProducts(productsResponse.data);
         setLoading(false);
       } catch (error) {
@@ -331,29 +332,28 @@ const FarmerDashboard = () => {
   const handleCreateProduct = async (e) => {
     e.preventDefault();
     if (!validateStep(2)) return;
-  
+
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
       const formData = new FormData();
-  
+
       // Basic product info
       formData.append('category', newProduct.category);
       formData.append('totalQuantity', newProduct.totalQuantity);
       formData.append('description', newProduct.description);
-  
+
       // Handle title/custom product
-      if (newProduct.category !== 'custom') {
-        formData.append('title', newProduct.title);
+      if (newProduct.subcategory === 'custom') {
+        formData.append('customProduct', newProduct.customSubcategory);
       } else {
-        formData.append('customProduct', newProduct.customProduct);
+        formData.append('title', newProduct.subcategory);
       }
-  
       // Handle image
       if (newProduct.image) {
         formData.append('image', newProduct.image);
       }
-  
+
       // Stringify complex objects
       formData.append('certifications', JSON.stringify(newProduct.certifications));
       formData.append('productSpecs', JSON.stringify(newProduct.productSpecs));
@@ -364,23 +364,23 @@ const FarmerDashboard = () => {
           coordinates: newProduct.productionPractices.fieldLocation.coordinates
         }
       }));
-  
+
       const response = await axios.post(`${API_URL}/api/products`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
         },
       });
-  
+
       // Reset state and handle success
       setNewProduct({ /* ...initial state */ });
       setActiveStep(0);
       showSnackbar('Product created successfully!', 'success');
-  
+
     } catch (error) {
       // Handle validation errors from backend
       if (error.response?.data?.errors) {
-        error.response.data.errors.forEach(err => 
+        error.response.data.errors.forEach(err =>
           showSnackbar(err.msg, 'error')
         );
       } else {
@@ -394,13 +394,15 @@ const FarmerDashboard = () => {
   const handleCreateAuction = async () => {
     try {
       const token = localStorage.getItem('token');
+      const delivery = document.getElementById('delivery-checkbox').checked;
       const response = await axios.post(
         `${API_URL}/api/auctions/create`,
         {
           productId: newAuction.product,
           startingPrice: parseFloat(newAuction.startingPrice),
           endTime: new Date(newAuction.endTime).toISOString(),
-          auctionQuantity: parseFloat(newAuction.auctionQuantity)
+          auctionQuantity: parseFloat(newAuction.auctionQuantity),
+          delivery: delivery,
         },
         {
           headers: {
@@ -411,7 +413,7 @@ const FarmerDashboard = () => {
       );
 
       setShowAuctionDialog(false);
-      setNewAuction({ product: '', startingPrice: '', endTime: '', auctionQuantity: '' });
+      setNewAuction({ product: '', startingPrice: '', endTime: '', auctionQuantity: '', delivery: false });
       showSnackbar('Auction created successfully!', 'success');
     } catch (error) {
       showSnackbar('Failed to create auction. Please try again.', 'error');
@@ -481,7 +483,7 @@ const FarmerDashboard = () => {
           </Button>
         </Box>
       </SectionHeader>
-
+      {/* Product Creation Form */}
       <Box maxWidth="1200px" margin="auto" p={4}>
         <Typography variant="h5" gutterBottom sx={{ mb: 4 }}>
           List new Product
@@ -904,7 +906,8 @@ const FarmerDashboard = () => {
             </Box>
           </form>
         </Paper>
-
+        
+        {/* Products list */}
         <Typography variant="h5" gutterBottom sx={{ mt: 6, mb: 4 }}>
           Your Products
         </Typography>
@@ -1090,18 +1093,30 @@ const FarmerDashboard = () => {
             }}
             sx={{ mt: 3 }}
           />
+
+          <FormControlLabel // delivery Checkbox
+            control={
+              <Checkbox
+                id="delivery-checkbox"
+                checked={newAuction.delivery}
+                onChange={(e) => setNewAuction({ ...newAuction, delivery: e.target.checked })}
+              />
+            }
+            label="Check for Delivery Available"
+            sx={{ mt: 3 }}
+          />
         </DialogContent>
         <DialogActions sx={{ p: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
           <Button onClick={() => setShowAuctionDialog(false)}>Cancel</Button>
           <Button
             variant="contained"
             onClick={handleCreateAuction}
-            disabled={!newAuction.product || !newAuction.startingPrice || !newAuction.endTime}
           >
             Launch Auction
           </Button>
         </DialogActions>
       </Dialog>
+
 
       {/* Notifications Dialog */}
       <Dialog
