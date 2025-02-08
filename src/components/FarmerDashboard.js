@@ -658,16 +658,18 @@ const FarmerDashboard = () => {
                     control={
                       <Checkbox
                         checked={newProduct.certifications.organic.isCertified}
-                        onChange={(e) => setNewProduct({
-                          ...newProduct,
-                          certifications: {
-                            ...newProduct.certifications,
-                            organic: {
-                              ...newProduct.certifications.organic,
-                              isCertified: e.target.checked
-                            }
-                          }
-                        })}
+                        onChange={(e) =>
+                          setNewProduct({
+                            ...newProduct,
+                            certifications: {
+                              ...newProduct.certifications,
+                              organic: {
+                                ...newProduct.certifications.organic,
+                                isCertified: e.target.checked,
+                              },
+                            },
+                          })
+                        }
                       />
                     }
                     label="Organic Certified"
@@ -681,16 +683,18 @@ const FarmerDashboard = () => {
                         fullWidth
                         label="Certifying Body"
                         value={newProduct.certifications.organic.certifyingBody}
-                        onChange={(e) => setNewProduct({
-                          ...newProduct,
-                          certifications: {
-                            ...newProduct.certifications,
-                            organic: {
-                              ...newProduct.certifications.organic,
-                              certifyingBody: e.target.value
-                            }
-                          }
-                        })}
+                        onChange={(e) =>
+                          setNewProduct({
+                            ...newProduct,
+                            certifications: {
+                              ...newProduct.certifications,
+                              organic: {
+                                ...newProduct.certifications.organic,
+                                certifyingBody: e.target.value,
+                              },
+                            },
+                          })
+                        }
                       />
                     </Grid>
                     <Grid item xs={6}>
@@ -698,16 +702,18 @@ const FarmerDashboard = () => {
                         fullWidth
                         label="Certification Number"
                         value={newProduct.certifications.organic.certificationNumber}
-                        onChange={(e) => setNewProduct({
-                          ...newProduct,
-                          certifications: {
-                            ...newProduct.certifications,
-                            organic: {
-                              ...newProduct.certifications.organic,
-                              certificationNumber: e.target.value
-                            }
-                          }
-                        })}
+                        onChange={(e) =>
+                          setNewProduct({
+                            ...newProduct,
+                            certifications: {
+                              ...newProduct.certifications,
+                              organic: {
+                                ...newProduct.certifications.organic,
+                                certificationNumber: e.target.value,
+                              },
+                            },
+                          })
+                        }
                       />
                     </Grid>
                   </Grid>
@@ -732,8 +738,8 @@ const FarmerDashboard = () => {
                                 ...newProduct,
                                 certifications: {
                                   ...newProduct.certifications,
-                                  foodSafety: updated
-                                }
+                                  foodSafety: updated,
+                                },
                               });
                             }}
                           >
@@ -757,8 +763,8 @@ const FarmerDashboard = () => {
                                 ...newProduct,
                                 certifications: {
                                   ...newProduct.certifications,
-                                  foodSafety: updated
-                                }
+                                  foodSafety: updated,
+                                },
                               });
                             }}
                           />
@@ -777,21 +783,25 @@ const FarmerDashboard = () => {
                               ...newProduct,
                               certifications: {
                                 ...newProduct.certifications,
-                                foodSafety: updated
-                              }
+                                foodSafety: updated,
+                              },
                             });
                           }}
                         />
                       </Grid>
                       <Grid item xs={2}>
                         <IconButton
-                          onClick={() => setNewProduct({
-                            ...newProduct,
-                            certifications: {
-                              ...newProduct.certifications,
-                              foodSafety: newProduct.certifications.foodSafety.filter((_, i) => i !== index)
-                            }
-                          })}
+                          onClick={() =>
+                            setNewProduct({
+                              ...newProduct,
+                              certifications: {
+                                ...newProduct.certifications,
+                                foodSafety: newProduct.certifications.foodSafety.filter(
+                                  (_, i) => i !== index
+                                ),
+                              },
+                            })
+                          }
                         >
                           <CloseIcon />
                         </IconButton>
@@ -801,26 +811,246 @@ const FarmerDashboard = () => {
                   <Button
                     variant="outlined"
                     startIcon={<AddIcon />}
-                    onClick={() => setNewProduct({
-                      ...newProduct,
-                      certifications: {
-                        ...newProduct.certifications,
-                        foodSafety: [...newProduct.certifications.foodSafety, {
-                          certificationType: 'GAP',
-                          otherCertification: '',
-                          auditScore: '',
-                          auditDate: '',
-                          certifyingBody: ''
-                        }]
-                      }
-                    })}
+                    onClick={() =>
+                      setNewProduct({
+                        ...newProduct,
+                        certifications: {
+                          ...newProduct.certifications,
+                          foodSafety: [
+                            ...newProduct.certifications.foodSafety,
+                            {
+                              certificationType: 'GAP',
+                              otherCertification: '',
+                              auditScore: '',
+                              auditDate: '',
+                              certifyingBody: '',
+                            },
+                          ],
+                        },
+                      })
+                    }
                   >
                     Add Food Safety Certification
                   </Button>
                 </Grid>
+
+                {/* Product Specifications */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom>
+                    Product Specifications
+                  </Typography>
+                </Grid>
+
+                {/* Varieties */}
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Varieties</InputLabel>
+                    <Select
+                      multiple
+                      value={newProduct.productSpecs.varieties}
+                      onChange={(e) =>
+                        setNewProduct({
+                          ...newProduct,
+                          productSpecs: {
+                            ...newProduct.productSpecs,
+                            varieties: e.target.value,
+                          },
+                        })
+                      }
+                      renderValue={(selected) => selected.join(', ')}
+                    >
+                      {['Standard', 'Heirloom', 'Hybrid', 'Organic'].map((variety) => (
+                        <MenuItem key={variety} value={variety}>
+                          <Checkbox
+                            checked={newProduct.productSpecs.varieties.includes(variety)}
+                          />
+                          <ListItemText primary={variety} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                {/* Size Specifications */}
+                <Grid item xs={12} container spacing={2}>
+                  <Grid item xs={4}>
+                    <TextField
+                      fullWidth
+                      label="Min Size"
+                      type="number"
+                      value={newProduct.productSpecs.size.min}
+                      onChange={(e) =>
+                        setNewProduct({
+                          ...newProduct,
+                          productSpecs: {
+                            ...newProduct.productSpecs,
+                            size: {
+                              ...newProduct.productSpecs.size,
+                              min: Number(e.target.value),
+                            },
+                          },
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={4}>
+                    <TextField
+                      fullWidth
+                      label="Max Size"
+                      type="number"
+                      value={newProduct.productSpecs.size.max}
+                      onChange={(e) =>
+                        setNewProduct({
+                          ...newProduct,
+                          productSpecs: {
+                            ...newProduct.productSpecs,
+                            size: {
+                              ...newProduct.productSpecs.size,
+                              max: Number(e.target.value),
+                            },
+                          },
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={4}>
+                    <FormControl fullWidth>
+                      <InputLabel>Size Unit</InputLabel>
+                      <Select
+                        value={newProduct.productSpecs.size.unit}
+                        onChange={(e) =>
+                          setNewProduct({
+                            ...newProduct,
+                            productSpecs: {
+                              ...newProduct.productSpecs,
+                              size: {
+                                ...newProduct.productSpecs.size,
+                                unit: e.target.value,
+                              },
+                            },
+                          })
+                        }
+                      >
+                        {['cm', 'mm', 'g', 'kg', 'oz', 'lb'].map((unit) => (
+                          <MenuItem key={unit} value={unit}>
+                            {unit}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+
+                {/* Shelf Life */}
+                <Grid item xs={12} container spacing={2}>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      label="Shelf Life Duration"
+                      type="number"
+                      value={newProduct.productSpecs.shelfLife.duration}
+                      onChange={(e) =>
+                        setNewProduct({
+                          ...newProduct,
+                          productSpecs: {
+                            ...newProduct.productSpecs,
+                            shelfLife: {
+                              ...newProduct.productSpecs.shelfLife,
+                              duration: Number(e.target.value),
+                            },
+                          },
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <FormControl fullWidth>
+                      <InputLabel>Shelf Life Unit</InputLabel>
+                      <Select
+                        value={newProduct.productSpecs.shelfLife.unit}
+                        onChange={(e) =>
+                          setNewProduct({
+                            ...newProduct,
+                            productSpecs: {
+                              ...newProduct.productSpecs,
+                              shelfLife: {
+                                ...newProduct.productSpecs.shelfLife,
+                                unit: e.target.value,
+                              },
+                            },
+                          })
+                        }
+                      >
+                        {['days', 'weeks', 'months'].map((unit) => (
+                          <MenuItem key={unit} value={unit}>
+                            {unit}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+
+                {/* Seasonal Availability */}
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Seasonal Availability
+                  </Typography>
+                  <Grid container spacing={1}>
+                    {[
+                      'Jan',
+                      'Feb',
+                      'Mar',
+                      'Apr',
+                      'May',
+                      'Jun',
+                      'Jul',
+                      'Aug',
+                      'Sep',
+                      'Oct',
+                      'Nov',
+                      'Dec',
+                    ].map((month) => (
+                      <Grid item xs={3} key={month}>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={newProduct.productSpecs.seasonalAvailability.some(
+                                (m) => m.month === month && m.available
+                              )}
+                              onChange={(e) => {
+                                const updatedAvailability = [
+                                  ...newProduct.productSpecs.seasonalAvailability,
+                                ];
+                                const index = updatedAvailability.findIndex(
+                                  (m) => m.month === month
+                                );
+                                if (index === -1) {
+                                  updatedAvailability.push({
+                                    month,
+                                    available: e.target.checked,
+                                  });
+                                } else {
+                                  updatedAvailability[index].available = e.target.checked;
+                                }
+                                setNewProduct({
+                                  ...newProduct,
+                                  productSpecs: {
+                                    ...newProduct.productSpecs,
+                                    seasonalAvailability: updatedAvailability,
+                                  },
+                                });
+                              }}
+                            />
+                          }
+                          label={month}
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Grid>
               </Grid>
             )}
-
             {activeStep === 2 && (
               <Grid container spacing={4}>
                 <Grid item xs={12}>
@@ -906,7 +1136,7 @@ const FarmerDashboard = () => {
             </Box>
           </form>
         </Paper>
-        
+
         {/* Products list */}
         <Typography variant="h5" gutterBottom sx={{ mt: 6, mb: 4 }}>
           Your Products
