@@ -55,7 +55,7 @@ export const SocketProvider = ({ children }) => {
     });
 
     // Debug notification events
-    socketInstance.on('newNotification', (notification) => {
+    socketInstance.on('notificationUpdate', (notification) => {
       console.log('Received new notification:', notification);
     });
 

@@ -211,7 +211,7 @@ const FarmerDashboard = () => {
       });
     };
 
-    socket.on('newNotification', handleNewNotification);
+    socket.on('notificationUpdate', handleNewNotification);
 
     const fetchNotifications = async () => {
       try {
@@ -424,7 +424,7 @@ const FarmerDashboard = () => {
   const handleMarkAsRead = async (notificationId) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API_URL}/notifications/${notificationId}/read`, null, {
+      await axios.put(`${API_URL}/api/notifications/${notificationId}/read`, null, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(prev =>
