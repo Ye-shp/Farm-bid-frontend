@@ -246,7 +246,7 @@ const BuyerDashboard = () => {
       });
     };
 
-    socket.on('newNotification', handleNewNotification);
+    socket.on('notificationUpdate', handleNewNotification);
 
     // Fetch initial notifications
     const fetchNotifications = async () => {
@@ -333,9 +333,7 @@ const BuyerDashboard = () => {
 
   const markAsRead = async (notificationId) => {
     try {
-      await axios.put(
-        `/notifications/${notificationId}/read`
-      );
+      await axios.put(`${API_URL}/notifications/${notificationId}/read`);
       setNotifications((prev) =>
         prev.map((notification) =>
           notification._id === notificationId ? { ...notification, read: true } : notification
@@ -402,7 +400,9 @@ const BuyerDashboard = () => {
     await markAsRead(notification._id);
 
     if (notification.type === 'auction_won' && notification.metadata) {
-      const { auctionId, bidId, amount, title } = notification.metadata;
+      const auctionId = notification.reference?.id;
+      const amount = notification.metadata?.amount;
+      const title = notification.title;
       
       if (!auctionId || !bidId) {
         console.error('Missing required payment data:', notification.metadata);
