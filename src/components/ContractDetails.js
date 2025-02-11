@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Formik, Form, Field } from 'formik';
+import * as Yup from 'yup';
 import {
   Box,
   Card,
@@ -36,6 +38,7 @@ const ContractDetails = () => {
   const [userId] = useState(localStorage.getItem('userId'));
   const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
   const [selectedFulfillment, setSelectedFulfillment] = useState(null);
+  const [showFulfillDialog, setShowFulfillDialog] = useState(false);
   const API_URL = 'https://farm-bid.onrender.com';
 
   useEffect(() => {
@@ -60,13 +63,28 @@ const ContractDetails = () => {
         userId,
         isBuyer: response.data.buyer._id === userId
       });
-      
+
       setContract(response.data);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching contract:', error);
       setError(error.response?.data?.error || 'Failed to load contract details');
       setLoading(false);
+    }
+  };
+
+  const handleSubmitFulfillment = async (values) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API_URL}/api/open-contracts/${contractId}/fulfill`,
+        values,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchContractDetails();
+      setShowFulfillDialog(false);
+    } catch (error) {
+      setError(error.response?.data?.error || 'Failed to submit fulfillment');
     }
   };
 
@@ -94,6 +112,24 @@ const ContractDetails = () => {
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!contract) return <Alert severity="info">No contract found</Alert>;
 
+  const fulfillmentSchema = Yup.object().shape({
+    price: Yup.number()
+      .required('Required')
+      .positive('Must be positive')
+      .max(contract.maxPrice, 'Price exceeds maximum allowed'),
+    deliveryMethod: Yup.string().required('Required'),
+    estimatedDeliveryDate: Yup.date()
+      .required('Required')
+      .min(new Date(), 'Delivery date must be in the future'),
+    deliveryFee: Yup.number().min(0, 'Cannot be negative'),
+    notes: Yup.string()
+  });
+
+  const isFarmer = userRole === 'farmer';
+  const hasExistingFulfillment = contract.fulfillments?.some(
+    f => f.farmer._id === userId
+  );
+  const canFulfill = isFarmer && contract.status === 'open' && !hasExistingFulfillment;
   return (
     <Box sx={{ p: 3 }}>
       <Card>
@@ -101,7 +137,7 @@ const ContractDetails = () => {
           <Typography variant="h5" gutterBottom>
             Contract Details
           </Typography>
-          
+
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <Typography variant="subtitle1" color="textSecondary">
@@ -170,10 +206,10 @@ const ContractDetails = () => {
 
           {contract.fulfillments && contract.fulfillments.length > 0 ? (
             contract.fulfillments.map((fulfillment) => {
-              const isAcceptable = 
-                userRole === 'buyer' && 
-                contract.buyer._id === userId && 
-                contract.status === 'open' && 
+              const isAcceptable =
+                userRole === 'buyer' &&
+                contract.buyer._id === userId &&
+                contract.status === 'open' &&
                 fulfillment.status === 'pending' &&
                 contract.paymentStatus === 'pending';
 
@@ -244,9 +280,9 @@ const ContractDetails = () => {
                         <Typography variant="subtitle2" color="textSecondary">
                           Status
                         </Typography>
-                        <Typography variant="body1" sx={{ 
-                          color: fulfillment.status === 'accepted' ? 'success.main' : 
-                                fulfillment.status === 'rejected' ? 'error.main' : 'text.primary'
+                        <Typography variant="body1" sx={{
+                          color: fulfillment.status === 'accepted' ? 'success.main' :
+                            fulfillment.status === 'rejected' ? 'error.main' : 'text.primary'
                         }}>
                           {fulfillment.status.toUpperCase()}
                         </Typography>
@@ -274,11 +310,131 @@ const ContractDetails = () => {
               No fulfillments yet
             </Typography>
           )}
+          {canFulfill && (
+            <Box sx={{ mt: 4 }}>
+              <Divider sx={{ mb: 3 }} />
+              <Typography variant="h6" gutterBottom>
+                Submit Your Offer
+              </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => setShowFulfillDialog(true)}
+                sx={{ mb: 3 }}
+              >
+                Submit Fulfillment Offer
+              </Button>
+
+              <Dialog open={showFulfillDialog} onClose={() => setShowFulfillDialog(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Submit Fulfillment Offer</DialogTitle>
+                <DialogContent>
+                  <Formik
+                    initialValues={{
+                      price: '',
+                      deliveryMethod: 'farmer_delivery',
+                      deliveryFee: 0,
+                      estimatedDeliveryDate: '',
+                      notes: ''
+                    }}
+                    validationSchema={fulfillmentSchema}
+                    onSubmit={handleSubmitFulfillment}
+                  >
+                    {({ errors, touched }) => (
+                      <Form>
+                        <Field name="price">
+                          {({ field }) => (
+                            <TextField
+                              {...field}
+                              fullWidth
+                              margin="normal"
+                              label="Price per unit"
+                              type="number"
+                              inputProps={{ step: "0.01" }}
+                              error={touched.price && !!errors.price}
+                              helperText={touched.price && errors.price}
+                            />
+                          )}
+                        </Field>
+
+                        <Field name="deliveryMethod">
+                          {({ field }) => (
+                            <TextField
+                              {...field}
+                              fullWidth
+                              margin="normal"
+                              label="Delivery Method"
+                              select
+                              error={touched.deliveryMethod && !!errors.deliveryMethod}
+                              helperText={touched.deliveryMethod && errors.deliveryMethod}
+                            >
+                              <MenuItem value="buyer_pickup">Buyer Pickup</MenuItem>
+                              <MenuItem value="farmer_delivery">Farmer Delivery</MenuItem>
+                              <MenuItem value="third_party">Third Party</MenuItem>
+                            </TextField>
+                          )}
+                        </Field>
+
+                        <Field name="deliveryFee">
+                          {({ field }) => (
+                            <TextField
+                              {...field}
+                              fullWidth
+                              margin="normal"
+                              label="Delivery Fee"
+                              type="number"
+                              inputProps={{ step: "0.01" }}
+                              error={touched.deliveryFee && !!errors.deliveryFee}
+                              helperText={touched.deliveryFee && errors.deliveryFee}
+                            />
+                          )}
+                        </Field>
+
+                        <Field name="estimatedDeliveryDate">
+                          {({ field }) => (
+                            <TextField
+                              {...field}
+                              fullWidth
+                              margin="normal"
+                              label="Estimated Delivery Date"
+                              type="date"
+                              InputLabelProps={{ shrink: true }}
+                              error={touched.estimatedDeliveryDate && !!errors.estimatedDeliveryDate}
+                              helperText={touched.estimatedDeliveryDate && errors.estimatedDeliveryDate}
+                            />
+                          )}
+                        </Field>
+
+                        <Field name="notes">
+                          {({ field }) => (
+                            <TextField
+                              {...field}
+                              fullWidth
+                              margin="normal"
+                              label="Additional Notes"
+                              multiline
+                              rows={3}
+                            />
+                          )}
+                        </Field>
+
+                        <DialogActions sx={{ mt: 2 }}>
+                          <Button onClick={() => setShowFulfillDialog(false)}>Cancel</Button>
+                          <Button type="submit" variant="contained" color="primary">
+                            Submit Offer
+                          </Button>
+                        </DialogActions>
+                      </Form>
+                    )}
+                  </Formik>
+                </DialogContent>
+              </Dialog>
+            </Box>
+          )}
         </CardContent>
       </Card>
 
-      <Dialog 
-        open={showCheckoutDialog} 
+      <Dialog
+        open={showCheckoutDialog}
         onClose={() => setShowCheckoutDialog(false)}
         maxWidth="sm"
         fullWidth
@@ -290,7 +446,7 @@ const ContractDetails = () => {
               amount={(selectedFulfillment.price * contract.quantity + (selectedFulfillment.deliveryFee || 0))}
               sourceType="contract"
               sourceId={contractId}
-              sellerId={contract.seller._id}
+              sellerId={selectedFulfillment.farmer._id}
               onSuccess={() => handleAcceptFulfillment(selectedFulfillment._id)}
               onError={(error) => console.error('Payment error:', error)}
             />
