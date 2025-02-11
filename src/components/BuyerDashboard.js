@@ -533,7 +533,7 @@ const BuyerDashboard = () => {
                 >
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                      {product.user.farmName || 'Farm Name Not Set'}
+                      {product.user.username || 'Farm Name Not Set'}
                     </Typography>
                     <Typography color="textSecondary" gutterBottom>
                       {product.user.firstName} {product.user.lastName}

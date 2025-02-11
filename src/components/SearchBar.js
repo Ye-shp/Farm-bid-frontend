@@ -24,7 +24,7 @@ const SearchBar = ({ onSearchResults }) => {
   const [delivery, setDelivery] = useState(false);
   const [wholesale, setWholesale] = useState(false);
   const [searchRadius, setSearchRadius] = useState(25);
-  const [searchAnywhere, setSearchAnywhere] = useState(true);
+  const [searchAnywhere, setSearchAnywhere] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
