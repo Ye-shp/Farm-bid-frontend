@@ -40,7 +40,7 @@ const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const API_URL = 'https://farm-bid.onrender.com';
+  const API_URL = process.env.REACT_APP_API_URL
 
   const fetchProducts = async () => {
     setLoading(true);

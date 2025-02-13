@@ -10,7 +10,7 @@ export const useSocket = () => {
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [connected, setConnected] = useState(false);
-  const API_URL = process.env.REACT_APP_API_URL || 'https://farm-bid.onrender.com';
+  const API_URL = process.env.REACT_APP_API_URL // || 'https://farm-bid.onrender.com';
 
   useEffect(() => {
     const token = localStorage.getItem('token');

@@ -28,7 +28,7 @@ const AuctionDetails = () => {
   const [error, setError] = useState(null);
   const [bidAmount, setBidAmount] = useState('');
   const [showBidDialog, setShowBidDialog] = useState(false);
-  const API_URL = 'https://farm-bid.onrender.com';
+  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     fetchAuctionDetails();

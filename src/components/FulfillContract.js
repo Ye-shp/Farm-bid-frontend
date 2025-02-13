@@ -17,7 +17,7 @@ const FulfillContract = () => {
     estimatedDeliveryDate: '',
     notes: ''
   });
-  const API_URL = 'https://farm-bid.onrender.com';
+  const API_URL = process.env.REACT_APP_API_URL
 
   useEffect(() => {
     const fetchContractDetails = async () => {
@@ -113,6 +113,7 @@ const FulfillContract = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
+
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
         <h2 className="text-2xl font-bold mb-6">Fulfill Contract</h2>
 

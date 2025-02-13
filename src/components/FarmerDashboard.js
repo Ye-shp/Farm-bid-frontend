@@ -107,7 +107,7 @@ const FarmerDashboard = () => {
   const [productCategories, setProductCategories] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const navigate = useNavigate();
-  const API_URL = 'https://farm-bid.onrender.com';
+  const API_URL = process.env.REACT_APP_API_URL;
 
   const [newProduct, setNewProduct] = useState({
     // Basic Info

@@ -37,7 +37,7 @@ const CreateAuction = ({ products }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const token = localStorage.getItem('token');
-  const API_URL = 'https://farm-bid.onrender.com';
+  const API_URL = process.env.REACT_APP_API_URL;
 
   // Calculate minimum date/time (now + 1 hour)
   const minDateTime = new Date(Date.now() + 3600000).toISOString().slice(0, 16);

@@ -9,7 +9,7 @@ const OpenContractList = () => {
   const [userRole, setUserRole] = useState(localStorage.getItem('role'));
   const navigate = useNavigate();
   const location = useLocation();
-  const API_URL = 'https://farm-bid.onrender.com';
+  const API_URL = process.env.REACT_APP_API_URL
 
   useEffect(() => {
     const fetchOpenContracts = async () => {

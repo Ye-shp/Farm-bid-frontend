@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = 'https://farm-bid.onrender.com/api'; 
+
+const API_URL = `${process.env.REACT_APP_API_URL}/api`; 
+
 
 const getToken = () => localStorage.getItem('token');
 
