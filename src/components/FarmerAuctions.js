@@ -97,7 +97,8 @@ const FarmerAuctions = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(true);
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const API_URL = 'https://farm-bid.onrender.com/api';
+  const API_URL = `${process.env.REACT_APP_API_URL}/api`; 
+
   const [acceptBidLoading, setAcceptBidLoading] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');

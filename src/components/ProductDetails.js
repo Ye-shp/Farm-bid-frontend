@@ -29,7 +29,7 @@ const ProductDetails = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const API_URL = 'https://farm-bid.onrender.com';
+  const API_URL = process.env.REACT_APP_API_URL
 
   useEffect(() => {
     const fetchProductDetails = async () => {

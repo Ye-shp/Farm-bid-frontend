@@ -17,7 +17,7 @@ const FulfillContract = () => {
     estimatedDeliveryDate: '',
     notes: ''
   });
-  const API_URL = 'https://farm-bid.onrender.com';
+  const API_URL = process.env.REACT_APP_API_URL
 
   useEffect(() => {
     const fetchContractDetails = async () => {

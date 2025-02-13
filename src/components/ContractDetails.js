@@ -39,7 +39,7 @@ const ContractDetails = () => {
   const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
   const [selectedFulfillment, setSelectedFulfillment] = useState(null);
   const [showFulfillDialog, setShowFulfillDialog] = useState(false);
-  const API_URL = 'https://farm-bid.onrender.com';
+  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     fetchContractDetails();

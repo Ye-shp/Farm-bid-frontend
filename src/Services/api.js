@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://farm-bid.onrender.com/api'; 
+const API_URL = `${process.env.REACT_APP_API_URL}/api`; 
 
 // User registration
 export const register = (data) => axios.post(`${API_URL}/auth/register`, data);
