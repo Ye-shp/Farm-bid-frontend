@@ -11,7 +11,7 @@ import {
 import PaymentForm from '../payment/PaymentForm';
 import TransactionStatus from '../payment/TransactionStatus';
 
-const STEPS = ['Review', 'Payment', 'Confirmation'];
+const STEPS = ['Review', 'Payment', 'Confirmation']; 
 
 const AuctionPayment = ({ auction, onComplete }) => {
   const [activeStep, setActiveStep] = useState(0);
