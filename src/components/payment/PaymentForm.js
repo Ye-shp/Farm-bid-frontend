@@ -16,6 +16,7 @@ import {
   ListItemText,
   styled
 } from '@mui/material';
+import PaymentMethodForm from './PaymentMethodForm';
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
@@ -36,6 +37,7 @@ const PaymentFormContent = ({ amount, sourceType, sourceId, sellerId, bidId, onS
   const [errorMessage, setErrorMessage] = useState(null);
   const [displayAmounts, setDisplayAmounts] = useState(null);
   const [clientSecret, setClientSecret] = useState(null);
+  const [showPaymentMethod, setShowPaymentMethod] = useState(false);
 
   useEffect(() => {
     const initializePayment = async () => {
@@ -43,7 +45,7 @@ const PaymentFormContent = ({ amount, sourceType, sourceId, sellerId, bidId, onS
         const amounts = PaymentService.calculateDisplayAmounts(amount);
         setDisplayAmounts(amounts);
 
-        const { clientSecret: secret } = await PaymentService.createPaymentIntent({
+        const { client_secret: secret } = await PaymentService.createPaymentIntent({
           amount: amounts.total,
           sourceType,
           sourceId,
@@ -52,12 +54,13 @@ const PaymentFormContent = ({ amount, sourceType, sourceId, sellerId, bidId, onS
           metadata: {
             sourceType,
             sourceId,
-            bidId
+            bidId,
           }
         });
         setClientSecret(secret);
       } catch (error) {
-        setErrorMessage(error.message);
+        console.error('Payment initialization error:', error);
+        setErrorMessage(error.message || 'Failed to initialize payment');
         onError?.(error);
       }
     };
@@ -66,6 +69,23 @@ const PaymentFormContent = ({ amount, sourceType, sourceId, sellerId, bidId, onS
       initializePayment();
     }
   }, [amount, sourceType, sourceId, sellerId, user, bidId]);
+
+  const handlePaymentMethodSubmit = async () => {
+    setIsProcessing(true);
+    setErrorMessage(null);
+
+    try {
+      // Payment is handled directly in PaymentMethodForm
+      setShowPaymentMethod(false);
+      onSuccess?.();
+    } catch (error) {
+      console.error('Payment method error:', error);
+      setErrorMessage(error.message);
+      onError?.(error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -82,33 +102,45 @@ const PaymentFormContent = ({ amount, sourceType, sourceId, sellerId, bidId, onS
         elements,
         redirect: 'if_required',
         confirmParams: {
-          return_url: window.location.origin + '/payment/confirm',
+          return_url: `${window.location.origin}/payment/confirm`,
           payment_method_data: {
+            billing_details: {
+              email: user?.email
+            },
             metadata: {
               sourceType,
               sourceId,
               bidId,
-              userId: user?.id
+              userId: user?.id,
+              deliveryMethod: 'pickup'
             }
           }
         }
       });
 
       if (error) {
-        setErrorMessage(error.message);
-        onError?.(error);
+        throw error;
+      }
+
+      if (paymentIntent.status === 'requires_payment_method') {
+        setShowPaymentMethod(true);
+        setIsProcessing(false);
+        return;
+      } else if (paymentIntent.status === 'requires_action') {
+        setErrorMessage('Additional authentication required. Please complete the verification.');
       } else if (paymentIntent.status === 'succeeded') {
         onSuccess?.(paymentIntent);
       }
     } catch (error) {
-      setErrorMessage('An unexpected error occurred.');
+      console.error('Payment confirmation error:', error);
+      setErrorMessage(error.message || 'An unexpected error occurred');
       onError?.(error);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  if (!clientSecret) {
+  if (!clientSecret) { 
     return (
       <Box display="flex" justifyContent="center" p={3}>
         <CircularProgress />
@@ -139,60 +171,60 @@ const PaymentFormContent = ({ amount, sourceType, sourceId, sellerId, bidId, onS
           </List>
         )}
 
-        <form onSubmit={handleSubmit}>
-          {errorMessage && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {errorMessage}
-            </Alert>
-          )}
-          
-          <Box sx={{ mb: 3 }}>
-            <PaymentElement />
-          </Box>
-
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            fullWidth
-            size="large"
-            disabled={!stripe || isProcessing}
-            sx={{
-              py: 1.5,
-              position: 'relative',
-            }}
-          >
-            {isProcessing ? (
-              <>
-                <CircularProgress
-                  size={24}
-                  sx={{
-                    position: 'absolute',
-                    left: '50%',
-                    marginLeft: '-12px',
-                  }}
-                />
-                Processing...
-              </>
-            ) : (
-              'Pay Now'
+        {showPaymentMethod ? (
+          <PaymentMethodForm
+            clientSecret={clientSecret}
+            onSubmit={handlePaymentMethodSubmit}
+            isProcessing={isProcessing}
+          />
+        ) : (
+          <form onSubmit={handleSubmit}>
+            {errorMessage && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {errorMessage}
+              </Alert>
             )}
-          </Button>
-        </form>
+            
+            <Box sx={{ mb: 3 }}>
+              <PaymentElement />
+            </Box>
+
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              fullWidth
+              size="large"
+              disabled={!stripe || isProcessing}
+              sx={{
+                py: 1.5,
+                position: 'relative',
+              }}
+            >
+              {isProcessing ? (
+                <>
+                  <CircularProgress
+                    size={24}
+                    sx={{
+                      position: 'absolute',
+                      left: '50%',
+                      marginLeft: '-12px',
+                    }}
+                  />
+                  Processing...
+                </>
+              ) : (
+                'Pay Now'
+              )}
+            </Button>
+          </form>
+        )}
       </CardContent>
     </StyledCard>
   );
 };
 
-const PaymentForm = ({ 
-  clientSecret, 
-  amount, 
-  sourceType, 
-  sourceId, 
-  bidId, 
-  onSuccess, 
-  onError 
-}) => {
+const PaymentForm = ({ amount, sourceType, sourceId, bidId, onSuccess, onError }) => {
   const options = {
     appearance: {
       theme: 'stripe',
@@ -201,11 +233,12 @@ const PaymentForm = ({
         borderRadius: '12px',
       },
     },
+    paymentMethodOrder: ['card', 'klarna', 'link', 'cashapp', 'amazon_pay'],
   };
 
   return (
     <Elements stripe={stripePromise} options={options}>
-      <PaymentFormContent {...{ clientSecret, amount, sourceType, sourceId, bidId, onSuccess, onError }} />
+      <PaymentFormContent {...{ amount, sourceType, sourceId, bidId, onSuccess, onError }} />
     </Elements>
   );
 };

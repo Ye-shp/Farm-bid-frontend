@@ -102,7 +102,6 @@ const Header = () => {
   ] : user.role === 'buyer' ? [
     { label: 'Create Field Notes', path: '/buyer/create-blog', icon: <ArticleIcon /> },
     { label: 'My Profile', path: '/profile', icon: <PersonIcon /> },
-    { label: 'Checkout', path: '/CheckoutForm', icon: <PaymentsIcon /> }
   ] : [];
 
   const allMenuItems = [...getVisibleNavItems(), ...menuItems];
