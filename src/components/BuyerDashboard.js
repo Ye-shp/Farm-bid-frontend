@@ -1,7 +1,7 @@
 // BuyerDashboard.js
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Card,
@@ -30,7 +30,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Notifications as NotificationsIcon,
   GavelRounded,
@@ -41,53 +41,53 @@ import {
   ListAlt,
   Payment as PaymentIcon,
   Close as CloseIcon,
-} from '@mui/icons-material';
-import axios from 'axios';
-import { formatDistanceToNow } from 'date-fns';
-import SearchBar from './SearchBar';
-import PaymentForm from './payment/PaymentForm';
-import TransactionStatus from './payment/TransactionStatus';
-import { useSocket } from '../context/SocketContext';
-import paymentService from '../Services/paymentService';
+} from "@mui/icons-material";
+import axios from "axios";
+import { formatDistanceToNow } from "date-fns";
+import SearchBar from "./SearchBar";
+import PaymentForm from "./payment/PaymentForm";
+import TransactionStatus from "./payment/TransactionStatus";
+import { useSocket } from "../context/SocketContext";
+import paymentService from "../Services/paymentService";
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
-  '& .MuiBadge-badge': {
+  "& .MuiBadge-badge": {
     right: -3,
     top: 3,
     border: `2px solid ${theme.palette.background.paper}`,
-    padding: '0 4px',
+    padding: "0 4px",
   },
 }));
 
 const AuctionCard = styled(Card)(({ theme }) => ({
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  transition: 'transform 0.2s ease-in-out',
-  '&:hover': {
-    transform: 'translateY(-4px)',
+  height: "100%",
+  display: "flex",
+  flexDirection: "column",
+  transition: "transform 0.2s ease-in-out",
+  "&:hover": {
+    transform: "translateY(-4px)",
     boxShadow: theme.shadows[8],
   },
 }));
 
 const NotificationDrawer = styled(Drawer)(({ theme }) => ({
-  '& .MuiDrawer-paper': {
+  "& .MuiDrawer-paper": {
     width: 340,
     padding: theme.spacing(2),
-    [theme.breakpoints.down('sm')]: {
-      width: '100%',
+    [theme.breakpoints.down("sm")]: {
+      width: "100%",
     },
   },
 }));
 
 const HeaderBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
   marginBottom: theme.spacing(4),
-  [theme.breakpoints.down('sm')]: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
+  [theme.breakpoints.down("sm")]: {
+    flexDirection: "column",
+    alignItems: "flex-start",
     gap: theme.spacing(2),
   },
 }));
@@ -95,18 +95,18 @@ const HeaderBox = styled(Box)(({ theme }) => ({
 const PageContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(4),
   paddingBottom: theme.spacing(4),
-  [theme.breakpoints.up('sm')]: {
+  [theme.breakpoints.up("sm")]: {
     paddingTop: theme.spacing(6),
     paddingBottom: theme.spacing(6),
   },
-  minHeight: '100vh',
-  display: 'flex',
-  flexDirection: 'column',
+  minHeight: "100vh",
+  display: "flex",
+  flexDirection: "column",
 }));
 
 const TimeDisplay = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
+  display: "flex",
+  alignItems: "center",
   marginBottom: theme.spacing(2),
   color: theme.palette.warning.main,
 }));
@@ -120,41 +120,49 @@ const SearchBox = styled(Paper)(({ theme }) => ({
 const NotificationItem = styled(ListItem)(({ theme }) => ({
   marginBottom: theme.spacing(1),
   borderRadius: theme.shape.borderRadius,
-  '&:hover': {
+  "&:hover": {
     backgroundColor: theme.palette.action.hover,
   },
-  cursor: 'pointer',
+  cursor: "pointer",
 }));
 
 const BuyerDashboard = () => {
   const navigate = useNavigate();
   const [auctions, setAuctions] = useState([]);
   const [bidAmount, setBidAmount] = useState({});
-  const [searchResults, setSearchResults] = useState([]); 
-  const [location, setLocation] = useState({ latitude: '', longitude: '' });
+  const [searchResults, setSearchResults] = useState([]);
+  const [location, setLocation] = useState({ latitude: "", longitude: "" });
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
   const [timeRemaining, setTimeRemaining] = useState({});
   const [paymentModal, setPaymentModal] = useState({
     open: false,
     auctionId: null,
     bidId: null,
+    sourceId: null,
+    sourceType: null,
     amount: 0,
-    title: '',
-    clientSecret: ''
+    sellerId: 0,
+    title: "",
+    clientSecret: "",
   });
+
   const socket = useSocket();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const token = localStorage.getItem('token');
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const token = localStorage.getItem("token");
   const API_URL = process.env.REACT_APP_API_URL;
 
   // Configure axios defaults
   axios.defaults.baseURL = `${API_URL}/api`;
-  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   axios.defaults.withCredentials = true;
 
   const isAuctionExpired = useCallback((endTime) => {
@@ -163,7 +171,9 @@ const BuyerDashboard = () => {
 
   const updateAuctionTimes = useCallback(() => {
     setAuctions((currentAuctions) => {
-      const updatedAuctions = currentAuctions.filter((auction) => !isAuctionExpired(auction.endTime));
+      const updatedAuctions = currentAuctions.filter(
+        (auction) => !isAuctionExpired(auction.endTime)
+      );
 
       const newTimeRemaining = {};
       updatedAuctions.forEach((auction) => {
@@ -179,10 +189,11 @@ const BuyerDashboard = () => {
   useEffect(() => {
     const fetchAuctions = async () => {
       try {
-        const response = await axios.get('/auctions');
+        const response = await axios.get("/auctions");
 
         const activeAuctions = response.data.filter(
-          (auction) => auction.status === 'active' && !isAuctionExpired(auction.endTime)
+          (auction) =>
+            auction.status === "active" && !isAuctionExpired(auction.endTime)
         );
 
         setAuctions(activeAuctions);
@@ -194,8 +205,8 @@ const BuyerDashboard = () => {
         });
         setTimeRemaining(initialTimeRemaining);
       } catch (error) {
-        console.error('Error fetching auctions:', error);
-        showSnackbar('Error fetching auctions', 'error');
+        console.error("Error fetching auctions:", error);
+        showSnackbar("Error fetching auctions", "error");
       }
     };
 
@@ -208,16 +219,19 @@ const BuyerDashboard = () => {
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        const response = await axios.get('https://ipinfo.io/json?token=80139ee7708eb3', {
-          withCredentials: false
-        });
-        const loc = response.data.loc.split(',');
+        const response = await axios.get(
+          "https://ipinfo.io/json?token=80139ee7708eb3",
+          {
+            withCredentials: false,
+          }
+        );
+        const loc = response.data.loc.split(",");
         setLocation({
           latitude: loc[0],
           longitude: loc[1],
         });
       } catch (error) {
-        console.error('Error fetching location:', error);
+        console.error("Error fetching location:", error);
       }
     };
 
@@ -226,52 +240,54 @@ const BuyerDashboard = () => {
 
   useEffect(() => {
     if (!socket) {
-      console.log('Socket not available for notifications');
+      console.log("Socket not available for notifications");
       return;
     }
 
-    console.log('Setting up notification listener');
+    console.log("Setting up notification listener");
     const handleNewNotification = (notification) => {
-      console.log('Received new notification:', notification);
-      setNotifications(prev => {
+      console.log("Received new notification:", notification);
+      setNotifications((prev) => {
         // Check if notification already exists
-        const exists = prev.some(n => n._id === notification._id);
+        const exists = prev.some((n) => n._id === notification._id);
         if (exists) {
-          return prev.map(n => n._id === notification._id ? notification : n);
+          return prev.map((n) =>
+            n._id === notification._id ? notification : n
+          );
         }
         // Add new notification and update unread count
-        setUnreadCount(count => count + 1);
-        showSnackbar(notification.message, 'info');
+        setUnreadCount((count) => count + 1);
+        showSnackbar(notification.message, "info");
         return [notification, ...prev];
       });
     };
 
-    socket.on('notificationUpdate', handleNewNotification);
+    socket.on("notificationUpdate", handleNewNotification);
 
     // Fetch initial notifications
     const fetchNotifications = async () => {
       try {
-        console.log('Fetching initial notifications');
-        const response = await axios.get('/notifications');
-        console.log('Initial notifications:', response.data);
+        console.log("Fetching initial notifications");
+        const response = await axios.get("/notifications");
+        console.log("Initial notifications:", response.data);
         setNotifications(response.data);
-        setUnreadCount(response.data.filter(n => !n.read).length);
+        setUnreadCount(response.data.filter((n) => !n.read).length);
       } catch (error) {
-        console.error('Error fetching notifications:', error);
-        showSnackbar('Error fetching notifications', 'error');
+        console.error("Error fetching notifications:", error);
+        showSnackbar("Error fetching notifications", "error");
       }
     };
 
     fetchNotifications();
 
     return () => {
-      console.log('Cleaning up notification listener');
-      socket.off('newNotification', handleNewNotification);
+      console.log("Cleaning up notification listener");
+      socket.off("newNotification", handleNewNotification);
     };
   }, [socket]);
 
   const formatTimeRemaining = (ms) => {
-    if (ms <= 0) return 'Auction ended';
+    if (ms <= 0) return "Auction ended";
 
     const seconds = Math.floor((ms / 1000) % 60);
     const minutes = Math.floor((ms / (1000 * 60)) % 60);
@@ -297,37 +313,41 @@ const BuyerDashboard = () => {
       const bidValue = parseFloat(bidAmount[auctionId]);
 
       if (!bidValue || isNaN(bidValue)) {
-        showSnackbar('Please enter a valid bid amount', 'error');
+        showSnackbar("Please enter a valid bid amount", "error");
         return;
       }
 
       if (bidValue <= auction.highestBid) {
-        showSnackbar('Bid must be higher than the current highest bid', 'error');
+        showSnackbar(
+          "Bid must be higher than the current highest bid",
+          "error"
+        );
         return;
       }
 
       if (timeRemaining[auctionId] <= 0) {
-        showSnackbar('This auction has ended', 'error');
+        showSnackbar("This auction has ended", "error");
         return;
       }
 
-      await axios.post(
-        `/auctions/${auctionId}/bid`,
-        { bidAmount: bidValue }
-      );
+      await axios.post(`/auctions/${auctionId}/bid`, { bidAmount: bidValue });
 
-      showSnackbar('Bid submitted successfully!', 'success');
-      setBidAmount((prev) => ({ ...prev, [auctionId]: '' }));
+      showSnackbar("Bid submitted successfully!", "success");
+      setBidAmount((prev) => ({ ...prev, [auctionId]: "" }));
 
-      const response = await axios.get('/auctions');
+      const response = await axios.get("/auctions");
 
       const activeAuctions = response.data.filter(
-        (auction) => auction.status === 'active' && !isAuctionExpired(auction.endTime)
+        (auction) =>
+          auction.status === "active" && !isAuctionExpired(auction.endTime)
       );
       setAuctions(activeAuctions);
     } catch (error) {
-      console.error('Error submitting bid:', error);
-      showSnackbar(error.response?.data?.message || 'Error submitting bid', 'error');
+      console.error("Error submitting bid:", error);
+      showSnackbar(
+        error.response?.data?.message || "Error submitting bid",
+        "error"
+      );
     }
   };
 
@@ -336,13 +356,15 @@ const BuyerDashboard = () => {
       await axios.put(`${API_URL}/notifications/${notificationId}/read`);
       setNotifications((prev) =>
         prev.map((notification) =>
-          notification._id === notificationId ? { ...notification, read: true } : notification
+          notification._id === notificationId
+            ? { ...notification, read: true }
+            : notification
         )
       );
-      setUnreadCount(count => count - 1);
+      setUnreadCount((count) => count - 1);
     } catch (error) {
-      console.error('Error marking notification as read:', error);
-      showSnackbar('Error marking notification as read', 'error');
+      console.error("Error marking notification as read:", error);
+      showSnackbar("Error marking notification as read", "error");
     }
   };
 
@@ -366,72 +388,85 @@ const BuyerDashboard = () => {
     try {
       const response = await paymentService.createPaymentIntent({
         amount,
-        sourceType: 'auction',
+        sourceType: "auction",
         sourceId: auctionId,
-        sellerId: auctions.find(a => a._id === auctionId)?.sellerId,
-        bidId: bidId // Add bidId to the payment intent creation
+        sellerId: auctions.find((a) => a._id === auctionId)?.sellerId,
+        bidId: bidId, // Add bidId to the payment intent creation
       });
 
       setPaymentModal({
         open: true,
         auctionId,
-        bidId,  // Store bidId in payment modal
+        bidId,
+        sourceId,
+        sourceType,
         amount,
-        title: auctions.find(a => a._id === auctionId)?.title || 'Auction Payment',
-        clientSecret: response.clientSecret
+        sellerId,
+        title:
+          auctions.find((a) => a._id === auctionId)?.title || "Auction Payment",
+        clientSecret: response.clientSecret,
       });
     } catch (error) {
-      console.error('Error initiating payment:', error);
-      showSnackbar(error.response?.data?.message || 'Error initiating payment', 'error');
+      console.error("Error initiating payment:", error);
+      showSnackbar(
+        error.response?.data?.message || "Error initiating payment",
+        "error"
+      );
     }
   };
 
   const handlePaymentSuccess = async (auctionId) => {
-    setPaymentModal(prev => ({ ...prev, open: false }));
-    showSnackbar('Payment successful!', 'success');
+    setPaymentModal((prev) => ({ ...prev, open: false }));
+    showSnackbar("Payment successful!", "success");
     // Refresh notifications after successful payment
-    const response = await axios.get('/notifications');
+    const response = await axios.get("/notifications");
     setNotifications(response.data);
-    setUnreadCount(response.data.filter(n => !n.read).length);
+    setUnreadCount(response.data.filter((n) => !n.read).length);
   };
 
   const handleNotificationClick = async (notification) => {
     // Mark notification as read
     await markAsRead(notification._id);
 
-    if (notification.type === 'auction_won' && notification.metadata) {
+    if (notification.type === "auction_won" && notification.metadata) {
       const auctionId = notification.reference?.id;
       const amount = notification.metadata?.amount;
       const title = notification.title;
-      
+
       if (!auctionId || !bidId) {
-        console.error('Missing required payment data:', notification.metadata);
-        showSnackbar('Error: Missing payment information', 'error');
+        console.error("Missing required payment data:", notification.metadata);
+        showSnackbar("Error: Missing payment information", "error");
         return;
       }
 
       try {
         const response = await paymentService.createPaymentIntent({
           amount,
-          sourceType: 'auction',
+          sourceType: "auction",
           sourceId: auctionId,
           bidId: bidId,
-          sellerId: auctions.find(a => a._id === auctionId)?.sellerId
+          sellerId: auctions.find((a) => a._id === auctionId)?.sellerId,
         });
 
         setPaymentModal({
           open: true,
           auctionId,
           bidId,
+          sourceId,
+          sourceType,
           amount,
+          sellerId,
           title,
-          clientSecret: response.clientSecret
+          clientSecret: response.clientSecret,
         });
 
         setDrawerOpen(false);
       } catch (error) {
-        console.error('Error creating payment intent:', error);
-        showSnackbar(error.response?.data?.message || 'Error initiating payment', 'error');
+        console.error("Error creating payment intent:", error);
+        showSnackbar(
+          error.response?.data?.message || "Error initiating payment",
+          "error"
+        );
       }
     }
   };
@@ -439,7 +474,9 @@ const BuyerDashboard = () => {
   const handlePaymentClickFromNotification = async (notification) => {
     try {
       // Get auction details first
-      const auctionResponse = await axios.get(`/auctions/${notification.metadata.auctionId}`);
+      const auctionResponse = await axios.get(
+        `/auctions/${notification.metadata.auctionId}`
+      );
       const auction = auctionResponse.data;
 
       // Create payment intent
@@ -452,13 +489,19 @@ const BuyerDashboard = () => {
         open: true,
         auctionId: notification.metadata.auctionId,
         bidId: notification.metadata.bidId,
+        sourceId: response.data.sourceId,
+        sourceType: response.data.sourceType,
         amount: auction.winningBid.amount,
+        sellerId: response.data.sellerId,
         title: auction.product.title,
-        clientSecret: response.data.clientSecret
+        clientSecret: response.data.clientSecret,
       });
     } catch (error) {
-      console.error('Payment error:', error);
-      showSnackbar(error.response?.data?.message || 'Error initiating payment', 'error');
+      console.error("Payment error:", error);
+      showSnackbar(
+        error.response?.data?.message || "Error initiating payment",
+        "error"
+      );
     }
   };
 
@@ -466,14 +509,21 @@ const BuyerDashboard = () => {
     <PageContainer maxWidth="xl">
       {/* Header Section */}
       <HeaderBox>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            flexWrap: "wrap",
+          }}
+        >
           <Typography
-            variant={isMobile ? 'h5' : 'h4'}
+            variant={isMobile ? "h5" : "h4"}
             component="h1"
             fontWeight="bold"
             sx={{
               background: theme.palette.primary.main,
-              color: 'white',
+              color: "white",
               padding: theme.spacing(2, 3),
               borderRadius: theme.shape.borderRadius,
               boxShadow: theme.shadows[3],
@@ -487,7 +537,7 @@ const BuyerDashboard = () => {
           onClick={() => setDrawerOpen(true)}
           sx={{
             backgroundColor: theme.palette.grey[100],
-            '&:hover': {
+            "&:hover": {
               backgroundColor: theme.palette.grey[200],
             },
           }}
@@ -506,53 +556,72 @@ const BuyerDashboard = () => {
       {/* Display search results if available */}
       {searchResults.length > 0 && (
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h5" gutterBottom sx={{ 
-            color: theme.palette.primary.main,
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1
-          }}>
+          <Typography
+            variant="h5"
+            gutterBottom
+            sx={{
+              color: theme.palette.primary.main,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
             Search Results ({searchResults.length} farms found)
           </Typography>
           <Grid container spacing={3}>
             {searchResults.map((product) => (
               <Grid item xs={12} sm={6} md={4} key={product._id}>
-                <Card sx={{ 
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'transform 0.2s ease-in-out',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: theme.shadows[4],
-                  },
-                  cursor: 'pointer'
-                }}
-                onClick={() => handleViewFarmerProfile(product.user._id)}
+                <Card
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    transition: "transform 0.2s ease-in-out",
+                    "&:hover": {
+                      transform: "translateY(-4px)",
+                      boxShadow: theme.shadows[4],
+                    },
+                    cursor: "pointer",
+                  }}
+                  onClick={() => handleViewFarmerProfile(product.user._id)}
                 >
                   <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                      {product.user.username || 'Farm Name Not Set'}
+                    <Typography
+                      variant="h6"
+                      gutterBottom
+                      sx={{ fontWeight: 600 }}
+                    >
+                      {product.user.username || "Farm Name Not Set"}
                     </Typography>
                     <Typography color="textSecondary" gutterBottom>
                       {product.user.firstName} {product.user.lastName}
                     </Typography>
                     <Divider sx={{ my: 1.5 }} />
                     <Box sx={{ mb: 2 }}>
-                      <Typography variant="body1" color="textPrimary" sx={{ mb: 0.5 }}>
+                      <Typography
+                        variant="body1"
+                        color="textPrimary"
+                        sx={{ mb: 0.5 }}
+                      >
                         Product: {product.title || product.customProduct}
                       </Typography>
                       <Typography variant="body2" color="textSecondary">
                         Category: {product.category}
                       </Typography>
                       {product.description && (
-                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mt: 1 }}
+                        >
                           {product.description}
                         </Typography>
                       )}
                     </Box>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                    <Box
+                      sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}
+                    >
                       {product.user.deliveryAvailable && (
                         <Chip
                           label="Delivery Available"
@@ -571,14 +640,20 @@ const BuyerDashboard = () => {
                       )}
                       {product.user.location && (
                         <Chip
-                          label={`${product.user.location.city || 'Location Available'}`}
+                          label={`${
+                            product.user.location.city || "Location Available"
+                          }`}
                           color="info"
                           size="small"
                           variant="outlined"
                         />
                       )}
                     </Box>
-                    <Typography variant="body2" color="textSecondary" sx={{ fontStyle: 'italic', mb: 2 }}>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      sx={{ fontStyle: "italic", mb: 2 }}
+                    >
                       Click to view full profile
                     </Typography>
                   </CardContent>
@@ -591,7 +666,7 @@ const BuyerDashboard = () => {
 
       {/* Show message when no results */}
       {searchResults.length === 0 && (
-        <Box sx={{ mb: 4, textAlign: 'center', py: 4 }}>
+        <Box sx={{ mb: 4, textAlign: "center", py: 4 }}>
           <Typography variant="body1" color="textSecondary">
             Use the search filters above to find farms
           </Typography>
@@ -599,14 +674,18 @@ const BuyerDashboard = () => {
       )}
 
       {/* Auctions Section Header */}
-      <Typography variant="h5" gutterBottom sx={{ 
-        color: theme.palette.primary.main,
-        fontWeight: 600,
-        mt: 4,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1
-      }}>
+      <Typography
+        variant="h5"
+        gutterBottom
+        sx={{
+          color: theme.palette.primary.main,
+          fontWeight: 600,
+          mt: 4,
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+        }}
+      >
         Active Auctions
       </Typography>
 
@@ -618,9 +697,9 @@ const BuyerDashboard = () => {
               <CardMedia
                 component="img"
                 height="240"
-                image={auction.product?.imageUrl || '/placeholder-image.jpg'}
-                alt={auction.product?.title || 'Product Image'}
-                sx={{ objectFit: 'cover' }}
+                image={auction.product?.imageUrl || "/placeholder-image.jpg"}
+                alt={auction.product?.title || "Product Image"}
+                sx={{ objectFit: "cover" }}
               />
               <CardContent sx={{ flexGrow: 1, p: theme.spacing(3) }}>
                 <Typography
@@ -630,15 +709,15 @@ const BuyerDashboard = () => {
                   sx={{
                     fontWeight: 600,
                     mb: 2,
-                    height: '2.4em',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box',
+                    height: "2.4em",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "-webkit-box",
                     WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
+                    WebkitBoxOrient: "vertical",
                   }}
                 >
-                  {auction.product?.title || 'Untitled Product'}
+                  {auction.product?.title || "Untitled Product"}
                 </Typography>
 
                 <Typography
@@ -646,26 +725,30 @@ const BuyerDashboard = () => {
                   color="text.secondary"
                   sx={{
                     mb: 3,
-                    height: '3.6em',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box',
+                    height: "3.6em",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "-webkit-box",
                     WebkitLineClamp: 3,
-                    WebkitBoxOrient: 'vertical',
+                    WebkitBoxOrient: "vertical",
                   }}
                 >
-                  {auction.product?.description || 'No description available'}
+                  {auction.product?.description || "No description available"}
                 </Typography>
 
                 <TimeDisplay>
                   <TimelapseRounded sx={{ mr: 1 }} />
-                  <Typography variant="body2" color="inherit" fontWeight="medium">
+                  <Typography
+                    variant="body2"
+                    color="inherit"
+                    fontWeight="medium"
+                  >
                     {formatTimeRemaining(timeRemaining[auction._id])}
                   </Typography>
                 </TimeDisplay>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <GavelRounded sx={{ mr: 1, color: 'primary.main' }} />
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <GavelRounded sx={{ mr: 1, color: "primary.main" }} />
                   <Typography variant="body2">
                     Starting Bid:
                     <Chip
@@ -677,8 +760,8 @@ const BuyerDashboard = () => {
                   </Typography>
                 </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                  <ArrowUpward sx={{ mr: 1, color: 'success.main' }} />
+                <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                  <ArrowUpward sx={{ mr: 1, color: "success.main" }} />
                   <Typography variant="body2">
                     Highest Bid:
                     <Chip
@@ -690,14 +773,16 @@ const BuyerDashboard = () => {
                   </Typography>
                 </Box>
 
-                <Box sx={{ mt: 'auto' }}>
+                <Box sx={{ mt: "auto" }}>
                   <TextField
                     fullWidth
                     size="small"
                     type="number"
                     label="Your Bid Amount"
-                    value={bidAmount[auction._id] || ''}
-                    onChange={(e) => handleBidChange(auction._id, e.target.value)}
+                    value={bidAmount[auction._id] || ""}
+                    onChange={(e) =>
+                      handleBidChange(auction._id, e.target.value)
+                    }
                     sx={{ mb: 2 }}
                     InputProps={{
                       startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
@@ -712,11 +797,13 @@ const BuyerDashboard = () => {
                     disabled={timeRemaining[auction._id] <= 0}
                     sx={{
                       py: 1.5,
-                      textTransform: 'none',
+                      textTransform: "none",
                       fontWeight: 600,
                     }}
                   >
-                    {timeRemaining[auction._id] <= 0 ? 'Auction Ended' : 'Place Bid'}
+                    {timeRemaining[auction._id] <= 0
+                      ? "Auction Ended"
+                      : "Place Bid"}
                   </Button>
                 </Box>
               </CardContent>
@@ -726,19 +813,24 @@ const BuyerDashboard = () => {
       </Grid>
 
       {/* Notification Drawer */}
-      <Drawer 
-        anchor="right" 
-        open={drawerOpen} 
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         PaperProps={{
-          sx: { width: { xs: '100%', sm: 400 } }
+          sx: { width: { xs: "100%", sm: 400 } },
         }}
       >
         <Box sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">
-              Notifications
-            </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+            }}
+          >
+            <Typography variant="h6">Notifications</Typography>
             <IconButton onClick={() => setDrawerOpen(false)}>
               <CloseIcon />
             </IconButton>
@@ -749,32 +841,42 @@ const BuyerDashboard = () => {
                 key={notification._id}
                 sx={{
                   opacity: notification.read ? 0.7 : 1,
-                  bgcolor: notification.read ? 'transparent' : 'action.hover',
+                  bgcolor: notification.read ? "transparent" : "action.hover",
                   borderRadius: 1,
                   mb: 1,
                 }}
               >
                 <ListItemText
                   primary={notification.message}
-                  secondary={formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                  secondary={formatDistanceToNow(
+                    new Date(notification.createdAt),
+                    { addSuffix: true }
+                  )}
                 />
-                {notification.type === 'auction_won' && notification.metadata?.auctionId && (
-                  <ListItemSecondaryAction>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      startIcon={<PaymentIcon />}
-                      onClick={() => handlePaymentClickFromNotification(notification)}
-                    >
-                      Pay Now
-                    </Button>
-                  </ListItemSecondaryAction>
-                )}
+                {notification.type === "auction_won" &&
+                  notification.metadata?.auctionId && (
+                    <ListItemSecondaryAction>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        startIcon={<PaymentIcon />}
+                        onClick={() =>
+                          handlePaymentClickFromNotification(notification)
+                        }
+                      >
+                        Pay Now
+                      </Button>
+                    </ListItemSecondaryAction>
+                  )}
               </ListItem>
             ))}
             {notifications.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ textAlign: "center", py: 4 }}
+              >
                 No notifications yet
               </Typography>
             )}
@@ -785,7 +887,7 @@ const BuyerDashboard = () => {
       {/* Payment Dialog */}
       <Dialog
         open={paymentModal.open}
-        onClose={() => setPaymentModal(prev => ({ ...prev, open: false }))}
+        onClose={() => setPaymentModal((prev) => ({ ...prev, open: false }))}
         maxWidth="sm"
         fullWidth
       >
@@ -795,9 +897,10 @@ const BuyerDashboard = () => {
             amount={paymentModal.amount}
             sourceType="auction"
             sourceId={paymentModal.auctionId}
+            sellerId={paymentModal.sellerId}
             bidId={paymentModal.bidId}
             onSuccess={handlePaymentSuccess}
-            onError={(error) => console.error('Payment error:', error)}
+            onError={(error) => console.error("Payment error:", error)}
           />
         </DialogContent>
       </Dialog>
@@ -807,13 +910,13 @@ const BuyerDashboard = () => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
         <Alert
           onClose={handleCloseSnackbar}
           severity={snackbar.severity}
           variant="filled"
-          sx={{ width: '100%' }}
+          sx={{ width: "100%" }}
         >
           {snackbar.message}
         </Alert>
