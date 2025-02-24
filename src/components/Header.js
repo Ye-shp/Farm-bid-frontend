@@ -98,7 +98,7 @@ const Header = () => {
   ] : user.role === 'farmer' ? [
     { label: 'Create Field Notes', path: '/create-blog', icon: <ArticleIcon /> },
     { label: 'My Profile', path: '/profile', icon: <PersonIcon /> },
-    { label: 'Payout', path: '/Payout', icon: <PaymentsIcon /> }
+    { label: 'Payout', path: '/PayoutPage', icon: <PaymentsIcon /> }
   ] : user.role === 'buyer' ? [
     { label: 'Create Field Notes', path: '/buyer/create-blog', icon: <ArticleIcon /> },
     { label: 'My Profile', path: '/profile', icon: <PersonIcon /> },

@@ -50,20 +50,19 @@ export const createAuctionTransaction = (auctionId) =>
 export const createContractTransaction = (contractId) => 
   axios.post(`${API_URL}/transactions/contract`, { contractId });
 
-export const getSellerTransfers = () => 
-  axios.get(`${API_URL}/seller/transfers`);
-
-//stripe 
-
+// Updated payout endpoints:
 export const createPaymentIntent = (data) => axios.post(`${API_URL}/payments/create-payment-intent`, data);
 
-export const requestPayout = (data) => axios.post(`${API_URL}/payout/request`, data);
+// NOTE: Updated endpoint from "/payout/request" to "/payout/create-payout"
+export const requestPayout = (data) => axios.post(`${API_URL}/payout/create-payout`, data);
 
+// The connected account and bank account endpoints remain the same
 export const createConnectedAccount = (data) => axios.post(`${API_URL}/payout/create-connected-account`, data);
-
-export const getSellerBalance = () => axios.get(`${API_URL}/payout/seller-balance`);
-
 export const addBankAccount = (data) => axios.post(`${API_URL}/payout/add-bank-account`, data);
+
+// Added new endpoints for seller balance and transfers (GET requests)
+export const getSellerBalance = () => axios.get(`${API_URL}/payout/seller-balance`);
+export const getSellerTransfers = () => axios.get(`${API_URL}/payout/seller-transfers`);
 
 // Export all functions
 const api = {
@@ -76,11 +75,12 @@ const api = {
   getNearbyBuyers,
   createAuctionTransaction,
   createContractTransaction,
-  getSellerTransfers,
   createPaymentIntent,
   requestPayout,
   createConnectedAccount,
-  getSellerBalance
+  addBankAccount,
+  getSellerBalance,
+  getSellerTransfers,
 };
 
 export default api;

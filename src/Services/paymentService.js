@@ -1,4 +1,11 @@
 import api from "./api";
+import { 
+  getSellerBalance as apiGetSellerBalance, 
+  getSellerTransfers as apiGetSellerTransfers, 
+  addBankAccount as apiAddBankAccount, 
+  requestPayout as apiRequestPayout, 
+  createConnectedAccount as apiCreateConnectedAccount 
+} from "./api";
 
 const paymentService = {
   /**
@@ -52,10 +59,7 @@ const paymentService = {
    * Get seller balance and payout history
    */
   getSellerBalance: async () => {
-    const token = localStorage.getItem("token");
-    const response = await api.get("/seller/balance", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await apiGetSellerBalance();
     return response.data;
   },
 
@@ -63,10 +67,7 @@ const paymentService = {
    * Get seller transfers (completed and pending)
    */
   getSellerTransfers: async () => {
-    const token = localStorage.getItem("token");
-    const response = await api.get("/seller/transfers", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await apiGetSellerTransfers();
     return response.data;
   },
 
@@ -74,10 +75,7 @@ const paymentService = {
    * Create a connected account for payouts
    */
   createConnectedAccount: async (data) => {
-    const token = localStorage.getItem("token");
-    const response = await api.post("/seller/account", data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await apiCreateConnectedAccount(data);
     return response.data;
   },
 
@@ -85,10 +83,7 @@ const paymentService = {
    * Add a bank account to connected account
    */
   addBankAccount: async (data) => {
-    const token = localStorage.getItem("token");
-    const response = await api.post("/seller/bank-account", data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await apiAddBankAccount(data);
     return response.data;
   },
 
@@ -96,10 +91,7 @@ const paymentService = {
    * Request a payout
    */
   requestPayout: async (data) => {
-    const token = localStorage.getItem("token");
-    const response = await api.post("/seller/payout", data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await apiRequestPayout(data);
     return response.data;
   },
 
