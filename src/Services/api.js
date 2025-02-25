@@ -56,13 +56,24 @@ export const createPaymentIntent = (data) => axios.post(`${API_URL}/payments/cre
 // NOTE: Updated endpoint from "/payout/request" to "/payout/create-payout"
 export const requestPayout = (data) => axios.post(`${API_URL}/payout/create-payout`, data);
 
-// The connected account and bank account endpoints remain the same
+// The connected account and bank account endpoints 
 export const createConnectedAccount = (data) => axios.post(`${API_URL}/payout/create-connected-account`, data);
 export const addBankAccount = (data) => axios.post(`${API_URL}/payout/add-bank-account`, data);
 
 // Added new endpoints for seller balance and transfers (GET requests)
-export const getSellerBalance = () => axios.get(`${API_URL}/payout/seller-balance`);
-export const getSellerTransfers = () => axios.get(`${API_URL}/payout/seller-transfers`);
+export const getSellerBalance = () => {
+  const token = localStorage.getItem("token");
+  return axios.get(`${API_URL}/payout/seller-balance`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};
+
+export const getSellerTransfers = () => {
+  const token = localStorage.getItem("token");
+  return axios.get(`${API_URL}/payout/seller-transfers`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};
 
 // Export all functions
 const api = {

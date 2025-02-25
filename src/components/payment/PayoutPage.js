@@ -11,9 +11,12 @@ import {
 } from "@mui/material";
 import PaymentService from "../../Services/paymentService";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const PayoutPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [balance, setBalance] = useState(null);
   const [transfers, setTransfers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,8 +33,18 @@ const PayoutPage = () => {
     const fetchData = async () => {
       try {
         const balanceData = await PaymentService.getSellerBalance();
-        const transfersData = await PaymentService.getSellerTransfers();
+        if (balanceData.redirectToConnectedAccount) {
+          // Redirect to the connected account creation page if no account exists
+          navigate("/create-connected-account");
+          return;
+        }
         setBalance(balanceData);
+
+        const transfersData = await PaymentService.getSellerTransfers();
+        if (transfersData.redirectToConnectedAccount) {
+          navigate("/create-connected-account");
+          return;
+        }
         setTransfers(transfersData);
       } catch (err) {
         setError(err.message);
@@ -41,14 +54,17 @@ const PayoutPage = () => {
     };
 
     fetchData();
-  }, []);
+  }, [navigate]);
 
   const handleAddBankAccount = async () => {
     setAddingBank(true);
     try {
       await PaymentService.addBankAccount(bankAccountDetails);
-      // Refresh balance after adding bank account (if needed)
       const balanceData = await PaymentService.getSellerBalance();
+      if (balanceData.redirectToConnectedAccount) {
+        navigate("/create-connected-account");
+        return;
+      }
       setBalance(balanceData);
     } catch (err) {
       setError(err.message);
@@ -60,11 +76,17 @@ const PayoutPage = () => {
   const handleRequestPayout = async () => {
     setRequestingPayout(true);
     try {
-      // Depending on your backend, you may need to pass additional data here
       await PaymentService.requestPayout({});
-      // Refresh the balance and transfers after payout
       const balanceData = await PaymentService.getSellerBalance();
+      if (balanceData.redirectToConnectedAccount) {
+        navigate("/create-connected-account");
+        return;
+      }
       const transfersData = await PaymentService.getSellerTransfers();
+      if (transfersData.redirectToConnectedAccount) {
+        navigate("/create-connected-account");
+        return;
+      }
       setBalance(balanceData);
       setTransfers(transfersData);
     } catch (err) {
@@ -99,7 +121,7 @@ const PayoutPage = () => {
           <CardContent>
             <Typography variant="h6">Current Balance</Typography>
             <Typography variant="h4">
-              ${balance.available.toFixed(2)}
+            ${balance?.available?.toFixed(2) ?? '0.00'}
             </Typography>
           </CardContent>
         </Card>
