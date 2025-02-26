@@ -35,6 +35,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { useAuth } from "./contexts/AuthContext";
 import { CircularProgress } from "@mui/material";
 import PayoutPage from "./components/payment/PayoutPage";
+import ProductInventory from "./components/ProductInventory";
 
 const stripePromise = loadStripe(
   "pk_live_51Q9hx7ApVL7y3rvg85x9cvnfNETqgxw7qYxRrBJeD7rOg0d0M0WJnNMRF4TouN5RYAgwQ0HfQefNwZ5AEGXPIlF600UXzQ8rKx"
@@ -151,6 +152,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={["farmer"]}>
               <FulfillContract />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/products/:id/inventory"
+          element={
+            <ProtectedRoute allowedRoles={["farmer"]}>
+              <ProductInventory />
             </ProtectedRoute>
           }
         />

@@ -1231,7 +1231,7 @@ const FarmerDashboard = () => {
                       variant="outlined"
                       color="primary"
                       fullWidth
-                      onClick={() => navigate(`/products/${product._id}`)}
+                      onClick={() => navigate(`/products/${product._id}/inventory`)}
                     >
                       Inventory Details
                     </Button>

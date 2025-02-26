@@ -20,7 +20,8 @@ import {
 import {
   Category as CategoryIcon,
   Description as DescriptionIcon,
-  Store as StoreIcon
+  Store as StoreIcon,
+  Inventory as InventoryIcon
 } from '@mui/icons-material';
 
 const ProductDetails = () => {
@@ -132,13 +133,20 @@ const ProductDetails = () => {
               </Typography>
             </Box>
 
-            <Box sx={{ mt: 4 }}>
+            <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
+              {product.isOwner && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => navigate(`/products/${id}/inventory`)}
+                  startIcon={<InventoryIcon />}
+                >
+                  Manage Inventory
+                </Button>
+              )}
               <Button
-                variant="contained"
-                color="primary"
-                size="large"
+                variant="outlined"
                 onClick={() => navigate('/auctions')}
-                fullWidth
               >
                 View Available Auctions
               </Button>
