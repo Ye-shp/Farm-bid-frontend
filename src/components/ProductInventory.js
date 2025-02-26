@@ -58,6 +58,7 @@ const ProductInventory = () => {
     reason: '',
     notes: ''
   });
+  const [inventoryReasons, setInventoryReasons] = useState({ ADD: [], REMOVE: [] });
 
   // Fetch product details
   const fetchProductDetails = useCallback(async () => {
@@ -99,12 +100,25 @@ const ProductInventory = () => {
     }
   }, [API_URL, id, token]);
 
+  // Fetch inventory reasons
+  const fetchInventoryReasons = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/products/inventory-reasons`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setInventoryReasons(response.data);
+    } catch (err) {
+      console.error('Failed to fetch inventory reasons:', err);
+    }
+  }, [API_URL, token]);
+
   // Load all required data on mount or when id changes
   useEffect(() => {
     fetchProductDetails();
     fetchInventoryHistory();
     fetchAnalytics();
-  }, [fetchProductDetails, fetchInventoryHistory, fetchAnalytics]);
+    fetchInventoryReasons();
+  }, [fetchProductDetails, fetchInventoryHistory, fetchAnalytics, fetchInventoryReasons]);
 
   // Handle stock addition or removal
   const handleInventoryChange = async () => {
@@ -380,21 +394,11 @@ const ProductInventory = () => {
                   }
                 }}
               >
-                {dialogType === 'add' ? (
-                  <>
-                    <MenuItem value="harvest">New Harvest</MenuItem>
-                    <MenuItem value="purchase">Purchase</MenuItem>
-                    <MenuItem value="return">Return</MenuItem>
-                    <MenuItem value="adjustment">Inventory Adjustment</MenuItem>
-                  </>
-                ) : (
-                  <>
-                    <MenuItem value="sale">Sale</MenuItem>
-                    <MenuItem value="damage">Damage/Spoilage</MenuItem>
-                    <MenuItem value="transfer">Transfer</MenuItem>
-                    <MenuItem value="adjustment">Inventory Adjustment</MenuItem>
-                  </>
-                )}
+                {(dialogType === 'add' ? inventoryReasons.ADD : inventoryReasons.REMOVE).map((reason) => (
+                  <MenuItem key={reason} value={reason}>
+                    {reason.charAt(0).toUpperCase() + reason.slice(1)}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
             <TextField
