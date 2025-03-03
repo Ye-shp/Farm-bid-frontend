@@ -21,6 +21,7 @@ import BlogList from "./components/BlogList";
 import BlogPost from "./components/BlogPost";
 import CreateBlogPost from "./components/CreateBlogPost";
 import FarmerAuctions from "./components/FarmerAuctions";
+import MissionStatement from "./components/MissionStatement";
 import UserProfile from "./components/UserProfile";
 import PaymentForm from "./components/payment/PaymentForm";
 import TransactionStatus from "./components/payment/TransactionStatus";
@@ -28,6 +29,7 @@ import FeaturedFarms from "./components/FeaturedFarms";
 import CreateContract from "./components/CreateContract";
 import Contracts from "./components/Contracts";
 import ContractDetails from "./components/contract/ContractContainer";
+import Students from "./components/students/Students";
 import FulfillContract from "./components/FulfillContract";
 import SearchBar from "./components/SearchBar";
 import { SocketProvider } from "./context/SocketContext";
@@ -36,6 +38,9 @@ import { useAuth } from "./contexts/AuthContext";
 import { CircularProgress } from "@mui/material";
 import PayoutPage from "./components/payment/PayoutPage";
 import ProductInventory from "./components/ProductInventory";
+import StudentRegister from './components/students/Studentregister';
+import StudentLogin from './components/students/Studentlogin';
+import CustomerList from './components/students/CustomerList';
 
 const stripePromise = loadStripe(
   "pk_live_51Q9hx7ApVL7y3rvg85x9cvnfNETqgxw7qYxRrBJeD7rOg0d0M0WJnNMRF4TouN5RYAgwQ0HfQefNwZ5AEGXPIlF600UXzQ8rKx"
@@ -49,6 +54,14 @@ const AppRoutes = () => {
   }
 
   const ProtectedRoute = ({ children, allowedRoles = [] }) => {
+    const studentToken = localStorage.getItem('studentToken');
+    
+    // If it's a student route and we have a student token
+    if (studentToken && window.location.pathname.startsWith('/student/')) {
+      return children;
+    }
+
+    // Existing user authentication logic
     if (!user) {
       return <Navigate to="/login" />;
     }
@@ -83,8 +96,10 @@ const AppRoutes = () => {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/products" element={<ProductList />} />
         <Route path="/blog" element={<BlogList />} />
+        <Route path="/students" element={<Students />} />
         <Route path="/blog/:id" element={<BlogPost />} />
         <Route path="/featured-farms" element={<FeaturedFarms />} />
+        <Route path="/MissionStatement" element={<MissionStatement />} />       
 
         {/* Profile Routes */}
         <Route
@@ -222,6 +237,18 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <ContractDetails />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Student Routes */}
+        <Route path="/student/register" element={<StudentRegister />} />
+        <Route path="/student/login" element={<StudentLogin />} />
+        <Route
+          path="/student/customers"
+          element={
+            <ProtectedRoute>
+              <CustomerList />
             </ProtectedRoute>
           }
         />

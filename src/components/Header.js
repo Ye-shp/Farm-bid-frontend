@@ -33,6 +33,7 @@ import LoginIcon from '@mui/icons-material/Login';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import DescriptionIcon from '@mui/icons-material/Description';
 import CloseIcon from '@mui/icons-material/Close';
+import SchoolIcon from '@mui/icons-material/School';
 
 import { useAuth } from '../contexts/AuthContext';
 
@@ -68,7 +69,7 @@ const Header = () => {
   const getVisibleNavItems = () => {
     if (!user) {
       return [
-        { label: 'Field Notes', path: '/blog', icon: <ArticleIcon /> }
+        { label: 'Field Notes', path: '/blog', icon: <ArticleIcon /> },
       ];
     }
 
@@ -94,7 +95,8 @@ const Header = () => {
 
   const menuItems = !user ? [
     { label: 'Login', path: '/login', icon: <LoginIcon /> },
-    { label: 'Register', path: '/register', icon: <HowToRegIcon /> }
+    { label: 'Register', path: '/register', icon: <HowToRegIcon /> },
+    { label: 'Students', path: '/students', icon: <SchoolIcon /> }
   ] : user.role === 'farmer' ? [
     { label: 'Create Field Notes', path: '/create-blog', icon: <ArticleIcon /> },
     { label: 'My Profile', path: '/profile', icon: <PersonIcon /> },

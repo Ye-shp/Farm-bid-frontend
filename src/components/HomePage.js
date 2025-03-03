@@ -271,15 +271,15 @@ const HomePage = () => {
                       variant="contained"
                       size="large"
                       className="btn-get-started"
-                      onClick={() => navigate('/signup')}
+                      onClick={() => navigate('/Register')}
                     >
                       Join Our Community
                     </Button>
                     <Button
-                      variant="outlined"
+                      variant="outlined" 
                       size="large"
                       className="btn-learn-more"
-                      onClick={() => navigate('/about')}
+                      onClick={() => navigate('/MissionStatement')}
                     >
                       How It Works
                     </Button>
@@ -374,9 +374,9 @@ const HomePage = () => {
               size="large"
               endIcon={<ArrowForward />}
               className="btn-primary"
-              onClick={() => navigate('/About')}
+              onClick={() => navigate('/MissionStatement')}
             >
-              Discover Our Impact
+              Read More
             </Button>
           </Grid>
         </Grid>
@@ -472,7 +472,7 @@ const HomePage = () => {
             <Process 
               number="2"
               title="List Your Products"
-              description="Upload what you're growing, set your wholesale prices, and share high-quality images."
+              description="Upload what you're growing, set your wholesale prices,What you have as surplus , and share high-quality images."
             />
             <Process 
               number="3"
