@@ -505,51 +505,6 @@ const HomePage = () => {
           </Grid>
         </Grid>
       </Container>
-      
-      {/* Testimonials */}
-      <Box className="testimonials-section">
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 6 }}>
-            <Typography 
-              variant="h3" 
-              component="h2" 
-              className="testimonials-title"
-            >
-              Voices From Our Community
-            </Typography>
-            <Typography className="testimonials-subtitle">
-              Hear from farmers who have transformed their businesses by keeping food local
-            </Typography>
-          </Box>
-          
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={4}>
-              <TestimonialCard 
-                quote="After 15 years of selling to distributors who dictated my prices, I'm finally earning what my produce is worth. And my customers are just 20 miles away!"
-                author="Sarah Johnson"
-                role="Berry Hill Farm, Oregon"
-                avatar="/api/placeholder/60/60"
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TestimonialCard 
-                quote="I was ready to sell my family farm until I joined Elipae. Now I supply three local restaurants and two markets, making double what I did before."
-                author="Michael Torres"
-                role="Sunshine Organics, California"
-                avatar="/api/placeholder/60/60"
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TestimonialCard 
-                quote="The big corporations wouldn't even talk to a small farm like mine. Now I'm the preferred supplier for the best restaurants in town - they love telling customers their food comes from 10 miles away."
-                author="Emily Chen"
-                role="Green Valley Farms, Washington"
-                avatar="/api/placeholder/60/60"
-              />
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
 
       {/* Featured Farmers Section - Replace the entire section with FeaturedFarms component */}
       <Box className="featured-farms-section">
@@ -584,63 +539,7 @@ const HomePage = () => {
           </Box>
         </Container>
       </Box>
-      
-      {/* Success Stories */}
-      <Container maxWidth="lg" sx={{ py: { xs: 6, md: 10 } }}>
-        <Box sx={{ textAlign: 'center', mb: 6 }}>
-          <Typography className="section-overline">
-            IMPACT STORIES
-          </Typography>
-          <Typography 
-            variant="h3" 
-            component="h2" 
-            className="section-title"
-          >
-            Local Success Stories
-          </Typography>
-          <Typography className="section-subtitle">
-            Real stories of how keeping food local transforms farms, businesses, and communities
-          </Typography>
-        </Box>
-        
-        <Grid container spacing={4}>
-          <Grid item xs={12} md={4}>
-            <SuccessStoryCard 
-              image="/api/placeholder/400/180"
-              title="How Green Valley Farm Saved Their 80-Year Legacy"
-              excerpt="Facing bankruptcy after decades of corporate exploitation, this small farm found new life by connecting with local businesses through our platform."
-              impact="Revenue increased 85% in six months"
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <SuccessStoryCard 
-              image="/api/placeholder/400/180"
-              title="From Farm to School: Feeding 3,000 Children Daily"
-              excerpt="See how we helped Bridge County School District replace processed foods with fresh produce from farms within 25 miles of their cafeterias."
-              impact="Improved nutrition while saving $27,000 annually"
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <SuccessStoryCard 
-              image="/api/placeholder/400/180"
-              title="The Restaurant That Built a Micro-Economy"
-              excerpt="Chef Maria Diaz sources 100% locally through our platform, creating demand that helped five farms expand and hire 23 new employees."
-              impact="Created 30+ new jobs in one rural community"
-            />
-          </Grid>
-        </Grid>
-        
-        <Box sx={{ textAlign: 'center', mt: 4 }}>
-          <Button
-            variant="outlined"
-            size="large"
-            endIcon={<KeyboardArrowRight />}
-            onClick={() => navigate('/success-stories')}
-          >
-            Read More Success Stories
-          </Button>
-        </Box>
-      </Container>
+
       
       {/* Call to Action */}
       <Box className="cta-section">
