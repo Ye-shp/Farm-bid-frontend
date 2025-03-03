@@ -286,7 +286,7 @@ const HomePage = () => {
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Typography variant="subtitle1" sx={{ color: 'white', mr: 3 }}>
-                      Supporting 500+ Local Farms
+                      Supporting Local Farms
                     </Typography>
                     <Box sx={{ display: 'flex' }}>
                       {[1, 2, 3, 4, 5].map((_, index) => (
@@ -324,7 +324,6 @@ const HomePage = () => {
             {[
               { number: '60%', label: 'Higher Farmer Profits' },
               { number: '24hrs', label: 'Marketplace Onboarding' },
-              { number: '500+', label: 'Local Farms Connected' },
               { number: '80%', label: 'Reduction in Food Miles' }
             ].map((stat, index) => (
               <Grid item xs={6} sm={3} key={index}>
@@ -552,7 +551,7 @@ const HomePage = () => {
         </Container>
       </Box>
 
-      {/* Featured Farmers Section - Replacing Featured Articles */}
+      {/* Featured Farmers Section - Replace the entire section with FeaturedFarms component */}
       <Box className="featured-farms-section">
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 6 }}>
@@ -571,35 +570,7 @@ const HomePage = () => {
             </Typography>
           </Box>
           
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={4}>
-              <FeaturedFarmerCard 
-                image="/api/placeholder/400/180"
-                farmName="Riverside Organic Dairy"
-                location="Lancaster County, PA"
-                description="Third-generation family farm producing award-winning artisanal cheeses and yogurts from grass-fed Jersey cows."
-                products={["Artisan Cheese", "Yogurt", "Grass-Fed Butter"]}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <FeaturedFarmerCard 
-                image="/api/placeholder/400/180"
-                farmName="Hillside Berry Patch"
-                location="Hudson Valley, NY"
-                description="Specializing in rare berry varieties grown using regenerative farming methods, supplying top restaurants within 30 miles."
-                products={["Heirloom Berries", "Jams", "Berry Plants"]}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <FeaturedFarmerCard 
-                image="/api/placeholder/400/180"
-                farmName="Veterans Victory Gardens"
-                location="Sonoma County, CA"
-                description="Veteran-owned cooperative growing premium heirloom vegetables and training fellow veterans in sustainable agriculture."
-                products={["Heirloom Tomatoes", "Specialty Greens", "Culinary Herbs"]}
-              />
-            </Grid>
-          </Grid>
+          <FeaturedFarms />
           
           <Box sx={{ textAlign: 'center', mt: 4 }}>
             <Button

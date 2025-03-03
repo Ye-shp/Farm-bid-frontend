@@ -41,6 +41,8 @@ import {
   ListAlt,
   Payment as PaymentIcon,
   Close as CloseIcon,
+  ShoppingBasket,
+  Handshake,
 } from "@mui/icons-material";
 import axios from "axios";
 import { formatDistanceToNow } from "date-fns";
@@ -124,6 +126,24 @@ const NotificationItem = styled(ListItem)(({ theme }) => ({
     backgroundColor: theme.palette.action.hover,
   },
   cursor: "pointer",
+}));
+
+const StatsContainer = styled(Grid)(({ theme }) => ({
+  marginBottom: theme.spacing(4),
+}));
+
+const StatCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  textAlign: 'center',
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  transition: 'transform 0.2s',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+  },
 }));
 
 const BuyerDashboard = () => {
@@ -547,6 +567,80 @@ const BuyerDashboard = () => {
           </StyledBadge>
         </IconButton>
       </HeaderBox>
+
+      {/* Quick Stats Section */}
+      <StatsContainer container spacing={3}>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard elevation={2}>
+            <ShoppingBasket color="primary" sx={{ fontSize: 40 }} />
+            <Typography variant="h4" color="primary">
+              {auctions.length}
+            </Typography>
+            <Typography variant="body1" color="textSecondary">
+              Active Auctions
+            </Typography>
+          </StatCard>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard elevation={2}>
+            <GavelRounded color="secondary" sx={{ fontSize: 40 }} />
+            <Typography variant="h4" color="secondary">
+              {notifications.filter(n => n.type === 'bid_placed').length}
+            </Typography>
+            <Typography variant="body1" color="textSecondary">
+              Your Active Bids
+            </Typography>
+          </StatCard>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard elevation={2}>
+            <Handshake color="success" sx={{ fontSize: 40 }} />
+            <Typography variant="h4" color="success.main">
+              {notifications.filter(n => n.type === 'auction_won').length}
+            </Typography>
+            <Typography variant="body1" color="textSecondary">
+              Auctions Won
+            </Typography>
+          </StatCard>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard elevation={2}>
+            <PaymentIcon color="info" sx={{ fontSize: 40 }} />
+            <Typography variant="h4" color="info.main">
+              {notifications.filter(n => n.type === 'transaction_completed').length}
+            </Typography>
+            <Typography variant="body1" color="textSecondary">
+              Completed Purchases
+            </Typography>
+          </StatCard>
+        </Grid>
+      </StatsContainer>
+
+      {/* Recent Transactions Section */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
+          Recent Transactions
+        </Typography>
+        <Grid container spacing={3}>
+          {notifications
+            .filter(n => n.type === 'transaction_completed')
+            .slice(0, 3)
+            .map((transaction, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="subtitle1" gutterBottom>
+                      {transaction.message}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {formatDistanceToNow(new Date(transaction.createdAt), { addSuffix: true })}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+        </Grid>
+      </Box>
 
       {/* Search Section */}
       <SearchBox>
