@@ -65,10 +65,15 @@ const HomePage = () => {
     };
   }, []);
 
-  const FeatureCard = ({ icon: Icon, title, description }) => (
+  const FeatureCard = ({ icon: Icon, title, description, bgImage }) => (
     <Paper 
       elevation={2}
       className="feature-card"
+      sx={{
+        backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)), url(${bgImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
     >
       <Box className="feature-icon-container">
         <Icon sx={{ fontSize: 40, color: 'white' }} />
@@ -382,65 +387,87 @@ const HomePage = () => {
       </Container>
 
       {/* Features */}
-      <Box id="features" className="features-section">
+      <Box id="features" className="features-section" sx={{
+        py: { xs: 8, md: 12 },
+        background: 'linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%)'
+      }}>
         <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 6 }}>
-            <Typography className="section-overline">
+          <Box sx={{ 
+            textAlign: 'center', 
+            mb: 8,
+            maxWidth: '800px',
+            mx: 'auto'
+          }}>
+            <Typography 
+              className="section-overline"
+              sx={{
+                color: 'primary.main',
+                fontWeight: 600,
+                letterSpacing: '1.5px',
+                mb: 2
+              }}
+            >
               WHY LOCAL MATTERS
             </Typography>
             <Typography 
               variant="h3" 
               component="h2" 
               className="section-title"
+              sx={{
+                fontWeight: 700,
+                mb: 3
+              }}
             >
               A Better Way To Feed Communities
             </Typography>
-            <Typography className="section-subtitle">
+            <Typography 
+              className="section-subtitle"
+              variant="h6"
+              sx={{ color: 'text.secondary' }}
+            >
               We're revolutionizing the wholesale food supply chain by putting farmers and local buyers first
             </Typography>
           </Box>
 
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={4}>
+          <Grid container spacing={4} justifyContent="center">
+            <Grid item xs={12} sm={6} md={4}>
               <FeatureCard
                 icon={MonetizationOn}
                 title="Fair Prices For Farmers"
                 description="Farmers earn up to 60% more by selling directly to local buyers, eliminating corporate middlemen"
+                bgImage="https://images.unsplash.com/photo-1580674285054-bed31e145f59?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <FeatureCard
                 icon={Storefront}
                 title="Community Marketplace"
                 description="Our platform creates a true online farmers' market, connecting local farms with buyers who value freshness and quality"
+                bgImage="https://images.unsplash.com/photo-1488459716781-31db52582fe9?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <FeatureCard
                 icon={People}
                 title="Stronger Communities"
                 description="When dollars stay local, communities thrive—creating jobs and building resilient local food networks"
+                bgImage="https://images.unsplash.com/photo-1591115765373-5207764f72e7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <FeatureCard
                 icon={LocalFlorist}
                 title="Fresher Food"
                 description="Produce reaches tables within days, not weeks, preserving flavor, nutrition, and reducing waste"
+                bgImage="https://images.unsplash.com/photo-1557844352-761f2565b576?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <FeatureCard
                 icon={EmojiNature}
                 title="Environmental Benefits"
                 description="Reducing food miles by 80% compared to traditional supply chains, dramatically cutting emissions"
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <FeatureCard
-                icon={LocalShipping}
-                title="Simplified Logistics"
-                description="Our local delivery network handles everything from farm to buyer, making the process seamless"
+                bgImage="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
               />
             </Grid>
           </Grid>
