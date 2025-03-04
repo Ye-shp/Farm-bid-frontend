@@ -106,7 +106,7 @@ const MissionStatement = () => {
                     </ul>
                     
                     <p>
-                        <a href="#scholarship-signup" className="scholarship-link">
+                        <a href="./students" className="scholarship-link">
                             Interested students can sign up for our scholarship program here
                         </a>
                     </p>
