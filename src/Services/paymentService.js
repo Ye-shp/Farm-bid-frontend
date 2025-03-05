@@ -75,7 +75,10 @@ const paymentService = {
    * Create a connected account for payouts
    */
   createConnectedAccount: async (data) => {
-    const response = await apiCreateConnectedAccount(data);
+    const token = localStorage.getItem("token");
+    const response = await api.post("/payment/create-connected-account", data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     return response.data;
   },
 
@@ -83,7 +86,10 @@ const paymentService = {
    * Add a bank account to connected account
    */
   addBankAccount: async (data) => {
-    const response = await apiAddBankAccount(data);
+    const token = localStorage.getItem("token");
+    const response = await api.post("/payment/add-bank-account", data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     return response.data;
   },
 
@@ -91,7 +97,10 @@ const paymentService = {
    * Request a payout
    */
   requestPayout: async (data) => {
-    const response = await apiRequestPayout(data);
+    const token = localStorage.getItem("token");
+    const response = await api.post("/payment/request-payout", data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     return response.data;
   },
 

@@ -8,6 +8,9 @@ import {
   Card,
   CardContent,
   TextField,
+  Stepper,
+  Step,
+  StepLabel,
 } from "@mui/material";
 import PaymentService from "../../Services/paymentService";
 import { useAuth } from "../../contexts/AuthContext";
@@ -28,6 +31,14 @@ const PayoutPage = () => {
   });
   const [addingBank, setAddingBank] = useState(false);
   const [requestingPayout, setRequestingPayout] = useState(false);
+  const [creatingAccount, setCreatingAccount] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
+  const [accountDetails, setAccountDetails] = useState({
+    email: "",
+    businessName: "",
+    firstName: "",
+    lastName: "",
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -59,13 +70,21 @@ const PayoutPage = () => {
   const handleAddBankAccount = async () => {
     setAddingBank(true);
     try {
-      await PaymentService.addBankAccount(bankAccountDetails);
+      // We need to get the balance first to ensure we have the connected account
       const balanceData = await PaymentService.getSellerBalance();
       if (balanceData.redirectToConnectedAccount) {
         navigate("/create-connected-account");
         return;
       }
-      setBalance(balanceData);
+
+      await PaymentService.addBankAccount({
+        accountId: balanceData.stripeAccountId, // Add the account ID
+        bankAccountDetails
+      });
+      
+      // Refresh balance after adding bank account
+      const updatedBalance = await PaymentService.getSellerBalance();
+      setBalance(updatedBalance);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -76,19 +95,34 @@ const PayoutPage = () => {
   const handleRequestPayout = async () => {
     setRequestingPayout(true);
     try {
-      await PaymentService.requestPayout({});
+      // Get latest balance to ensure we have funds to pay out
       const balanceData = await PaymentService.getSellerBalance();
       if (balanceData.redirectToConnectedAccount) {
         navigate("/create-connected-account");
         return;
       }
-      const transfersData = await PaymentService.getSellerTransfers();
-      if (transfersData.redirectToConnectedAccount) {
-        navigate("/create-connected-account");
+
+      // Check if there are available funds
+      const availableAmount = balanceData.available?.[0]?.amount || 0;
+      if (availableAmount <= 0) {
+        setError("No funds available for payout");
         return;
       }
-      setBalance(balanceData);
-      setTransfers(transfersData);
+
+      // Request payout of available balance
+      await PaymentService.requestPayout({
+        amount: availableAmount / 100, // Convert from cents to dollars
+        currency: balanceData.available[0].currency,
+        accountId: balanceData.stripeAccountId
+      });
+
+      // Refresh data after payout
+      const updatedBalance = await PaymentService.getSellerBalance();
+      const updatedTransfers = await PaymentService.getSellerTransfers();
+      
+      setBalance(updatedBalance);
+      setTransfers(updatedTransfers);
+      
     } catch (err) {
       setError(err.message);
     } finally {
@@ -96,10 +130,147 @@ const PayoutPage = () => {
     }
   };
 
+  const handleCreateConnectedAccount = async () => {
+    setCreatingAccount(true);
+    setError(null);
+    try {
+      const response = await PaymentService.createConnectedAccount({
+        email: accountDetails.email || user.email, // Use user's email if not provided
+        businessName: accountDetails.businessName,
+        firstName: accountDetails.firstName,
+        lastName: accountDetails.lastName,
+      });
+
+      // If successful, refresh the balance data which will now include the connected account
+      const balanceData = await PaymentService.getSellerBalance();
+      setBalance(balanceData);
+      setActiveStep(1); // Move to bank account step
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCreatingAccount(false);
+    }
+  };
+
+  const renderConnectedAccountSetup = () => (
+    <Box sx={{ mb: 4 }}>
+      <Card>
+        <CardContent>
+          <Typography variant="h5" gutterBottom>
+            Set Up Your Seller Account
+          </Typography>
+          
+          <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+            <Step>
+              <StepLabel>Create Account</StepLabel>
+            </Step>
+            <Step>
+              <StepLabel>Add Bank Account</StepLabel>
+            </Step>
+            <Step>
+              <StepLabel>Ready for Payouts</StepLabel>
+            </Step>
+          </Stepper>
+
+          {activeStep === 0 && (
+            <Box>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                To receive payments, you'll need to set up a connected account with our payment processor.
+              </Typography>
+              
+              <TextField
+                fullWidth
+                label="Email"
+                margin="normal"
+                value={accountDetails.email}
+                onChange={(e) =>
+                  setAccountDetails((prev) => ({
+                    ...prev,
+                    email: e.target.value,
+                  }))
+                }
+                placeholder={user.email}
+                helperText="Leave blank to use your account email"
+              />
+              
+              <TextField
+                fullWidth
+                label="Business Name"
+                margin="normal"
+                value={accountDetails.businessName}
+                onChange={(e) =>
+                  setAccountDetails((prev) => ({
+                    ...prev,
+                    businessName: e.target.value,
+                  }))
+                }
+              />
+              
+              <TextField
+                fullWidth
+                label="First Name"
+                margin="normal"
+                value={accountDetails.firstName}
+                onChange={(e) =>
+                  setAccountDetails((prev) => ({
+                    ...prev,
+                    firstName: e.target.value,
+                  }))
+                }
+              />
+              
+              <TextField
+                fullWidth
+                label="Last Name"
+                margin="normal"
+                value={accountDetails.lastName}
+                onChange={(e) =>
+                  setAccountDetails((prev) => ({
+                    ...prev,
+                    lastName: e.target.value,
+                  }))
+                }
+              />
+
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleCreateConnectedAccount}
+                disabled={creatingAccount}
+                sx={{ mt: 2 }}
+              >
+                {creatingAccount ? "Creating Account..." : "Create Account"}
+              </Button>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+    </Box>
+  );
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" p={3}>
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Show connected account setup if no balance (meaning no connected account)
+  if (!balance || balance.redirectToConnectedAccount) {
+    return (
+      <Box p={3}>
+        <Typography variant="h4" gutterBottom>
+          Payout Dashboard
+        </Typography>
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+
+        {renderConnectedAccountSetup()}
       </Box>
     );
   }
