@@ -109,6 +109,46 @@ const ContractDetails = () => {
     setShowCheckoutDialog(true);
   };
 
+  const handlePayment = async (contractId) => {
+    try {
+      // 1. Create payment intent
+      const { data: { clientSecret } } = await axios.post(
+        `${API_URL}/api/contracts/payment-intent`,
+        { contractId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // 2. Initialize Stripe payment
+      const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
+      const elements = stripe.elements();
+
+      // 3. Handle payment submission
+      const result = await stripe.confirmPayment({
+        clientSecret,
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/contracts/${contractId}/payment-success`,
+        },
+      });
+
+      if (result.error) {
+        // Handle payment failure
+        await axios.post(
+          `${API_URL}/api/contracts/payment-failure`,
+          { 
+            contractId,
+            error: result.error.message 
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setError(result.error.message);
+      }
+
+    } catch (error) {
+      setError(error.response?.data?.error || "Payment failed");
+    }
+  };
+
   if (loading) return <CircularProgress />;
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!contract) return <Alert severity="info">No contract found</Alert>;

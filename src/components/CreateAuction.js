@@ -31,6 +31,7 @@ const CreateAuction = ({ products }) => {
   const [formData, setFormData] = useState({
     productId: '',
     startingBid: '',
+    auctionQuantity: '',
     endTime: '',
   });
   const [loading, setLoading] = useState(false);
@@ -78,12 +79,20 @@ const CreateAuction = ({ products }) => {
         throw new Error('End time must be in the future');
       }
 
+      // Get the selected product
+      const selectedProduct = getSelectedProduct();
+      
       const response = await axios.post(
         `${API_URL}/api/auctions/create`,
         {
           productId: formData.productId,
-          startingPrice: startingBid,
-          endTime: endTime.toISOString(),
+          startingPrice: parseFloat(formData.startingBid),
+          endTime: formData.endTime,
+          startTime: new Date().toISOString(), // Add missing startTime
+          quantity: parseFloat(formData.auctionQuantity),
+          farmer: localStorage.getItem('userId'), // Add missing farmer ID
+          minIncrement: 1,
+          delivery: false
         },
         {
           headers: {
