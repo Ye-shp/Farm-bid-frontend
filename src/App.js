@@ -138,8 +138,8 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-         <Route
-          path="/PayoutPage"
+        <Route
+          path="/Payoutpage"
           element={
             <ProtectedRoute allowedRoles={["farmer"]}>
               <PayoutPage />

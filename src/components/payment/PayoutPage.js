@@ -15,6 +15,7 @@ import {
 import PaymentService from "../../Services/paymentService";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import ConnectedAccount from "./ConnectedAccount";
 
 const PayoutPage = () => {
   const { user } = useAuth();
@@ -43,46 +44,91 @@ const PayoutPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
+        setError(null);
+        
         const balanceData = await PaymentService.getSellerBalance();
-        if (balanceData.redirectToConnectedAccount) {
-          // Redirect to the connected account creation page if no account exists
-          navigate("/create-connected-account");
+        console.log('Balance Data:', balanceData); // For debugging
+        
+        // If we get a redirect response, we need to create a connected account
+        if (balanceData.redirect === '/create-connected-account') {
+          setActiveStep(0);
+          setLoading(false);
           return;
         }
+
+        // Store the balance data
         setBalance(balanceData);
 
-        const transfersData = await PaymentService.getSellerTransfers();
-        if (transfersData.redirectToConnectedAccount) {
-          navigate("/create-connected-account");
-          return;
+        try {
+          // Get transfer history
+          const transfersData = await PaymentService.getSellerTransfers();
+          setTransfers(transfersData);
+        } catch (transferError) {
+          console.error('Transfer fetch error:', transferError);
+          // Don't fail completely if transfers can't be fetched
         }
-        setTransfers(transfersData);
+
+        // Check for bank accounts
+        const hasExternalAccounts = balanceData.external_accounts?.data?.length > 0;
+        
+        if (!hasExternalAccounts) {
+          setActiveStep(1); // Show bank account setup
+        } else {
+          setActiveStep(2); // Show dashboard
+        }
+
       } catch (err) {
-        setError(err.message);
+        console.error('Fetch error:', err);
+        // If the error indicates we need a connected account, show step 0
+        if (err.response?.status === 401) {
+          // Handle authentication errors
+          setError('Please log in again to continue');
+        } else if (err.response?.redirect === '/create-connected-account' || !err.response) {
+          setActiveStep(0);
+        } else {
+          setError(err.message || 'An error occurred while fetching data');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [navigate]);
+  }, []);
+
+  const handleCreateConnectedAccount = async () => {
+    setCreatingAccount(true);
+    setError(null);
+    try {
+      await PaymentService.createConnectedAccount({
+        email: accountDetails.email || user.email,
+        businessName: accountDetails.businessName,
+        firstName: accountDetails.firstName,
+        lastName: accountDetails.lastName,
+      });
+
+      setActiveStep(1); // Move to bank account step after successful creation
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCreatingAccount(false);
+    }
+  };
 
   const handleAddBankAccount = async () => {
     setAddingBank(true);
     try {
-      // We need to get the balance first to ensure we have the connected account
       const balanceData = await PaymentService.getSellerBalance();
-      if (balanceData.redirectToConnectedAccount) {
-        navigate("/create-connected-account");
-        return;
-      }
-
+      
       await PaymentService.addBankAccount({
-        accountId: balanceData.stripeAccountId, // Add the account ID
+        accountId: balanceData.stripeAccountId,
         bankAccountDetails
       });
       
-      // Refresh balance after adding bank account
+      setActiveStep(2); // Move to final step after adding bank account
+      
+      // Refresh balance data
       const updatedBalance = await PaymentService.getSellerBalance();
       setBalance(updatedBalance);
     } catch (err) {
@@ -130,28 +176,6 @@ const PayoutPage = () => {
     }
   };
 
-  const handleCreateConnectedAccount = async () => {
-    setCreatingAccount(true);
-    setError(null);
-    try {
-      const response = await PaymentService.createConnectedAccount({
-        email: accountDetails.email || user.email, // Use user's email if not provided
-        businessName: accountDetails.businessName,
-        firstName: accountDetails.firstName,
-        lastName: accountDetails.lastName,
-      });
-
-      // If successful, refresh the balance data which will now include the connected account
-      const balanceData = await PaymentService.getSellerBalance();
-      setBalance(balanceData);
-      setActiveStep(1); // Move to bank account step
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setCreatingAccount(false);
-    }
-  };
-
   const renderConnectedAccountSetup = () => (
     <Box sx={{ mb: 4 }}>
       <Card>
@@ -173,73 +197,66 @@ const PayoutPage = () => {
           </Stepper>
 
           {activeStep === 0 && (
+            <ConnectedAccount 
+              onSuccess={() => {
+                setActiveStep(1);
+                // Refresh balance data after connected account creation
+                fetchData();
+              }}
+            />
+          )}
+
+          {activeStep === 1 && (
             <Box>
               <Typography variant="body1" sx={{ mb: 2 }}>
-                To receive payments, you'll need to set up a connected account with our payment processor.
+                Add your bank account to receive payouts
               </Typography>
               
               <TextField
                 fullWidth
-                label="Email"
+                label="Account Number"
                 margin="normal"
-                value={accountDetails.email}
+                value={bankAccountDetails.accountNumber}
                 onChange={(e) =>
-                  setAccountDetails((prev) => ({
+                  setBankAccountDetails((prev) => ({
                     ...prev,
-                    email: e.target.value,
-                  }))
-                }
-                placeholder={user.email}
-                helperText="Leave blank to use your account email"
-              />
-              
-              <TextField
-                fullWidth
-                label="Business Name"
-                margin="normal"
-                value={accountDetails.businessName}
-                onChange={(e) =>
-                  setAccountDetails((prev) => ({
-                    ...prev,
-                    businessName: e.target.value,
+                    accountNumber: e.target.value,
                   }))
                 }
               />
-              
               <TextField
                 fullWidth
-                label="First Name"
+                label="Routing Number"
                 margin="normal"
-                value={accountDetails.firstName}
+                value={bankAccountDetails.routingNumber}
                 onChange={(e) =>
-                  setAccountDetails((prev) => ({
+                  setBankAccountDetails((prev) => ({
                     ...prev,
-                    firstName: e.target.value,
+                    routingNumber: e.target.value,
+                  }))
+                }
+              />
+              <TextField
+                fullWidth
+                label="Account Holder Name"
+                margin="normal"
+                value={bankAccountDetails.holderName}
+                onChange={(e) =>
+                  setBankAccountDetails((prev) => ({
+                    ...prev,
+                    holderName: e.target.value,
                   }))
                 }
               />
               
-              <TextField
-                fullWidth
-                label="Last Name"
-                margin="normal"
-                value={accountDetails.lastName}
-                onChange={(e) =>
-                  setAccountDetails((prev) => ({
-                    ...prev,
-                    lastName: e.target.value,
-                  }))
-                }
-              />
-
               <Button
                 variant="contained"
                 color="primary"
-                onClick={handleCreateConnectedAccount}
-                disabled={creatingAccount}
+                onClick={handleAddBankAccount}
+                disabled={addingBank}
                 sx={{ mt: 2 }}
               >
-                {creatingAccount ? "Creating Account..." : "Create Account"}
+                {addingBank ? "Adding Bank Account..." : "Add Bank Account"}
               </Button>
             </Box>
           )}
@@ -248,32 +265,73 @@ const PayoutPage = () => {
     </Box>
   );
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" p={3}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  // Render function to determine what to show
+  const renderContent = () => {
+    // If we're still loading, show spinner
+    if (loading) {
+      return (
+        <Box display="flex" justifyContent="center" p={3}>
+          <CircularProgress />
+        </Box>
+      );
+    }
 
-  // Show connected account setup if no balance (meaning no connected account)
-  if (!balance || balance.redirectToConnectedAccount) {
-    return (
-      <Box p={3}>
-        <Typography variant="h4" gutterBottom>
-          Payout Dashboard
-        </Typography>
+    // If we need to set up connected account or bank account, show setup flow
+    if (activeStep < 2) {
+      return renderConnectedAccountSetup();
+    }
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
+    // If everything is set up, show the payout dashboard
+    return (
+      <>
+        {balance && (
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Typography variant="h6">Current Balance</Typography>
+              <Typography variant="h4">
+                ${(balance?.available?.[0]?.amount / 100).toFixed(2) ?? '0.00'}
+              </Typography>
+            </CardContent>
+          </Card>
         )}
 
-        {renderConnectedAccountSetup()}
-      </Box>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Payout History
+          </Typography>
+          {transfers.length > 0 ? (
+            transfers.map((transfer) => (
+              <Card key={transfer.id} sx={{ mb: 1 }}>
+                <CardContent>
+                  <Typography>
+                    Amount: ${(transfer.amount / 100).toFixed(2)}
+                  </Typography>
+                  <Typography>Status: {transfer.status}</Typography>
+                  <Typography>
+                    Date: {new Date(transfer.created * 1000).toLocaleDateString()}
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Typography>No payouts yet.</Typography>
+          )}
+        </Box>
+
+        <Box>
+          <Button
+            variant="contained"
+            color="success"
+            fullWidth
+            onClick={handleRequestPayout}
+            disabled={requestingPayout || !balance?.available?.[0]?.amount}
+          >
+            {requestingPayout ? "Processing Payout..." : "Request Payout"}
+          </Button>
+        </Box>
+      </>
     );
-  }
+  };
 
   return (
     <Box p={3}>
@@ -287,102 +345,7 @@ const PayoutPage = () => {
         </Alert>
       )}
 
-      {balance && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6">Current Balance</Typography>
-            <Typography variant="h4">
-            ${balance?.available?.toFixed(2) ?? '0.00'}
-            </Typography>
-          </CardContent>
-        </Card>
-      )}
-
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Payout History
-        </Typography>
-        {transfers.length > 0 ? (
-          transfers.map((transfer) => (
-            <Card key={transfer.id} sx={{ mb: 1 }}>
-              <CardContent>
-                <Typography>
-                  Amount: ${transfer.amount.toFixed(2)}
-                </Typography>
-                <Typography>Status: {transfer.status}</Typography>
-                <Typography>
-                  Date: {new Date(transfer.date).toLocaleDateString()}
-                </Typography>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <Typography>No payouts yet.</Typography>
-        )}
-      </Box>
-
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Add Bank Account
-        </Typography>
-        <TextField
-          fullWidth
-          label="Account Number"
-          margin="normal"
-          value={bankAccountDetails.accountNumber}
-          onChange={(e) =>
-            setBankAccountDetails((prev) => ({
-              ...prev,
-              accountNumber: e.target.value,
-            }))
-          }
-        />
-        <TextField
-          fullWidth
-          label="Routing Number"
-          margin="normal"
-          value={bankAccountDetails.routingNumber}
-          onChange={(e) =>
-            setBankAccountDetails((prev) => ({
-              ...prev,
-              routingNumber: e.target.value,
-            }))
-          }
-        />
-        <TextField
-          fullWidth
-          label="Account Holder Name"
-          margin="normal"
-          value={bankAccountDetails.holderName}
-          onChange={(e) =>
-            setBankAccountDetails((prev) => ({
-              ...prev,
-              holderName: e.target.value,
-            }))
-          }
-        />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleAddBankAccount}
-          disabled={addingBank}
-          sx={{ mt: 2 }}
-        >
-          {addingBank ? "Adding Bank Account..." : "Add Bank Account"}
-        </Button>
-      </Box>
-
-      <Box>
-        <Button
-          variant="contained"
-          color="success"
-          fullWidth
-          onClick={handleRequestPayout}
-          disabled={requestingPayout}
-        >
-          {requestingPayout ? "Processing Payout..." : "Request Payout"}
-        </Button>
-      </Box>
+      {renderContent()}
     </Box>
   );
 };

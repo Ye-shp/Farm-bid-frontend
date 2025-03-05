@@ -9,11 +9,9 @@ import {
 } from "@mui/material";
 import PaymentService from "../../Services/paymentService";
 import { useAuth } from "../../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 
-const CreateConnectedAccountPage = () => {
+const ConnectedAccount = ({ onSuccess }) => {
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   // Pre-populate with user's email if available
   const [email, setEmail] = useState(user?.email || "");
@@ -26,31 +24,32 @@ const CreateConnectedAccountPage = () => {
     setLoading(true);
     setError(null);
     try {
-      // Pass email as required to create a connected account
-      const data = { email };
+      const data = { 
+        email,
+        firstName: user?.firstName,
+        lastName: user?.lastName
+      };
       const response = await PaymentService.createConnectedAccount(data);
       if (response.accountId) {
         setSuccess(response.message);
-        // After a short delay, redirect the seller back to the payout page
-        setTimeout(() => {
-          navigate("/payout");
-        }, 2000);
+        if (onSuccess) {
+          setTimeout(() => {
+            onSuccess();
+          }, 1500); // Give user time to see success message
+        }
       }
     } catch (err) {
-      setError(err.message || "Failed to create connected account");
+      console.error('Connected account error:', err);
+      setError(err.message || 'Failed to create connected account');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Box p={3} maxWidth={600} mx="auto">
-      <Typography variant="h4" gutterBottom>
-        Create Connected Account
-      </Typography>
+    <Box>
       <Typography variant="body1" gutterBottom>
-        To receive payouts directly, please create your Stripe connected
-        account.
+        To receive payouts directly, please create your Stripe connected account.
       </Typography>
 
       {error && (
@@ -88,4 +87,4 @@ const CreateConnectedAccountPage = () => {
   );
 };
 
-export default CreateConnectedAccountPage;
+export default ConnectedAccount;

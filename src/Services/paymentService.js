@@ -1,11 +1,4 @@
-import api from "./api";
-import { 
-  getSellerBalance as apiGetSellerBalance, 
-  getSellerTransfers as apiGetSellerTransfers, 
-  addBankAccount as apiAddBankAccount, 
-  requestPayout as apiRequestPayout, 
-  createConnectedAccount as apiCreateConnectedAccount 
-} from "./api";
+const API_URL = process.env.REACT_APP_API_URL;
 
 const paymentService = {
   /**
@@ -13,9 +6,8 @@ const paymentService = {
    */
   createPaymentIntent: async (data) => {
     const token = localStorage.getItem("token");
-
     const response = await fetch(
-      `${process.env.REACT_APP_API_URL}/api/payments/create-intent`,
+      `${API_URL}/api/payments/create-intent`,
       {
         method: "POST",
         headers: {
@@ -25,8 +17,7 @@ const paymentService = {
         body: JSON.stringify(data),
       }
     );
-    const result = await response.json();
-    return result;
+    return response.json();
   },
 
   /**
@@ -34,10 +25,16 @@ const paymentService = {
    */
   getTransaction: async (transactionId) => {
     const token = localStorage.getItem("token");
-    const response = await api.get(`/payment/transaction/${transactionId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
+    const response = await fetch(
+      `${API_URL}/api/payments/transaction/${transactionId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.json();
   },
 
   /**
@@ -45,30 +42,66 @@ const paymentService = {
    */
   processPayout: async (transactionId) => {
     const token = localStorage.getItem("token");
-    const response = await api.post(
-      `/payment/process-payout/${transactionId}`,
-      {},
+    const response = await fetch(
+      `${API_URL}/api/payments/process-payout/${transactionId}`,
       {
-        headers: { Authorization: `Bearer ${token}` },
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       }
     );
-    return response.data;
+    return response.json();
   },
 
   /**
    * Get seller balance and payout history
    */
   getSellerBalance: async () => {
-    const response = await apiGetSellerBalance();
-    return response.data;
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${API_URL}/api/payments/balance`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw {
+        message: data.error || 'Failed to fetch balance',
+        status: response.status,
+        response: data
+      };
+    }
+    
+    return data;
   },
 
   /**
    * Get seller transfers (completed and pending)
    */
   getSellerTransfers: async () => {
-    const response = await apiGetSellerTransfers();
-    return response.data;
+    const token = localStorage.getItem("token");
+    const response = await fetch(
+      `${API_URL}/api/payments/transfers`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.json();
   },
 
   /**
@@ -76,10 +109,33 @@ const paymentService = {
    */
   createConnectedAccount: async (data) => {
     const token = localStorage.getItem("token");
-    const response = await api.post("/payment/create-connected-account", data, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${API_URL}/api/payments/create-connected-account`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      }
+    );
+
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      throw {
+        message: responseData.error || 'Failed to create connected account',
+        status: response.status,
+        response: responseData
+      };
+    }
+    
+    return responseData;
   },
 
   /**
@@ -87,10 +143,18 @@ const paymentService = {
    */
   addBankAccount: async (data) => {
     const token = localStorage.getItem("token");
-    const response = await api.post("/payment/add-bank-account", data, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
+    const response = await fetch(
+      `${API_URL}/api/payments/add-bank-account`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
   },
 
   /**
@@ -98,10 +162,18 @@ const paymentService = {
    */
   requestPayout: async (data) => {
     const token = localStorage.getItem("token");
-    const response = await api.post("/payment/request-payout", data, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
+    const response = await fetch(
+      `${API_URL}/api/payments/request-payout`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
   },
 
   /**
