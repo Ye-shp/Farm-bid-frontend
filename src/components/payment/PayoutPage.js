@@ -101,14 +101,22 @@ const PayoutPage = () => {
     setCreatingAccount(true);
     setError(null);
     try {
-      await PaymentService.createConnectedAccount({
+      const response = await PaymentService.createConnectedAccount({
         email: accountDetails.email || user.email,
         businessName: accountDetails.businessName,
         firstName: accountDetails.firstName,
         lastName: accountDetails.lastName,
       });
 
-      setActiveStep(1); // Move to bank account step after successful creation
+      // If account creation was successful
+      if (response.accountId) {
+        // Refresh the balance data to get updated account status
+        const balanceData = await PaymentService.getSellerBalance();
+        setBalance(balanceData);
+        
+        // Move to bank account step
+        setActiveStep(1);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -120,10 +128,19 @@ const PayoutPage = () => {
     setAddingBank(true);
     try {
       const balanceData = await PaymentService.getSellerBalance();
+      console.log('Balance data for bank account:', balanceData);
       
+      if (!balanceData.stripeAccountId) {
+        throw new Error('No Stripe account ID found. Please create a connected account first.');
+      }
+
       await PaymentService.addBankAccount({
         accountId: balanceData.stripeAccountId,
-        bankAccountDetails
+        bankAccountDetails: {
+          accountNumber: bankAccountDetails.accountNumber,
+          routingNumber: bankAccountDetails.routingNumber,
+          holderName: bankAccountDetails.holderName
+        }
       });
       
       setActiveStep(2); // Move to final step after adding bank account
@@ -132,7 +149,8 @@ const PayoutPage = () => {
       const updatedBalance = await PaymentService.getSellerBalance();
       setBalance(updatedBalance);
     } catch (err) {
-      setError(err.message);
+      console.error('Bank account error:', err);
+      setError(err.message || 'Failed to add bank account');
     } finally {
       setAddingBank(false);
     }
