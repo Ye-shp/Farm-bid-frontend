@@ -51,6 +51,7 @@ import PaymentForm from "./payment/PaymentForm";
 import TransactionStatus from "./payment/TransactionStatus";
 import { useSocket } from "../context/SocketContext";
 import paymentService from "../Services/paymentService";
+import { alpha } from "@mui/material/styles";
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
   "& .MuiBadge-badge": {
@@ -268,21 +269,26 @@ const BuyerDashboard = () => {
     const handleNewNotification = (notification) => {
       console.log("Received new notification:", notification);
       setNotifications((prev) => {
+        // Ensure prev is an array
+        const prevArray = Array.isArray(prev) ? prev : [];
+        
         // Check if notification already exists
-        const exists = prev.some((n) => n._id === notification._id);
+        const exists = prevArray.some((n) => n._id === notification._id);
         if (exists) {
-          return prev.map((n) =>
+          return prevArray.map((n) =>
             n._id === notification._id ? notification : n
           );
         }
         // Add new notification and update unread count
         setUnreadCount((count) => count + 1);
         showSnackbar(notification.message, "info");
-        return [notification, ...prev];
+        return [notification, ...prevArray];
       });
     };
 
+    // Listen for both event types to ensure we catch all notifications
     socket.on("notificationUpdate", handleNewNotification);
+    socket.on("notification", handleNewNotification);
 
     // Fetch initial notifications
     const fetchNotifications = async () => {
@@ -290,11 +296,15 @@ const BuyerDashboard = () => {
         console.log("Fetching initial notifications");
         const response = await axios.get("/notifications");
         console.log("Initial notifications:", response.data);
-        setNotifications(response.data);
-        setUnreadCount(response.data.filter((n) => !n.read).length);
+        // Ensure notifications is an array
+        const notificationsArray = Array.isArray(response.data) ? response.data : [];
+        setNotifications(notificationsArray);
+        setUnreadCount(notificationsArray.filter((n) => !n.read).length);
       } catch (error) {
         console.error("Error fetching notifications:", error);
         showSnackbar("Error fetching notifications", "error");
+        // Set notifications to empty array on error
+        setNotifications([]);
       }
     };
 
@@ -302,7 +312,8 @@ const BuyerDashboard = () => {
 
     return () => {
       console.log("Cleaning up notification listener");
-      socket.off("newNotification", handleNewNotification);
+      socket.off("notificationUpdate", handleNewNotification);
+      socket.off("notification", handleNewNotification);
     };
   }, [socket]);
 
@@ -374,14 +385,16 @@ const BuyerDashboard = () => {
   const markAsRead = async (notificationId) => {
     try {
       await axios.put(`${API_URL}/notifications/${notificationId}/read`);
-      setNotifications((prev) =>
-        prev.map((notification) =>
+      setNotifications((prev) => {
+        // Ensure prev is an array
+        const prevArray = Array.isArray(prev) ? prev : [];
+        return prevArray.map((notification) =>
           notification._id === notificationId
             ? { ...notification, read: true }
             : notification
-        )
-      );
-      setUnreadCount((count) => count - 1);
+        );
+      });
+      setUnreadCount((count) => Math.max(0, count - 1));
     } catch (error) {
       console.error("Error marking notification as read:", error);
       showSnackbar("Error marking notification as read", "error");
@@ -439,9 +452,16 @@ const BuyerDashboard = () => {
     setPaymentModal((prev) => ({ ...prev, open: false }));
     showSnackbar("Payment successful!", "success");
     // Refresh notifications after successful payment
-    const response = await axios.get("/notifications");
-    setNotifications(response.data);
-    setUnreadCount(response.data.filter((n) => !n.read).length);
+    try {
+      const response = await axios.get("/notifications");
+      // Ensure notifications is an array
+      const notificationsArray = Array.isArray(response.data) ? response.data : [];
+      setNotifications(notificationsArray);
+      setUnreadCount(notificationsArray.filter((n) => !n.read).length);
+    } catch (error) {
+      console.error("Error fetching notifications after payment:", error);
+      // Don't update notifications on error
+    }
   };
 
   const handleNotificationClick = async (notification) => {
@@ -585,7 +605,7 @@ const BuyerDashboard = () => {
           <StatCard elevation={2}>
             <GavelRounded color="secondary" sx={{ fontSize: 40 }} />
             <Typography variant="h4" color="secondary">
-              {notifications.filter(n => n.type === 'bid_placed').length}
+              {Array.isArray(notifications) ? notifications.filter(n => n.type === 'bid_placed').length : 0}
             </Typography>
             <Typography variant="body1" color="textSecondary">
               Your Active Bids
@@ -596,7 +616,7 @@ const BuyerDashboard = () => {
           <StatCard elevation={2}>
             <Handshake color="success" sx={{ fontSize: 40 }} />
             <Typography variant="h4" color="success.main">
-              {notifications.filter(n => n.type === 'auction_won').length}
+              {Array.isArray(notifications) ? notifications.filter(n => n.type === 'auction_won').length : 0}
             </Typography>
             <Typography variant="body1" color="textSecondary">
               Auctions Won
@@ -607,7 +627,7 @@ const BuyerDashboard = () => {
           <StatCard elevation={2}>
             <PaymentIcon color="info" sx={{ fontSize: 40 }} />
             <Typography variant="h4" color="info.main">
-              {notifications.filter(n => n.type === 'transaction_completed').length}
+              {Array.isArray(notifications) ? notifications.filter(n => n.type === 'transaction_completed').length : 0}
             </Typography>
             <Typography variant="body1" color="textSecondary">
               Completed Purchases
@@ -929,50 +949,58 @@ const BuyerDashboard = () => {
               <CloseIcon />
             </IconButton>
           </Box>
-          <List>
-            {notifications.map((notification) => (
-              <ListItem
-                key={notification._id}
-                sx={{
-                  opacity: notification.read ? 0.7 : 1,
-                  bgcolor: notification.read ? "transparent" : "action.hover",
-                  borderRadius: 1,
-                  mb: 1,
-                }}
-              >
-                <ListItemText
-                  primary={notification.message}
-                  secondary={formatDistanceToNow(
-                    new Date(notification.createdAt),
-                    { addSuffix: true }
-                  )}
-                />
-                {notification.type === "auction_won" &&
-                  notification.metadata?.auctionId && (
-                    <ListItemSecondaryAction>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        size="small"
-                        startIcon={<PaymentIcon />}
-                        onClick={() =>
-                          handlePaymentClickFromNotification(notification)
-                        }
-                      >
-                        Pay Now
-                      </Button>
-                    </ListItemSecondaryAction>
-                  )}
-              </ListItem>
+          <List sx={{ width: "100%" }}>
+            {Array.isArray(notifications) && notifications.map((notification) => (
+              <React.Fragment key={notification._id}>
+                <ListItem
+                  button
+                  onClick={() => handleNotificationClick(notification)}
+                  sx={{
+                    backgroundColor: notification.read
+                      ? "transparent"
+                      : alpha(theme.palette.primary.light, 0.1),
+                    "&:hover": {
+                      backgroundColor: alpha(
+                        theme.palette.primary.light,
+                        0.05
+                      ),
+                    },
+                  }}
+                >
+                  <ListItemText
+                    primary={notification.message}
+                    secondary={formatDistanceToNow(
+                      new Date(notification.createdAt),
+                      { addSuffix: true }
+                    )}
+                  />
+                  {notification.type === "auction_won" &&
+                    notification.metadata?.auctionId && (
+                      <ListItemSecondaryAction>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          size="small"
+                          startIcon={<PaymentIcon />}
+                          onClick={() =>
+                            handlePaymentClickFromNotification(notification)
+                          }
+                        >
+                          Pay Now
+                        </Button>
+                      </ListItemSecondaryAction>
+                    )}
+                </ListItem>
+                <Divider />
+              </React.Fragment>
             ))}
-            {notifications.length === 0 && (
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ textAlign: "center", py: 4 }}
-              >
-                No notifications yet
-              </Typography>
+            {(!Array.isArray(notifications) || notifications.length === 0) && (
+              <ListItem>
+                <ListItemText
+                  primary="No notifications"
+                  secondary="You don't have any notifications yet"
+                />
+              </ListItem>
             )}
           </List>
         </Box>

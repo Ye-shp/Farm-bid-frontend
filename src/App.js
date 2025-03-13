@@ -41,6 +41,9 @@ import ProductInventory from "./components/ProductInventory";
 import StudentRegister from './components/students/Studentregister';
 import StudentLogin from './components/students/Studentlogin';
 import CustomerList from './components/students/CustomerList';
+import RecurringPaymentSettings from './components/payment/RecurringPaymentSettings';
+import NotificationsPage from './components/NotificationsPage';
+import { SnackbarProvider } from './contexts/SnackbarContext';
 
 const stripePromise = loadStripe(
   "pk_live_51Q9hx7ApVL7y3rvg85x9cvnfNETqgxw7qYxRrBJeD7rOg0d0M0WJnNMRF4TouN5RYAgwQ0HfQefNwZ5AEGXPIlF600UXzQ8rKx"
@@ -252,6 +255,20 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
+        {/* Payment Routes */}
+        <Route path="/payment-settings" element={
+          <ProtectedRoute>
+            <RecurringPaymentSettings />
+          </ProtectedRoute>
+        } />
+        
+        {/* Notification Routes */}
+        <Route path="/notifications" element={
+          <ProtectedRoute>
+            <NotificationsPage />
+          </ProtectedRoute>
+        } />
       </Routes>
     </>
   );
@@ -261,11 +278,13 @@ const App = () => {
   return (
     <Router>
       <AuthProvider>
-        <SocketProvider>
-          <div className="App">
-            <AppRoutes />
-          </div>
-        </SocketProvider>
+        <SnackbarProvider>
+          <SocketProvider>
+            <div className="App">
+              <AppRoutes />
+            </div>
+          </SocketProvider>
+        </SnackbarProvider>
       </AuthProvider>
     </Router>
   );

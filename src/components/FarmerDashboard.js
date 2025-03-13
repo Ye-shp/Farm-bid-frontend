@@ -203,15 +203,19 @@ const FarmerDashboard = () => {
 
     const handleNewNotification = (notification) => {
       setNotifications(prev => {
-        const exists = prev.some(n => n._id === notification._id);
-        if (exists) return prev.map(n => n._id === notification._id ? notification : n);
+        // Ensure prev is an array
+        const prevNotifications = Array.isArray(prev) ? prev : [];
+        const exists = prevNotifications.some(n => n._id === notification._id);
+        if (exists) return prevNotifications.map(n => n._id === notification._id ? notification : n);
         setUnreadCount(count => count + 1);
         showSnackbar(notification.message, 'info');
-        return [notification, ...prev];
+        return [notification, ...prevNotifications];
       });
     };
 
+    // Listen for both event types to ensure we catch all notifications
     socket.on('notificationUpdate', handleNewNotification);
+    socket.on('notification', handleNewNotification);
 
     const fetchNotifications = async () => {
       try {
@@ -219,18 +223,24 @@ const FarmerDashboard = () => {
         const response = await axios.get(`${API_URL}/api/notifications`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setNotifications(response.data);
-        setUnreadCount(response.data.filter(n => !n.read).length);
+        // Ensure response.data is an array
+        const notificationsData = Array.isArray(response.data) ? response.data : [];
+        setNotifications(notificationsData);
+        setUnreadCount(notificationsData.filter(n => !n.read).length);
       } catch (error) {
         console.error('Error fetching notifications:', error);
         showSnackbar('Error fetching notifications', 'error');
+        // Set notifications to empty array on error
+        setNotifications([]);
+        setUnreadCount(0);
       }
     };
 
     fetchNotifications();
 
     return () => {
-      socket.off('newNotification', handleNewNotification);
+      socket.off('notificationUpdate', handleNewNotification);
+      socket.off('notification', handleNewNotification);
     };
   }, [socket, API_URL]);
 
@@ -427,12 +437,14 @@ const FarmerDashboard = () => {
       await axios.put(`${API_URL}/api/notifications/${notificationId}/read`, null, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setNotifications(prev =>
-        prev.map(notification =>
+      setNotifications(prev => {
+        // Ensure prev is an array
+        const prevNotifications = Array.isArray(prev) ? prev : [];
+        return prevNotifications.map(notification =>
           notification._id === notificationId ? { ...notification, read: true } : notification
-        )
-      );
-      setUnreadCount(count => count - 1);
+        );
+      });
+      setUnreadCount(count => Math.max(0, count - 1));
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -1369,7 +1381,7 @@ const FarmerDashboard = () => {
         </DialogTitle>
         <DialogContent>
           <List>
-            {notifications.map((notification) => (
+            {Array.isArray(notifications) && notifications.map((notification) => (
               <ListItem
                 key={notification._id}
                 sx={{

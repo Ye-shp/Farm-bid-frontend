@@ -31,6 +31,7 @@ import {
   Store as StoreIcon,
   Agriculture as FarmerIcon,
   Business as PartnersIcon,
+  Payments as PaymentsIcon,
 } from '@mui/icons-material';
 import { useParams, useLocation } from 'react-router-dom';
 import Reviews from './Reviews';
@@ -540,6 +541,25 @@ const UserProfile = () => {
 
   const isOwner = loggedInUserId === user._id;
 
+  const renderPaymentSettingsLink = () => {
+    if (loggedInUserId && (userId === loggedInUserId || location.pathname === '/profile')) {
+      return (
+        <Box mt={3}>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<PaymentsIcon />}
+            onClick={() => navigate('/payment-settings')}
+            fullWidth
+          >
+            Manage Payment Settings
+          </Button>
+        </Box>
+      );
+    }
+    return null;
+  };
+
   return (
     <Box sx={{ maxWidth: 1200, margin: '0 auto', padding: '24px' }}>
       {error && (
@@ -773,6 +793,8 @@ const UserProfile = () => {
           </Box>
         </CardContent>
       </Card>
+
+      {renderPaymentSettingsLink()}
 
       {/* Tabs Section */}
       <TabContext value={tabValue}>

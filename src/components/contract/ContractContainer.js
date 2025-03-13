@@ -149,6 +149,17 @@ const ContractDetails = () => {
     }
   };
 
+  // Add this helper function to format recurring frequency
+  const formatRecurringFrequency = (frequency) => {
+    switch (frequency) {
+      case 'weekly': return 'Weekly';
+      case 'biweekly': return 'Bi-weekly';
+      case 'monthly': return 'Monthly';
+      case 'quarterly': return 'Quarterly';
+      default: return frequency;
+    }
+  };
+
   if (loading) return <CircularProgress />;
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!contract) return <Alert severity="info">No contract found</Alert>;
@@ -185,6 +196,49 @@ const ContractDetails = () => {
             setShowFulfillDialog={setShowFulfillDialog}
             handleSubmitFulfillment={handleSubmitFulfillment}
           />
+
+          {/* In the contract details section, add the recurring information */}
+          {contract.isRecurring && (
+            <div className="mt-4 p-4 bg-purple-50 rounded-lg">
+              <h3 className="text-lg font-semibold text-purple-800 mb-2">Recurring Contract</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Frequency</p>
+                  <p className="text-base font-medium">{formatRecurringFrequency(contract.recurringFrequency)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Next Delivery</p>
+                  <p className="text-base font-medium">
+                    {contract.nextDeliveryDate 
+                      ? new Date(contract.nextDeliveryDate).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })
+                      : 'Not scheduled'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">End Date</p>
+                  <p className="text-base font-medium">
+                    {contract.recurringEndDate 
+                      ? new Date(contract.recurringEndDate).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })
+                      : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Instances</p>
+                  <p className="text-base font-medium">
+                    {contract.recurringInstances?.length || 0} total
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

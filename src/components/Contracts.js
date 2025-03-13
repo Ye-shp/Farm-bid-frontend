@@ -102,6 +102,28 @@ const Contracts = () => {
     }
   };
 
+  const formatRecurringFrequency = (frequency) => {
+    switch (frequency) {
+      case 'weekly': return 'Weekly';
+      case 'biweekly': return 'Bi-weekly';
+      case 'monthly': return 'Monthly';
+      case 'quarterly': return 'Quarterly';
+      default: return frequency;
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const renderContractCard = (contract) => {
     const userId = localStorage.getItem('userId');
     const acceptedFulfillment = contract.fulfillments?.find(f => 
@@ -134,6 +156,21 @@ const Contracts = () => {
               <Typography variant="body2" color="primary" gutterBottom>
                 Your offer was accepted!
               </Typography>
+            )}
+            {contract.isRecurring && (
+              <div className="mt-2 border-t pt-2">
+                <p className="text-sm font-medium text-gray-700">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mr-2">
+                    Recurring
+                  </span>
+                  {formatRecurringFrequency(contract.recurringFrequency)}
+                </p>
+                {contract.nextDeliveryDate && (
+                  <p className="text-sm text-gray-600">
+                    Next delivery: {formatDate(contract.nextDeliveryDate)}
+                  </p>
+                )}
+              </div>
             )}
             <Button
               variant="contained"

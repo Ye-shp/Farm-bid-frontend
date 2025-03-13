@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -23,12 +23,65 @@ const CreateContract = () => {
       city: '',
       state: '',
       zipCode: ''
+    },
+    isRecurring: false,
+    recurringFrequency: 'monthly',
+    recurringEndDate: '',
+    recurringPaymentSettings: {
+      autoPayEnabled: false,
+      paymentMethodId: '',
+      notifyBeforeCharge: true,
+      notificationDays: 3
     }
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
   const navigate = useNavigate();
   const API_URL = process.env.REACT_APP_API_URL;
+
+  // Fetch payment methods when component mounts
+  useEffect(() => {
+    if (formData.isRecurring) {
+      fetchPaymentMethods();
+    }
+  }, [formData.isRecurring]);
+
+  const fetchPaymentMethods = async () => {
+    try {
+      setLoadingPaymentMethods(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.get(
+        `${API_URL}/api/payments/methods`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setPaymentMethods(response.data);
+      
+      // If there's a default payment method, select it
+      const defaultMethod = response.data.find(method => method.invoice_settings?.default_payment_method);
+      if (defaultMethod) {
+        setFormData({
+          ...formData,
+          recurringPaymentSettings: {
+            ...formData.recurringPaymentSettings,
+            paymentMethodId: defaultMethod.id
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching payment methods:', error);
+      setError('Failed to load payment methods. Please try again.');
+    } finally {
+      setLoadingPaymentMethods(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,6 +101,20 @@ const CreateContract = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         formData.deliveryAddress = userResponse.data.address;
+      }
+
+      // Validate recurring contract fields
+      if (formData.isRecurring && !formData.recurringEndDate) {
+        setError('Recurring end date is required for recurring contracts');
+        setLoading(false);
+        return;
+      }
+
+      // Validate payment method if auto-pay is enabled
+      if (formData.isRecurring && formData.recurringPaymentSettings.autoPayEnabled && !formData.recurringPaymentSettings.paymentMethodId) {
+        setError('Please select a payment method for automatic payments');
+        setLoading(false);
+        return;
       }
 
       const response = await axios.post(
@@ -70,6 +137,21 @@ const CreateContract = () => {
   // Get available products based on selected category
   const getAvailableProducts = () => {
     return formData.productCategory ? productCategories[formData.productCategory] || [] : [];
+  };
+
+  // Calculate minimum date for recurring end date (must be after initial end time)
+  const getMinRecurringEndDate = () => {
+    if (!formData.endTime) return '';
+    
+    const endDate = new Date(formData.endTime);
+    // Add one day to ensure it's after the end time
+    endDate.setDate(endDate.getDate() + 1);
+    return endDate.toISOString().slice(0, 16);
+  };
+
+  // Format card details for display
+  const formatCardDetails = (card) => {
+    return `${card.brand.toUpperCase()} •••• ${card.last4} (Expires ${card.exp_month}/${card.exp_year})`;
   };
 
   return (
@@ -162,6 +244,161 @@ const CreateContract = () => {
             />
           </div>
 
+          {/* Recurring Contract Options */}
+          <div className="space-y-2">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="isRecurring"
+                checked={formData.isRecurring}
+                onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="isRecurring" className="ml-2 block font-medium">
+                Make this a recurring contract
+              </label>
+            </div>
+          </div>
+
+          {formData.isRecurring && (
+            <>
+              <div className="space-y-2">
+                <label htmlFor="recurringFrequency" className="block font-medium">Frequency</label>
+                <select
+                  id="recurringFrequency"
+                  value={formData.recurringFrequency}
+                  onChange={(e) => setFormData({ ...formData, recurringFrequency: e.target.value })}
+                  className="w-full border rounded-md p-2"
+                  required={formData.isRecurring}
+                >
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly">Bi-weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="recurringEndDate" className="block font-medium">Recurring End Date</label>
+                <input
+                  type="datetime-local"
+                  id="recurringEndDate"
+                  value={formData.recurringEndDate}
+                  onChange={(e) => setFormData({ ...formData, recurringEndDate: e.target.value })}
+                  className="w-full border rounded-md p-2"
+                  required={formData.isRecurring}
+                  min={getMinRecurringEndDate()}
+                  max={new Date(Date.now() + 365 * 24 * 3600000).toISOString().slice(0, 16)} // Max 1 year in the future
+                />
+              </div>
+
+              {/* Recurring Payment Settings */}
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                <h3 className="text-lg font-semibold text-blue-800 mb-3">Payment Settings</h3>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="autoPayEnabled"
+                      checked={formData.recurringPaymentSettings.autoPayEnabled}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        recurringPaymentSettings: {
+                          ...formData.recurringPaymentSettings,
+                          autoPayEnabled: e.target.checked
+                        }
+                      })}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="autoPayEnabled" className="ml-2 block font-medium">
+                      Enable automatic payments
+                    </label>
+                  </div>
+
+                  {formData.recurringPaymentSettings.autoPayEnabled && (
+                    <>
+                      <div className="space-y-2">
+                        <label htmlFor="paymentMethodId" className="block font-medium">Payment Method</label>
+                        {loadingPaymentMethods ? (
+                          <div className="text-gray-500">Loading payment methods...</div>
+                        ) : paymentMethods.length === 0 ? (
+                          <div className="text-red-500">
+                            No payment methods found. Please add a payment method in your profile.
+                          </div>
+                        ) : (
+                          <select
+                            id="paymentMethodId"
+                            value={formData.recurringPaymentSettings.paymentMethodId}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              recurringPaymentSettings: {
+                                ...formData.recurringPaymentSettings,
+                                paymentMethodId: e.target.value
+                              }
+                            })}
+                            className="w-full border rounded-md p-2"
+                            required={formData.recurringPaymentSettings.autoPayEnabled}
+                          >
+                            <option value="">Select a payment method</option>
+                            {paymentMethods.map((method) => (
+                              <option key={method.id} value={method.id}>
+                                {method.card ? formatCardDetails(method.card) : method.id}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="notifyBeforeCharge"
+                          checked={formData.recurringPaymentSettings.notifyBeforeCharge}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            recurringPaymentSettings: {
+                              ...formData.recurringPaymentSettings,
+                              notifyBeforeCharge: e.target.checked
+                            }
+                          })}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="notifyBeforeCharge" className="ml-2 block font-medium">
+                          Notify me before charging
+                        </label>
+                      </div>
+
+                      {formData.recurringPaymentSettings.notifyBeforeCharge && (
+                        <div className="space-y-2">
+                          <label htmlFor="notificationDays" className="block font-medium">Days before charge to notify</label>
+                          <select
+                            id="notificationDays"
+                            value={formData.recurringPaymentSettings.notificationDays}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              recurringPaymentSettings: {
+                                ...formData.recurringPaymentSettings,
+                                notificationDays: parseInt(e.target.value)
+                              }
+                            })}
+                            className="w-full border rounded-md p-2"
+                          >
+                            <option value="1">1 day</option>
+                            <option value="2">2 days</option>
+                            <option value="3">3 days</option>
+                            <option value="5">5 days</option>
+                            <option value="7">7 days</option>
+                          </select>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
           <div className="space-y-2">
             <label htmlFor="deliveryMethod" className="block font-medium">Delivery Method</label>
             <select
@@ -247,15 +484,7 @@ const CreateContract = () => {
             className="w-full bg-blue-600 text-white text-lg font-semibold rounded-lg py-3 px-6 mt-6 hover:bg-blue-700 transform transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-md disabled:opacity-50 disabled:cursor-not-allowed" 
             disabled={loading}
           >
-            {loading ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Creating...
-              </span>
-            ) : 'Create Contract'}
+            {loading ? 'Creating...' : 'Create Contract'}
           </button>
         </form>
       </div>

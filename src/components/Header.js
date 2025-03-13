@@ -36,6 +36,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import SchoolIcon from '@mui/icons-material/School';
 
 import { useAuth } from '../contexts/AuthContext';
+import NotificationCenter from './NotificationCenter';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -98,28 +99,28 @@ const Header = () => {
     { label: 'Register', path: '/register', icon: <HowToRegIcon /> },
     { label: 'Students', path: '/students', icon: <SchoolIcon /> }
   ] : user.role === 'farmer' ? [
-    { label: 'Create Field Notes', path: '/create-blog', icon: <ArticleIcon /> },
-    { label: 'My Profile', path: '/profile', icon: <PersonIcon /> },
-    { label: 'Payout', path: '/PayoutPage', icon: <PaymentsIcon /> }
+    { label: 'Profile', path: '/profile', icon: <PersonIcon /> },
+    { label: 'Payment Settings', path: '/payment-settings', icon: <PaymentsIcon /> },
+    { label: 'Logout', action: handleLogout, icon: <LogoutIcon /> }
   ] : user.role === 'buyer' ? [
-    { label: 'Create Field Notes', path: '/buyer/create-blog', icon: <ArticleIcon /> },
-    { label: 'My Profile', path: '/profile', icon: <PersonIcon /> },
-  ] : [];
+    { label: 'Profile', path: '/profile', icon: <PersonIcon /> },
+    { label: 'Payment Settings', path: '/payment-settings', icon: <PaymentsIcon /> },
+    { label: 'Logout', action: handleLogout, icon: <LogoutIcon /> }
+  ] : [
+    { label: 'Logout', action: handleLogout, icon: <LogoutIcon /> }
+  ];
 
   const allMenuItems = [...getVisibleNavItems(), ...menuItems];
-  if (user) {
-    allMenuItems.push({ label: 'Logout', path: null, icon: <LogoutIcon />, onClick: handleLogout });
-  }
 
   const desktopMenuItems = menuItems.map((item) => (
     <MenuItem
-      key={item.path}
-      component={Link}
+      key={item.path || item.label}
+      component={item.path ? Link : 'div'}
       to={item.path}
-      onClick={handleMenuClose}
-      selected={isCurrentPath(item.path)}
+      onClick={item.action || handleMenuClose}
+      selected={item.path ? isCurrentPath(item.path) : false}
       sx={{
-        color: isCurrentPath(item.path) ? 'primary.main' : 'text.primary',
+        color: item.path && isCurrentPath(item.path) ? 'primary.main' : 'text.primary',
         '&:hover': { backgroundColor: 'action.hover' }
       }}
     >
@@ -220,6 +221,9 @@ const Header = () => {
               >
                 Menu
               </Button>
+
+              {/* Notification Center */}
+              {user && <NotificationCenter />}
 
               {/* Desktop User Menu */}
               <Box sx={{ display: { xs: 'none', md: 'block' } }}>

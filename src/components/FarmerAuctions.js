@@ -187,9 +187,11 @@ const FarmerAuctions = () => {
         ]);
 
         setAuctions(auctionsRes.data);
-        setNotifications(notificationsRes.data);
+        const notificationsData = Array.isArray(notificationsRes.data) ? notificationsRes.data : [];
+        setNotifications(notificationsData);
       } catch (error) {
         console.error('Error fetching data:', error);
+        setNotifications([]);
       }
     };
 
@@ -201,9 +203,10 @@ const FarmerAuctions = () => {
       await axios.put(`${API_URL}/notifications/${notificationId}/read`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setNotifications((prev) =>
-        prev.map(n => n._id === notificationId ? { ...n, read: true } : n)
-      );
+      setNotifications((prev) => {
+        const prevNotifications = Array.isArray(prev) ? prev : [];
+        return prevNotifications.map(n => n._id === notificationId ? { ...n, read: true } : n);
+      });
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -219,7 +222,7 @@ const FarmerAuctions = () => {
             </Typography>
             <IconButton onClick={() => setNotificationsOpen(!notificationsOpen)}>
               <Badge 
-                badgeContent={notifications.filter(n => !n.read).length} 
+                badgeContent={Array.isArray(notifications) ? notifications.filter(n => !n.read).length : 0} 
                 color="error"
               >
                 <NotificationsIcon fontSize="large" />
@@ -243,7 +246,7 @@ const FarmerAuctions = () => {
           
           <Collapse in={notificationsOpen}>
             <List sx={{ p: 2 }}>
-              {notifications.map((notification) => (
+              {Array.isArray(notifications) && notifications.map((notification) => (
                 <NotificationItem 
                   key={notification._id}
                   unread={!notification.read}

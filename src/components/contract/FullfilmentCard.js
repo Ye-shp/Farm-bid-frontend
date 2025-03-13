@@ -1,8 +1,15 @@
 import React from "react";
-import { Card, CardContent, Typography, Button, Grid } from "@mui/material";
+import { Card, CardContent, Typography, Button, Grid, Box } from "@mui/material";
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 
 const FullfilmentCard = ({ contract, userRole, userId, initiateCheckout }) => {
   const { fulfillments, buyer, status, paymentStatus, quantity } = contract;
+
+  // Helper function to format address
+  const formatAddress = (address) => {
+    if (!address) return "No address provided";
+    return `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`;
+  };
 
   if (fulfillments?.length > 0) {
     return fulfillments.map((fulfillment) => {
@@ -56,6 +63,21 @@ const FullfilmentCard = ({ contract, userRole, userId, initiateCheckout }) => {
                       Delivery Fee: ${fulfillment.deliveryFee}
                     </Typography>
                   )}
+                </Grid>
+
+                {/* Farmer Location */}
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                    <LocationOnIcon sx={{ mr: 1, color: 'success.main' }} />
+                    <Typography variant="subtitle2" color="textSecondary">
+                      Farmer's Location
+                    </Typography>
+                  </Box>
+                  <Typography variant="body1">
+                    {fulfillment.farmerLocation ? 
+                      formatAddress(fulfillment.farmerLocation.address) : 
+                      formatAddress(fulfillment.farmer.address)}
+                  </Typography>
                 </Grid>
 
                 {fulfillment.notes && (
