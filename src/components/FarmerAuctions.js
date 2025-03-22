@@ -7,8 +7,6 @@ import {
   CardContent, 
   Button, 
   Grid, 
-  Badge, 
-  IconButton, 
   Paper, 
   Tooltip, 
   Chip, 
@@ -26,10 +24,6 @@ import {
   Snackbar, 
   Alert,
   Avatar,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
   useTheme
 } from '@mui/material';
 import { 
@@ -37,9 +31,7 @@ import {
   Cancel,
   ExpandMore, 
   ExpandLess, 
-  MarkEmailRead, 
   Person,
-  Notifications as NotificationsIcon,
   MonetizationOn,
   Schedule
 } from '@mui/icons-material';
@@ -66,16 +58,6 @@ const AuctionCard = styled(Card)(({ theme }) => ({
   },
 }));
 
-const NotificationItem = styled(ListItem)(({ theme, unread }) => ({
-  backgroundColor: unread ? theme.palette.action.selected : theme.palette.background.paper,
-  borderRadius: 12,
-  marginBottom: theme.spacing(1),
-  transition: 'all 0.3s ease',
-  '&:hover': {
-    backgroundColor: theme.palette.action.hover,
-  },
-}));
-
 const StatusChip = styled(Chip)(({ theme, status }) => ({
   fontWeight: 700,
   borderRadius: 8,
@@ -93,8 +75,6 @@ const FarmerAuctions = () => {
   const theme = useTheme();
   const [auctions, setAuctions] = useState([]);
   const token = localStorage.getItem('token');
-  const [notifications, setNotifications] = useState([]);
-  const [notificationsOpen, setNotificationsOpen] = useState(true);
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const API_URL = `${process.env.REACT_APP_API_URL}/api`; 
@@ -177,40 +157,20 @@ const FarmerAuctions = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [auctionsRes, notificationsRes] = await Promise.all([
-          axios.get(`${API_URL}/auctions/farmer-auctions`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get(`${API_URL}/notifications`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-        ]);
-
-        setAuctions(auctionsRes.data);
-        const notificationsData = Array.isArray(notificationsRes.data) ? notificationsRes.data : [];
-        setNotifications(notificationsData);
+        const response = await axios.get(`${API_URL}/auctions/seller`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setAuctions(response.data);
       } catch (error) {
-        console.error('Error fetching data:', error);
-        setNotifications([]);
+        console.error('Error fetching auctions:', error);
       }
     };
 
-    if (token) fetchData();
-  }, [token]);
-
-  const markAsRead = async (notificationId) => {
-    try {
-      await axios.put(`${API_URL}/notifications/${notificationId}/read`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setNotifications((prev) => {
-        const prevNotifications = Array.isArray(prev) ? prev : [];
-        return prevNotifications.map(n => n._id === notificationId ? { ...n, read: true } : n);
-      });
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
+    fetchData();
+    // Set up interval to refresh auction data
+    const interval = setInterval(fetchData, 60000);
+    return () => clearInterval(interval);
+  }, [token, API_URL]);
 
   return (
     <DashboardContainer>
@@ -220,60 +180,11 @@ const FarmerAuctions = () => {
             <Typography variant="h4" fontWeight={700}>
               Auction Dashboard
             </Typography>
-            <IconButton onClick={() => setNotificationsOpen(!notificationsOpen)}>
-              <Badge 
-                badgeContent={Array.isArray(notifications) ? notifications.filter(n => !n.read).length : 0} 
-                color="error"
-              >
-                <NotificationsIcon fontSize="large" />
-              </Badge>
-            </IconButton>
           </Box>
         </Box>
       </StyledAppBar>
 
       <Box maxWidth="1200px" margin="auto" p={4}>
-        {/* Notifications Section */}
-        <Paper elevation={0} sx={{ mb: 4, borderRadius: 3, bgcolor: 'background.paper' }}>
-          <Box display="flex" alignItems="center" justifyContent="space-between" p={2}>
-            <Typography variant="h5" fontWeight={600}>
-              Recent Activity
-            </Typography>
-            <IconButton onClick={() => setNotificationsOpen(!notificationsOpen)}>
-              {notificationsOpen ? <ExpandLess /> : <ExpandMore />}
-            </IconButton>
-          </Box>
-          
-          <Collapse in={notificationsOpen}>
-            <List sx={{ p: 2 }}>
-              {Array.isArray(notifications) && notifications.map((notification) => (
-                <NotificationItem 
-                  key={notification._id}
-                  unread={!notification.read}
-                >
-                  <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
-                      <MonetizationOn />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={notification.message}
-                    primaryTypographyProps={{ fontWeight: 600 }}
-                    secondary={formatDateTime(notification.createdAt)}
-                  />
-                  {!notification.read && (
-                    <Tooltip title="Mark as Read">
-                      <IconButton onClick={() => markAsRead(notification._id)}>
-                        <MarkEmailRead color="primary" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </NotificationItem>
-              ))}
-            </List>
-          </Collapse>
-        </Paper>
-
         {/* Auctions Grid */}
         <Typography variant="h5" fontWeight={600} gutterBottom sx={{ mb: 4 }}>
           Active Auctions
@@ -444,7 +355,21 @@ const FarmerAuctions = () => {
           )}
         </Dialog>
 
-        {/* Snackbar section remains the same */}
+        {/* Snackbar for notifications */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          onClose={() => setSnackbarOpen(false)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert 
+            onClose={() => setSnackbarOpen(false)} 
+            severity={snackbarSeverity}
+            sx={{ width: '100%' }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
       </Box>
     </DashboardContainer>
   );

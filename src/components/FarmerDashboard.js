@@ -29,7 +29,6 @@ import {
   ListItemText,
   ListItemAvatar,
   LinearProgress,
-  Badge,
   IconButton,
   useTheme,
   AppBar,
@@ -45,9 +44,7 @@ import {
 import {
   Add as AddIcon,
   CloudUpload as UploadIcon,
-  Notifications as NotificationsIcon,
   LocalFlorist as ProductIcon,
-  CheckCircle as CheckIcon,
   Close as CloseIcon,
   PhotoCamera
 } from '@mui/icons-material';
@@ -185,7 +182,6 @@ const FarmerDashboard = () => {
 
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('info');
@@ -431,25 +427,6 @@ const FarmerDashboard = () => {
     }
   };
 
-  const handleMarkAsRead = async (notificationId) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.put(`${API_URL}/api/notifications/${notificationId}/read`, null, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setNotifications(prev => {
-        // Ensure prev is an array
-        const prevNotifications = Array.isArray(prev) ? prev : [];
-        return prevNotifications.map(notification =>
-          notification._id === notificationId ? { ...notification, read: true } : notification
-        );
-      });
-      setUnreadCount(count => Math.max(0, count - 1));
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
-
   if (loading) return (
     <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
       <CircularProgress size={60} />
@@ -471,11 +448,6 @@ const FarmerDashboard = () => {
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             Farmer Dashboard
           </Typography>
-          <IconButton onClick={() => setShowNotifications(true)}>
-            <Badge badgeContent={unreadCount} color="error">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
         </Toolbar>
       </StyledAppBar>
 
@@ -1359,59 +1331,6 @@ const FarmerDashboard = () => {
         </DialogActions>
       </Dialog>
 
-
-      {/* Notifications Dialog */}
-      <Dialog
-        open={showNotifications}
-        onClose={() => setShowNotifications(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <NotificationsIcon sx={{ mr: 1 }} />
-            Notifications
-            <Chip
-              label={unreadCount}
-              color="error"
-              size="small"
-              sx={{ ml: 2 }}
-            />
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          <List>
-            {Array.isArray(notifications) && notifications.map((notification) => (
-              <ListItem
-                key={notification._id}
-                sx={{
-                  backgroundColor: notification.read ? 'transparent' : theme.palette.action.selected,
-                  borderRadius: 2,
-                  mb: 1
-                }}
-              >
-                <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
-                    <NotificationsIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={notification.message}
-                  secondary={new Date(notification.createdAt).toLocaleString()}
-                  primaryTypographyProps={{ fontWeight: 600 }}
-                />
-                <IconButton onClick={() => handleMarkAsRead(notification._id)}>
-                  <CheckIcon color="action" />
-                </IconButton>
-              </ListItem>
-            ))}
-          </List>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowNotifications(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
-
       {/* Snackbar */}
       <Snackbar
         open={snackbarOpen}
@@ -1423,10 +1342,6 @@ const FarmerDashboard = () => {
           onClose={() => setSnackbarOpen(false)}
           severity={snackbarSeverity}
           sx={{ width: '100%', borderRadius: 2, boxShadow: theme.shadows[3] }}
-          iconMapping={{
-            success: <CheckIcon fontSize="inherit" />,
-            error: <CloseIcon fontSize="inherit" />
-          }}
         >
           {snackbarMessage}
         </Alert>

@@ -32,7 +32,6 @@ import {
   DialogContent,
 } from "@mui/material";
 import {
-  Notifications as NotificationsIcon,
   GavelRounded,
   LocalOfferRounded,
   TimelapseRounded,
@@ -70,16 +69,6 @@ const AuctionCard = styled(Card)(({ theme }) => ({
   "&:hover": {
     transform: "translateY(-4px)",
     boxShadow: theme.shadows[8],
-  },
-}));
-
-const NotificationDrawer = styled(Drawer)(({ theme }) => ({
-  "& .MuiDrawer-paper": {
-    width: 340,
-    padding: theme.spacing(2),
-    [theme.breakpoints.down("sm")]: {
-      width: "100%",
-    },
   },
 }));
 
@@ -153,7 +142,6 @@ const BuyerDashboard = () => {
   const [bidAmount, setBidAmount] = useState({});
   const [searchResults, setSearchResults] = useState([]);
   const [location, setLocation] = useState({ latitude: "", longitude: "" });
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -464,87 +452,6 @@ const BuyerDashboard = () => {
     }
   };
 
-  const handleNotificationClick = async (notification) => {
-    // Mark notification as read
-    await markAsRead(notification._id);
-
-    if (notification.type === "auction_won" && notification.metadata) {
-      const auctionId = notification.reference?.id;
-      const amount = notification.metadata?.amount;
-      const title = notification.title;
-
-      if (!auctionId || !bidId) {
-        console.error("Missing required payment data:", notification.metadata);
-        showSnackbar("Error: Missing payment information", "error");
-        return;
-      }
-
-      try {
-        const response = await paymentService.createPaymentIntent({
-          amount,
-          sourceType: "auction",
-          sourceId: auctionId,
-          bidId: bidId,
-          sellerId: auctions.find((a) => a._id === auctionId)?.sellerId,
-        });
-
-        setPaymentModal({
-          open: true,
-          auctionId,
-          bidId,
-          sourceId,
-          sourceType,
-          amount,
-          sellerId,
-          title,
-          clientSecret: response.clientSecret,
-        });
-
-        setDrawerOpen(false);
-      } catch (error) {
-        console.error("Error creating payment intent:", error);
-        showSnackbar(
-          error.response?.data?.message || "Error initiating payment",
-          "error"
-        );
-      }
-    }
-  };
-
-  const handlePaymentClickFromNotification = async (notification) => {
-    try {
-      // Get auction details first
-      const auctionResponse = await axios.get(
-        `/auctions/${notification.metadata.auctionId}`
-      );
-      const auction = auctionResponse.data;
-
-      // Create payment intent
-      const response = await axios.post(
-        `/auctions/${notification.metadata.auctionId}/payment-intent`,
-        { amount: auction.winningBid.amount }
-      );
-
-      setPaymentModal({
-        open: true,
-        auctionId: notification.metadata.auctionId,
-        bidId: notification.metadata.bidId,
-        sourceId: response.data.sourceId,
-        sourceType: response.data.sourceType,
-        amount: auction.winningBid.amount,
-        sellerId: response.data.sellerId,
-        title: auction.product.title,
-        clientSecret: response.data.clientSecret,
-      });
-    } catch (error) {
-      console.error("Payment error:", error);
-      showSnackbar(
-        error.response?.data?.message || "Error initiating payment",
-        "error"
-      );
-    }
-  };
-
   return (
     <PageContainer maxWidth="xl">
       {/* Header Section */}
@@ -572,20 +479,6 @@ const BuyerDashboard = () => {
             Buyer Dashboard
           </Typography>
         </Box>
-        <IconButton
-          color="primary"
-          onClick={() => setDrawerOpen(true)}
-          sx={{
-            backgroundColor: theme.palette.grey[100],
-            "&:hover": {
-              backgroundColor: theme.palette.grey[200],
-            },
-          }}
-        >
-          <StyledBadge badgeContent={unreadCount} color="error">
-            <NotificationsIcon />
-          </StyledBadge>
-        </IconButton>
       </HeaderBox>
 
       {/* Quick Stats Section */}
@@ -925,86 +818,6 @@ const BuyerDashboard = () => {
           </Grid>
         ))}
       </Grid>
-
-      {/* Notification Drawer */}
-      <Drawer
-        anchor="right"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        PaperProps={{
-          sx: { width: { xs: "100%", sm: 400 } },
-        }}
-      >
-        <Box sx={{ p: 2 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 2,
-            }}
-          >
-            <Typography variant="h6">Notifications</Typography>
-            <IconButton onClick={() => setDrawerOpen(false)}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
-          <List sx={{ width: "100%" }}>
-            {Array.isArray(notifications) && notifications.map((notification) => (
-              <React.Fragment key={notification._id}>
-                <ListItem
-                  button
-                  onClick={() => handleNotificationClick(notification)}
-                  sx={{
-                    backgroundColor: notification.read
-                      ? "transparent"
-                      : alpha(theme.palette.primary.light, 0.1),
-                    "&:hover": {
-                      backgroundColor: alpha(
-                        theme.palette.primary.light,
-                        0.05
-                      ),
-                    },
-                  }}
-                >
-                  <ListItemText
-                    primary={notification.message}
-                    secondary={formatDistanceToNow(
-                      new Date(notification.createdAt),
-                      { addSuffix: true }
-                    )}
-                  />
-                  {notification.type === "auction_won" &&
-                    notification.metadata?.auctionId && (
-                      <ListItemSecondaryAction>
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          size="small"
-                          startIcon={<PaymentIcon />}
-                          onClick={() =>
-                            handlePaymentClickFromNotification(notification)
-                          }
-                        >
-                          Pay Now
-                        </Button>
-                      </ListItemSecondaryAction>
-                    )}
-                </ListItem>
-                <Divider />
-              </React.Fragment>
-            ))}
-            {(!Array.isArray(notifications) || notifications.length === 0) && (
-              <ListItem>
-                <ListItemText
-                  primary="No notifications"
-                  secondary="You don't have any notifications yet"
-                />
-              </ListItem>
-            )}
-          </List>
-        </Box>
-      </Drawer>
 
       {/* Payment Dialog */}
       <Dialog
